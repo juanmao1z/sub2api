@@ -30,3 +30,10 @@ describe('AppSidebar header styles', () => {
     expect(sidebarBrandBlockMatch?.[0]).not.toContain('overflow: hidden;')
   })
 })
+
+describe('AppSidebar recharge nav item', () => {
+  it('contains the custom recharge route and label key', () => {
+    expect(componentSource).toContain("path: '/recharge'")
+    expect(componentSource).toContain("label: t('nav.recharge')")
+  })
+})

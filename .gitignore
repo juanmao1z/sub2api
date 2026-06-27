@@ -92,6 +92,7 @@ temp/
 # ===================
 dist/
 build/
+build-local/
 release/
 
 # 后端嵌入的前端构建产物

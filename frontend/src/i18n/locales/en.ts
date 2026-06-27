@@ -404,6 +404,7 @@ export default {
     logout: 'Logout',
     github: 'GitHub',
     mySubscriptions: 'My Subscriptions',
+    recharge: 'Recharge',
     buySubscription: 'Recharge / Subscription',
     docs: 'Docs',
     myOrders: 'My Orders',
@@ -416,6 +417,12 @@ export default {
     channelMonitor: 'Channel Monitor',
     channelStatus: 'Channel Status',
     riskControl: 'Risk Control',
+  },
+
+  recharge: {
+    title: 'Recharge - Open in new window',
+    openInNewWindow: 'Open in new window',
+    iframeTitle: 'Recharge Center'
   },
 
   // Auth

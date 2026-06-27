@@ -404,6 +404,7 @@ export default {
     logout: '退出登录',
     github: 'GitHub',
     mySubscriptions: '我的订阅',
+    recharge: '点击充值',
     buySubscription: '充值/订阅',
     docs: '文档',
     myOrders: '我的订单',
@@ -416,6 +417,12 @@ export default {
     channelMonitor: '渠道监控',
     channelStatus: '渠道状态',
     riskControl: '风控中心',
+  },
+
+  recharge: {
+    title: '点击充值-右上角新窗口',
+    openInNewWindow: '新窗口打开',
+    iframeTitle: '充值中心'
   },
 
   // Auth

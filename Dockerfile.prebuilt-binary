@@ -1,0 +1,62 @@
+# =============================================================================
+# Sub2API Dockerfile for externally built backend binaries
+# =============================================================================
+# This variant expects a Linux amd64 binary at build-local/sub2api.
+# Use it when the target host has too little memory or unreliable network for
+# Go/frontend builds.
+# =============================================================================
+
+ARG ALPINE_IMAGE=alpine:3.21
+ARG POSTGRES_IMAGE=postgres:18-alpine
+
+FROM ${POSTGRES_IMAGE} AS pg-client
+
+FROM ${ALPINE_IMAGE}
+
+LABEL maintainer="Wei-Shaw <github.com/Wei-Shaw>"
+LABEL description="Sub2API - AI API Gateway Platform"
+LABEL org.opencontainers.image.source="https://github.com/Wei-Shaw/sub2api"
+
+RUN apk add --no-cache \
+    ca-certificates \
+    tzdata \
+    su-exec \
+    libpq \
+    zstd-libs \
+    lz4-libs \
+    krb5-libs \
+    libldap \
+    libedit \
+    && rm -rf /var/cache/apk/*
+
+COPY --from=pg-client /usr/local/bin/pg_dump /usr/local/bin/pg_dump
+COPY --from=pg-client /usr/local/bin/psql /usr/local/bin/psql
+COPY --from=pg-client /usr/local/lib/libpq.so.5* /usr/local/lib/
+
+RUN addgroup -g 1000 sub2api && \
+    adduser -u 1000 -G sub2api -s /bin/sh -D sub2api
+
+WORKDIR /app
+
+COPY --chown=sub2api:sub2api build-local/sub2api /app/sub2api
+COPY --chown=sub2api:sub2api backend/resources /app/resources
+
+RUN chmod +x /app/sub2api && \
+    mkdir -p /app/data && \
+    chown -R sub2api:sub2api /app/data && \
+    chmod 755 /app/data
+
+COPY --chown=root:root deploy/docker-entrypoint.sh /app/docker-entrypoint.sh
+RUN chmod +x /app/docker-entrypoint.sh
+
+USER sub2api
+
+EXPOSE 8080
+
+VOLUME ["/app/data"]
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+    CMD wget -q -T 5 -O /dev/null http://localhost:8080/health || exit 1
+
+ENTRYPOINT ["/app/docker-entrypoint.sh"]
+CMD ["/app/sub2api"]
