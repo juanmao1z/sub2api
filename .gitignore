@@ -92,6 +92,8 @@ temp/
 # ===================
 dist/
 build/
+build-local/
+deploy-artifacts/
 release/
 
 # 后端嵌入的前端构建产物

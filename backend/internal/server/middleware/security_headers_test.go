@@ -194,6 +194,23 @@ func TestSecurityHeaders(t *testing.T) {
 		assert.Contains(t, csp, "default-src 'self'")
 	})
 
+	t.Run("default_policy_allows_external_recharge_iframe", func(t *testing.T) {
+		cfg := config.CSPConfig{
+			Enabled: true,
+			Policy:  "",
+		}
+		middleware := SecurityHeaders(cfg, nil)
+
+		w := httptest.NewRecorder()
+		c, _ := gin.CreateTestContext(w)
+		c.Request = httptest.NewRequest(http.MethodGet, "/recharge", nil)
+
+		middleware(c)
+
+		csp := w.Header().Get("Content-Security-Policy")
+		assert.Equal(t, 1, countDirectiveValue(csp, "frame-src", "https://pay.ldxp.cn"))
+	})
+
 	t.Run("uses_default_policy_when_whitespace_only", func(t *testing.T) {
 		cfg := config.CSPConfig{
 			Enabled: true,
