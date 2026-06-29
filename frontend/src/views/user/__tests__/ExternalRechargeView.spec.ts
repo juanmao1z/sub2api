@@ -35,16 +35,19 @@ describe('ExternalRechargeView', () => {
     const wrapper = mountView()
 
     expect(wrapper.get('[data-testid="app-layout"]').exists()).toBe(true)
-    expect(wrapper.text()).toContain('点击充值-右上角新窗口')
+    expect(wrapper.find('h1').exists()).toBe(false)
+    expect(wrapper.text()).not.toContain('点击充值-右上角新窗口')
 
     const frameShell = wrapper.get('[data-testid="recharge-frame-shell"]')
     expect(frameShell.classes()).toContain('rounded-2xl')
     expect(frameShell.classes()).toContain('overflow-hidden')
+    expect(frameShell.classes()).toContain('min-h-[calc(100vh-7rem)]')
 
     const iframe = wrapper.get('iframe')
     expect(iframe.attributes('src')).toBe('https://pay.ldxp.cn/shop/1WGCPCG0')
     expect(iframe.attributes('title')).toBe('充值中心')
-    expect(iframe.classes()).toContain('min-h-[760px]')
+    expect(iframe.classes()).toContain('h-[calc(100vh-7rem)]')
+    expect(iframe.classes()).toContain('min-h-[820px]')
 
     const openButton = wrapper.get('[data-testid="recharge-open-window"]')
     expect(openButton.classes()).toContain('absolute')

@@ -1,18 +1,12 @@
 <template>
   <AppLayout>
-    <div class="space-y-6">
-      <div class="flex items-center justify-between gap-3">
-        <h1 class="min-w-0 truncate text-xl font-semibold text-gray-950 dark:text-white">
-          {{ t('recharge.title') }}
-        </h1>
-      </div>
-
+    <div>
       <div
         data-testid="recharge-frame-shell"
-        class="relative min-h-[calc(100vh-9.5rem)] overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-soft ring-1 ring-black/5 dark:border-dark-700 dark:bg-dark-900 dark:ring-white/5"
+        class="relative min-h-[calc(100vh-7rem)] overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-soft ring-1 ring-black/5 dark:border-dark-700 dark:bg-dark-900 dark:ring-white/5"
       >
         <iframe
-          class="block h-[calc(100vh-9.5rem)] min-h-[760px] w-full border-0 bg-white"
+          class="block h-[calc(100vh-7rem)] min-h-[820px] w-full border-0 bg-white"
           :src="PAYMENT_URL"
           :title="t('recharge.iframeTitle')"
           referrerpolicy="no-referrer-when-downgrade"
