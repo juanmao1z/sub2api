@@ -95,7 +95,93 @@ Remove-Item -LiteralPath $checkRoot -Recurse -Force
 exit $composeExit
 ```
 
-## 6. Server Validation
+## 6. Publish to GitHub
+
+```powershell
+cd D:\Desktop\sub2api\sub2api-custom
+git status -sb
+git add <intended files>
+git commit -m "chore: update custom build for v0.1.143"
+git push -u origin codex/fix-custom-menu-injection
+
+cd D:\Desktop\sub2api\sub2api-leaderboard
+git status -sb
+git add <intended files>
+git commit -m "chore: prepare leaderboard deployment refresh"
+git push -u origin codex/usage-leaderboard
+```
+
+If the leaderboard repository has no remote yet, create a private GitHub repository:
+
+```powershell
+gh repo create juanmao1z/sub2api-leaderboard --private --source . --remote origin --push
+```
+
+## 7. Build Custom Runtime Image
+
+```powershell
+cd D:\Desktop\sub2api\sub2api-custom
+pnpm --dir frontend run build
+
+cd D:\Desktop\sub2api\sub2api-custom\backend
+New-Item -ItemType Directory -Force -Path '..\build-local' | Out-Null
+$commit = git -C .. rev-parse --short HEAD
+$date = (Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ')
+$env:CGO_ENABLED='0'
+$env:GOOS='linux'
+$env:GOARCH='amd64'
+go build -tags embed -trimpath -ldflags "-s -w -X main.Version=0.1.143-ui1 -X main.Commit=$commit -X main.Date=$date -X main.BuildType=release" -o ..\build-local\sub2api .\cmd\server
+```
+
+```powershell
+cd D:\Desktop\sub2api\sub2api-custom
+$tag = '0.1.143-ui1'
+$artifactRoot = Join-Path (Get-Location) 'deploy-artifacts'
+$contextRoot = Join-Path $artifactRoot "sub2api-custom-$tag-context"
+$archive = Join-Path $artifactRoot "sub2api-custom-$tag-context.tar.gz"
+if (Test-Path -LiteralPath $contextRoot) { Remove-Item -LiteralPath $contextRoot -Recurse -Force }
+New-Item -ItemType Directory -Force -Path (Join-Path $contextRoot 'build-local') | Out-Null
+New-Item -ItemType Directory -Force -Path (Join-Path $contextRoot 'backend') | Out-Null
+New-Item -ItemType Directory -Force -Path (Join-Path $contextRoot 'deploy') | Out-Null
+Copy-Item -LiteralPath 'Dockerfile.prebuilt-binary' -Destination (Join-Path $contextRoot 'Dockerfile')
+Copy-Item -LiteralPath 'build-local\sub2api' -Destination (Join-Path $contextRoot 'build-local\sub2api')
+Copy-Item -LiteralPath 'backend\resources' -Destination (Join-Path $contextRoot 'backend\resources') -Recurse
+Copy-Item -LiteralPath 'deploy\docker-entrypoint.sh' -Destination (Join-Path $contextRoot 'deploy\docker-entrypoint.sh')
+if (Test-Path -LiteralPath $archive) { Remove-Item -LiteralPath $archive -Force }
+tar -czf $archive -C $contextRoot .
+ssh root@23.95.229.165 "mkdir -p /opt/sub2api-build/sub2api-custom-$tag"
+scp $archive root@23.95.229.165:/opt/sub2api-build/sub2api-custom-$tag/context.tar.gz
+```
+
+```bash
+cd /opt/sub2api-build/sub2api-custom-0.1.143-ui1
+rm -rf context
+mkdir context
+tar -xzf context.tar.gz -C context
+docker build -t sub2api-custom:0.1.143-ui1 context
+```
+
+## 8. Deploy on Server
+
+```bash
+cd /opt/sub2api-deploy
+ts=$(date +%Y%m%d-%H%M%S)
+cp docker-compose.override.yml docker-compose.override.yml.bak-v0143-$ts
+sed -i 's#sub2api-custom:0\.1\.142-ui3#sub2api-custom:0.1.143-ui1#' docker-compose.override.yml
+docker compose -f docker-compose.local.yml -f docker-compose.override.yml -f docker-compose.leaderboard.yml up -d sub2api
+```
+
+```bash
+for i in $(seq 1 30); do
+  status=$(docker inspect -f "{{.State.Health.Status}}" sub2api 2>/dev/null || echo missing)
+  echo "sub2api health=$status"
+  [ "$status" = healthy ] && exit 0
+  sleep 2
+done
+exit 1
+```
+
+## 9. Server Validation
 
 ```bash
 cd /opt/sub2api-deploy

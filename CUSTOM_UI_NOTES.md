@@ -14,8 +14,8 @@
 - 线上部署路径：`/opt/sub2api-deploy`
 - 构建暂存路径：`/opt/sub2api-build`
 - compose 文件：`docker-compose.local.yml` + `docker-compose.override.yml`
-- 当前线上镜像：`sub2api-custom:0.1.142-ui1`
-- 当前定制基线：官方 `v0.1.142` + 本仓库自定义 `/recharge` 页面
+- 当前线上镜像：`sub2api-custom:0.1.143-ui1`
+- 当前定制基线：官方 `v0.1.143` + 本仓库自定义 `/recharge` 页面与 `usage-leaderboard` 自定义菜单入口
 - 线上切换方式：只修改 `/opt/sub2api-deploy/docker-compose.override.yml` 中 `sub2api` 服务镜像，再执行 `docker compose -f docker-compose.local.yml -f docker-compose.override.yml up -d sub2api`
 
 ## 自定义充值页
@@ -45,6 +45,7 @@
 7. 上传到 `/opt/sub2api-build`，用 `Dockerfile.prebuilt-binary` 构建新镜像。
 8. 备份 `docker-compose.override.yml`，只重建 `sub2api` 应用容器。
 9. 验证 `/health`、容器健康、版本信息、`/recharge`、充值页 JS 和 CSP。
+10. 将升级工作流同步到 `docs/custom-upgrade-workflow.md` 并随分支 push 到 GitHub。
 
 ## 数据与停机约束
 
