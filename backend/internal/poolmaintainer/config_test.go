@@ -90,6 +90,17 @@ func TestLoadConfigRejectsUnknownAllowedSalesGroup(t *testing.T) {
 	require.Contains(t, err.Error(), "unknown allowed sales group")
 }
 
+func TestLoadConfigNormalizesAllowedSalesGroups(t *testing.T) {
+	body := strings.Replace(validConfigYAML(), `allowed_sales_groups: ["0.18"]`, `allowed_sales_groups: [" 0.18 "]`, 1)
+	body = strings.Replace(body, `allowed_sales_groups: ["0.12", "0.18"]`, `allowed_sales_groups: [" 0.12", "0.18 "]`, 1)
+
+	cfg, err := LoadConfig(writeTempConfig(t, body))
+
+	require.NoError(t, err)
+	require.Equal(t, []string{"0.18"}, cfg.Accounts[0].AllowedSalesGroups)
+	require.Equal(t, []string{"0.12", "0.18"}, cfg.SelfBuiltAccounts[0].AllowedSalesGroups)
+}
+
 func TestLoadConfigRequiresAdminTokenEnv(t *testing.T) {
 	body := strings.Replace(validConfigYAML(), `admin_token_env: "SUB2API_ADMIN_TOKEN"`, `admin_token_env: ""`, 1)
 

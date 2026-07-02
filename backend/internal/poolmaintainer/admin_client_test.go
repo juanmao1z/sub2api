@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -62,6 +63,63 @@ func TestAdminClientUnwrapsResponseEnvelope(t *testing.T) {
 	require.Equal(t, "2026-07-03T01:02:03Z", accounts[0].UpdatedAt.Format("2006-01-02T15:04:05Z"))
 }
 
+func TestAdminClientListAccountsReadsAllPages(t *testing.T) {
+	var pages []string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		require.Equal(t, "/api/v1/admin/accounts", r.URL.Path)
+		page := r.URL.Query().Get("page")
+		pages = append(pages, page)
+		var items []map[string]any
+		switch page {
+		case "1":
+			items = []map[string]any{
+				{
+					"id":              1,
+					"name":            "account-1",
+					"rate_multiplier": 0.1,
+					"group_ids":       []int64{10},
+					"priority":        5,
+					"schedulable":     true,
+				},
+			}
+		case "2":
+			items = []map[string]any{
+				{
+					"id":              2,
+					"name":            "account-2",
+					"rate_multiplier": 0.2,
+					"group_ids":       []int64{20},
+					"priority":        10,
+					"schedulable":     true,
+				},
+			}
+		default:
+			t.Fatalf("unexpected page %s", page)
+		}
+		writeAdminJSON(t, w, http.StatusOK, map[string]any{
+			"code":    0,
+			"message": "ok",
+			"data": map[string]any{
+				"items":     items,
+				"total":     2,
+				"page":      mustAtoi(t, page),
+				"page_size": 1000,
+				"pages":     2,
+			},
+		})
+	}))
+	defer server.Close()
+
+	client := NewAdminClient(server.URL, "secret-token", server.Client())
+	accounts, err := client.ListAccounts(context.Background())
+
+	require.NoError(t, err)
+	require.Equal(t, []string{"1", "2"}, pages)
+	require.Len(t, accounts, 2)
+	require.Equal(t, int64(1), accounts[0].ID)
+	require.Equal(t, int64(2), accounts[1].ID)
+}
+
 func TestAdminClientApplyPlanDetectsDrift(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		require.Equal(t, http.MethodGet, r.Method)
@@ -111,6 +169,13 @@ func TestAdminClientApplyPlanDetectsDrift(t *testing.T) {
 	require.Equal(t, "conflict", result.Results[0].Status)
 	require.Equal(t, 1, result.Summary.Conflicts)
 	require.Equal(t, 0, result.Summary.Success)
+}
+
+func mustAtoi(t *testing.T, value string) int {
+	t.Helper()
+	n, err := strconv.Atoi(value)
+	require.NoError(t, err)
+	return n
 }
 
 func TestAdminClientApplyPlanUpdatesAccountThenSchedulable(t *testing.T) {

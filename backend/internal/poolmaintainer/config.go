@@ -191,7 +191,7 @@ func validateAllowedSalesGroups(owner string, allowed []string, salesGroups map[
 	if len(allowed) == 0 {
 		return fmt.Errorf("%s allowed_sales_groups is required", owner)
 	}
-	for _, name := range allowed {
+	for i, name := range allowed {
 		trimmed := strings.TrimSpace(name)
 		if trimmed == "" {
 			return fmt.Errorf("%s allowed_sales_groups contains an empty name", owner)
@@ -199,6 +199,7 @@ func validateAllowedSalesGroups(owner string, allowed []string, salesGroups map[
 		if _, exists := salesGroups[trimmed]; !exists {
 			return fmt.Errorf("%s references unknown allowed sales group %q", owner, trimmed)
 		}
+		allowed[i] = trimmed
 	}
 	return nil
 }

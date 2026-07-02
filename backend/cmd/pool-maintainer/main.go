@@ -6,9 +6,11 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"math"
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/Wei-Shaw/sub2api/internal/poolmaintainer"
@@ -113,13 +115,16 @@ func runApply(args []string) error {
 	if err != nil {
 		return fmt.Errorf("load config: %w", err)
 	}
-	token, err := adminToken(cfg)
-	if err != nil {
-		return err
-	}
 	plan, err := poolmaintainer.ReadPlanJSON(*planPath)
 	if err != nil {
 		return fmt.Errorf("read apply plan: %w", err)
+	}
+	if err := validatePlanConfig(cfg, plan); err != nil {
+		return err
+	}
+	token, err := adminToken(cfg)
+	if err != nil {
+		return err
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
@@ -171,6 +176,43 @@ func adminToken(cfg *poolmaintainer.Config) (string, error) {
 		return "", fmt.Errorf("admin token environment variable %s is not set", envName)
 	}
 	return token, nil
+}
+
+func validatePlanConfig(cfg *poolmaintainer.Config, plan *poolmaintainer.Plan) error {
+	if plan == nil {
+		return errors.New("plan config is missing")
+	}
+	currentBaseURL := normalizePlanBaseURL(cfg.LocalSub2API.BaseURL)
+	plannedBaseURL := normalizePlanBaseURL(plan.Config.LocalBaseURL)
+	if currentBaseURL != plannedBaseURL {
+		return fmt.Errorf("plan config local_base_url mismatch: current %q, plan %q", cfg.LocalSub2API.BaseURL, plan.Config.LocalBaseURL)
+	}
+	if !floatEqual(cfg.Policy.SafetyMargin, plan.Config.SafetyMargin) {
+		return fmt.Errorf("plan config safety_margin mismatch: current %v, plan %v", cfg.Policy.SafetyMargin, plan.Config.SafetyMargin)
+	}
+	if len(cfg.Policy.SalesGroups) != len(plan.Config.SalesGroups) {
+		return fmt.Errorf("plan config sales_groups mismatch: current has %d, plan has %d", len(cfg.Policy.SalesGroups), len(plan.Config.SalesGroups))
+	}
+	for i := range cfg.Policy.SalesGroups {
+		current := cfg.Policy.SalesGroups[i]
+		planned := plan.Config.SalesGroups[i]
+		if current.Name != planned.Name || current.GroupID != planned.GroupID || !floatEqual(current.Rate, planned.Rate) {
+			return fmt.Errorf("plan config sales_groups[%d] mismatch", i)
+		}
+	}
+	return nil
+}
+
+func normalizePlanBaseURL(raw string) string {
+	trimmed := strings.TrimRight(strings.TrimSpace(raw), "/")
+	if strings.HasSuffix(trimmed, "/api/v1") {
+		return trimmed
+	}
+	return trimmed + "/api/v1"
+}
+
+func floatEqual(left, right float64) bool {
+	return math.Abs(left-right) <= 1e-9
 }
 
 func writeApplyResult(result *poolmaintainer.ApplyResult, path string) error {

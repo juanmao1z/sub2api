@@ -39,12 +39,27 @@ func NewAdminClient(baseURL, token string, httpClient *http.Client) *AdminClient
 }
 
 func (c *AdminClient) ListAccounts(ctx context.Context) ([]AccountSnapshot, error) {
-	var response adminListAccountsData
-	err := c.do(ctx, http.MethodGet, "/admin/accounts?page=1&page_size=1000&sort_by=name&sort_order=asc", nil, &response)
-	if err != nil {
-		return nil, err
+	const pageSize = 1000
+	accounts := make([]AccountSnapshot, 0)
+	for page := 1; ; page++ {
+		var response adminListAccountsData
+		endpoint := fmt.Sprintf("/admin/accounts?page=%d&page_size=%d&sort_by=name&sort_order=asc", page, pageSize)
+		if err := c.do(ctx, http.MethodGet, endpoint, nil, &response); err != nil {
+			return nil, err
+		}
+		accounts = append(accounts, response.Items...)
+
+		pages := response.Pages
+		if pages <= 0 && response.Total > 0 && response.PageSize > 0 {
+			pages = (response.Total + response.PageSize - 1) / response.PageSize
+		}
+		if pages <= 0 {
+			pages = 1
+		}
+		if page >= pages {
+			return accounts, nil
+		}
 	}
-	return response.Items, nil
 }
 
 func (c *AdminClient) GetAccount(ctx context.Context, id int64) (AccountSnapshot, error) {

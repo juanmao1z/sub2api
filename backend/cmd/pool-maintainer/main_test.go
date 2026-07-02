@@ -6,6 +6,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -98,6 +99,53 @@ self_built_accounts:
 	report, err := os.ReadFile(filepath.Join(outDir, "report.html"))
 	require.NoError(t, err)
 	require.Contains(t, string(report), "https://api.mdkj.lol-pro-0.1")
+}
+
+func TestApplyRejectsPlanFromDifferentConfig(t *testing.T) {
+	var called bool
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		called = true
+		t.Fatalf("apply should reject mismatched plan before calling Admin API")
+	}))
+	defer server.Close()
+
+	root := t.TempDir()
+	configPath := filepath.Join(root, "pool-maintainer.yaml")
+	planPath := filepath.Join(root, "apply-plan.json")
+	require.NoError(t, os.WriteFile(configPath, []byte(`
+local_sub2api:
+  base_url: "`+server.URL+`"
+  admin_token_env: "POOL_MAINTAINER_TEST_TOKEN"
+policy:
+  safety_margin: 0.02
+  sales_groups:
+    - name: "0.12"
+      group_id: 12
+      rate: 0.12
+  priority:
+    self_built: 1
+    upstream_start: 5
+    upstream_step: 5
+upstreams: []
+accounts: []
+self_built_accounts: []
+`), 0o600))
+	require.NoError(t, os.WriteFile(planPath, []byte(`{
+  "generated_at": "2026-07-03T00:00:00Z",
+  "config": {
+    "local_base_url": "https://other.example",
+    "sales_groups": [{"name":"0.12","group_id":12,"rate":0.12}],
+    "safety_margin": 0.02
+  },
+  "accounts": []
+}`), 0o600))
+	t.Setenv("POOL_MAINTAINER_TEST_TOKEN", "test-token")
+
+	err := run([]string{"apply", "--config", configPath, "--plan", planPath})
+
+	require.Error(t, err)
+	require.Contains(t, strings.ToLower(err.Error()), "plan config")
+	require.False(t, called)
 }
 
 func writeJSON(t *testing.T, w http.ResponseWriter, body any) {
