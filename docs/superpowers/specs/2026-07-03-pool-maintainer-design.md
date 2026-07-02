@@ -97,40 +97,35 @@ self_built_accounts:
 - `pricing_page_url` 可以先手工配置；如果未配置具体页面，工具可打开站点首页并允许管理员手动导航到倍率页面。
 - `accounts.allowed_sales_groups` 是账号分组白名单，自动化只在白名单范围内建议调整。
 - 第一版优先通过账号名匹配，例如 `https://api.mdkj.lol-pro-0.2`。后续可升级为稳定账号 ID。
-- 自建号独立配置，成本固定最低，但仍按白名单参与混合调度。
+- 自建号独立配置，使用 `policy.self_built_rate` 作为成本，仍按白名单和成本档位参与混合调度。
 
 ## 采集流程
 
 命令：
 
 ```powershell
-pool-maintainer collect
+pool-maintainer open-browser --config tools\pool-maintainer\pool-maintainer.yaml --profiles-dir runs\pool-maintainer-profiles
+pool-maintainer collect --config tools\pool-maintainer\pool-maintainer.yaml --html-dir runs\pool-maintainer-snapshots --out runs\2026-07-03-1530
 ```
 
 流程：
 
-1. 为每个上游站点启动或复用独立浏览器 profile，例如 `profiles/mdkj/`。
-2. 打开上游站点的 `pricing_page_url`。
-3. 检测登录状态：
-   - 如果页面跳转登录页、出现未登录关键词，或找不到倍率信息，则标记为 `need_login`。
-   - 工具暂停等待管理员在浏览器中完成登录或导航。
-   - 管理员确认后，工具继续读取当前页面。
-4. 提取倍率：
-   - 优先读取 DOM 表格和卡片结构。
+1. `open-browser` 为每个上游站点启动或复用本地浏览器 profile，并打开 `pricing_page_url`。
+2. 管理员在浏览器中登录或导航到倍率页面，然后把页面另存为 `<upstream_id>.html`，放入 `--html-dir` 指向的快照目录。
+3. `collect` 只读取 `--html-dir` 中的 HTML 快照和本地 Admin API 账号状态，不控制浏览器、不等待页面交互。
+4. 快照解析时：
+   - 如果 HTML 中出现未登录关键词，或找不到倍率信息，则标记为 `need_login`。
+   - 优先读取文本化后的表格和卡片内容。
    - 其次扫描页面文本中的分组名和倍率。
-   - 站点特殊结构可在配置中添加站点级选择器或文本模式覆盖。
-5. 保存采集结果和排障资料。
+5. 保存报告和应用计划。
 
 每次运行输出目录示例：
 
 ```text
 runs/2026-07-03-1530/
-  collected-rates.json
   apply-plan.json
   report.html
   apply-result.json
-  screenshots/mdkj.png
-  pages/mdkj.html
 ```
 
 采集失败、登录失效、倍率解析冲突时，对应账号不进入生产变更计划，只在报告中标红。
@@ -173,11 +168,11 @@ https://api.mdkj.lol-pro-0.2
 
 优先级按每个本地销售分组单独计算：
 
-- 自建号固定 `priority=1`。
-- 上游账号按采集倍率从低到高排序。
-- 最便宜上游账号为 `priority=5`。
+- 自建号使用 `policy.self_built_rate` 作为成本，和上游账号一起按成本从低到高排序。
+- 最便宜成本档位为 `priority=5`。
 - 后续每个不同倍率档位增加 `5`，即 `10`、`15`、`20`。
-- 同倍率账号使用同一个 `priority`，由现有调度器的负载率、LRU 和粘性会话机制分散。
+- 同成本账号使用同一个 `priority`，由现有调度器的负载率、LRU 和粘性会话机制分散。
+- `policy.priority.self_built` 第一版仅保留为兼容字段，不作为绝对优先级覆盖。
 
 ### 同步字段
 

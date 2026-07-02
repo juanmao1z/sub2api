@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strconv"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -171,6 +172,95 @@ func TestAdminClientApplyPlanDetectsDrift(t *testing.T) {
 	require.Equal(t, 0, result.Summary.Success)
 }
 
+func TestAdminClientApplyPlanDetectsPlatformTypeStatusDrift(t *testing.T) {
+	var calls []string
+	liveByID := map[string]map[string]any{
+		"42": {
+			"id":              42,
+			"name":            "account-1.1",
+			"platform":        "anthropic",
+			"type":            "apikey",
+			"status":          "active",
+			"rate_multiplier": 1.1,
+			"group_ids":       []int64{10},
+			"priority":        5,
+			"schedulable":     true,
+		},
+		"43": {
+			"id":              43,
+			"name":            "account-1.1",
+			"platform":        "openai",
+			"type":            "oauth",
+			"status":          "active",
+			"rate_multiplier": 1.1,
+			"group_ids":       []int64{10},
+			"priority":        5,
+			"schedulable":     true,
+		},
+		"44": {
+			"id":              44,
+			"name":            "account-1.1",
+			"platform":        "openai",
+			"type":            "apikey",
+			"status":          "error",
+			"rate_multiplier": 1.1,
+			"group_ids":       []int64{10},
+			"priority":        5,
+			"schedulable":     true,
+		},
+	}
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		calls = append(calls, r.Method+" "+r.URL.Path)
+		require.Equal(t, http.MethodGet, r.Method)
+		id := pathBase(r.URL.Path)
+		writeAdminJSON(t, w, http.StatusOK, map[string]any{
+			"code":    0,
+			"message": "ok",
+			"data":    liveByID[id],
+		})
+	}))
+	defer server.Close()
+
+	var plan Plan
+	require.NoError(t, json.Unmarshal([]byte(`{
+	  "accounts": [
+	    {
+	      "account_id": 42,
+	      "status": "ready",
+	      "current": {"id":42,"name":"account-1.1","platform":"openai","type":"apikey","status":"active","rate_multiplier":1.1,"group_ids":[10],"priority":5,"schedulable":true},
+	      "target": {"name":"account-1.2","rate_multiplier":1.2,"group_ids":[10],"priority":5,"schedulable":true}
+	    },
+	    {
+	      "account_id": 43,
+	      "status": "ready",
+	      "current": {"id":43,"name":"account-1.1","platform":"openai","type":"apikey","status":"active","rate_multiplier":1.1,"group_ids":[10],"priority":5,"schedulable":true},
+	      "target": {"name":"account-1.2","rate_multiplier":1.2,"group_ids":[10],"priority":5,"schedulable":true}
+	    },
+	    {
+	      "account_id": 44,
+	      "status": "ready",
+	      "current": {"id":44,"name":"account-1.1","platform":"openai","type":"apikey","status":"active","rate_multiplier":1.1,"group_ids":[10],"priority":5,"schedulable":true},
+	      "target": {"name":"account-1.2","rate_multiplier":1.2,"group_ids":[10],"priority":5,"schedulable":true}
+	    }
+	  ]
+	}`), &plan))
+
+	client := NewAdminClient(server.URL, "secret-token", server.Client())
+	result, err := client.ApplyPlan(context.Background(), &plan, false)
+
+	require.NoError(t, err)
+	require.Equal(t, []string{
+		"GET /api/v1/admin/accounts/42",
+		"GET /api/v1/admin/accounts/43",
+		"GET /api/v1/admin/accounts/44",
+	}, calls)
+	require.Equal(t, 3, result.Summary.Conflicts)
+	require.Equal(t, 0, result.Summary.Success)
+	for _, item := range result.Results {
+		require.Equal(t, "conflict", item.Status)
+	}
+}
+
 func mustAtoi(t *testing.T, value string) int {
 	t.Helper()
 	n, err := strconv.Atoi(value)
@@ -178,7 +268,7 @@ func mustAtoi(t *testing.T, value string) int {
 	return n
 }
 
-func TestAdminClientApplyPlanUpdatesAccountThenSchedulable(t *testing.T) {
+func TestAdminClientApplyPlanDisablesThenUpdatesAccount(t *testing.T) {
 	var calls []string
 	var updatePayload map[string]any
 	var schedulablePayload map[string]any
@@ -207,12 +297,12 @@ func TestAdminClientApplyPlanUpdatesAccountThenSchedulable(t *testing.T) {
 			require.Equal(t, "GET /api/v1/admin/accounts/42", calls[0])
 			writeEnvelopeData(t, w, current)
 		case 2:
-			require.Equal(t, "PUT /api/v1/admin/accounts/42", calls[1])
-			require.NoError(t, json.NewDecoder(r.Body).Decode(&updatePayload))
+			require.Equal(t, "POST /api/v1/admin/accounts/42/schedulable", calls[1])
+			require.NoError(t, json.NewDecoder(r.Body).Decode(&schedulablePayload))
 			writeEnvelopeData(t, w, final)
 		case 3:
-			require.Equal(t, "POST /api/v1/admin/accounts/42/schedulable", calls[2])
-			require.NoError(t, json.NewDecoder(r.Body).Decode(&schedulablePayload))
+			require.Equal(t, "PUT /api/v1/admin/accounts/42", calls[2])
+			require.NoError(t, json.NewDecoder(r.Body).Decode(&updatePayload))
 			writeEnvelopeData(t, w, final)
 		case 4:
 			require.Equal(t, "GET /api/v1/admin/accounts/42", calls[3])
@@ -244,8 +334,8 @@ func TestAdminClientApplyPlanUpdatesAccountThenSchedulable(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, []string{
 		"GET /api/v1/admin/accounts/42",
-		"PUT /api/v1/admin/accounts/42",
 		"POST /api/v1/admin/accounts/42/schedulable",
+		"PUT /api/v1/admin/accounts/42",
 		"GET /api/v1/admin/accounts/42",
 	}, calls)
 	require.Equal(t, map[string]any{
@@ -258,6 +348,61 @@ func TestAdminClientApplyPlanUpdatesAccountThenSchedulable(t *testing.T) {
 	require.Equal(t, map[string]any{"schedulable": false}, schedulablePayload)
 	require.Equal(t, 1, result.Summary.Success)
 	require.Equal(t, "applied", result.Results[0].Status)
+}
+
+func TestAdminClientApplyPlanDoesNotUpdateFieldsWhenDisableFails(t *testing.T) {
+	var calls []string
+	current := AccountSnapshot{
+		ID:             42,
+		Name:           "account-1.1",
+		RateMultiplier: 1.1,
+		GroupIDs:       []int64{10},
+		Priority:       5,
+		Schedulable:    true,
+	}
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		calls = append(calls, r.Method+" "+r.URL.Path)
+		switch len(calls) {
+		case 1:
+			require.Equal(t, "GET /api/v1/admin/accounts/42", calls[0])
+			writeEnvelopeData(t, w, current)
+		case 2:
+			require.Equal(t, "POST /api/v1/admin/accounts/42/schedulable", calls[1])
+			writeAdminJSON(t, w, http.StatusInternalServerError, map[string]any{
+				"code":    1,
+				"message": "schedulable update failed",
+			})
+		default:
+			t.Fatalf("unexpected call after failed disable: %s", calls[len(calls)-1])
+		}
+	}))
+	defer server.Close()
+
+	client := NewAdminClient(server.URL, "secret-token", server.Client())
+	result, err := client.ApplyPlan(context.Background(), &Plan{
+		Accounts: []PlanAccountChange{
+			{
+				AccountID: 42,
+				Status:    PlanChangeStatusReady,
+				Current:   current,
+				Target: &AccountTarget{
+					Name:           "account-1.2",
+					RateMultiplier: 1.2,
+					GroupIDs:       []int64{},
+					Priority:       15,
+					Schedulable:    false,
+				},
+			},
+		},
+	}, false)
+
+	require.NoError(t, err)
+	require.Equal(t, []string{
+		"GET /api/v1/admin/accounts/42",
+		"POST /api/v1/admin/accounts/42/schedulable",
+	}, calls)
+	require.Equal(t, 1, result.Summary.Failed)
+	require.Equal(t, "failed", result.Results[0].Status)
 }
 
 func TestAdminClientDryRunDoesNotMutate(t *testing.T) {
@@ -306,6 +451,14 @@ func TestAdminClientDryRunDoesNotMutate(t *testing.T) {
 	require.Equal(t, 1, result.Summary.Skipped)
 	require.Equal(t, "dry_run", result.Results[0].Status)
 	require.Equal(t, "skipped", result.Results[1].Status)
+}
+
+func pathBase(value string) string {
+	parts := strings.Split(strings.Trim(value, "/"), "/")
+	if len(parts) == 0 {
+		return ""
+	}
+	return parts[len(parts)-1]
 }
 
 func writeEnvelopeData(t *testing.T, w http.ResponseWriter, data any) {

@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"math"
 	"net/http"
 	"net/url"
 	"path"
@@ -111,6 +110,16 @@ func (c *AdminClient) ApplyPlan(ctx context.Context, plan *Plan, dryRun bool) (*
 			continue
 		}
 
+		if live.Schedulable && !change.Target.Schedulable {
+			if err := c.updateSchedulable(ctx, change.AccountID, false); err != nil {
+				accountResult.Status = applyStatusFailed
+				accountResult.Message = err.Error()
+				result.Results = append(result.Results, accountResult)
+				result.Summary.Failed++
+				continue
+			}
+		}
+
 		if err := c.updateAccount(ctx, change.AccountID, *change.Target); err != nil {
 			accountResult.Status = applyStatusFailed
 			accountResult.Message = err.Error()
@@ -118,8 +127,8 @@ func (c *AdminClient) ApplyPlan(ctx context.Context, plan *Plan, dryRun bool) (*
 			result.Summary.Failed++
 			continue
 		}
-		if live.Schedulable != change.Target.Schedulable {
-			if err := c.updateSchedulable(ctx, change.AccountID, change.Target.Schedulable); err != nil {
+		if !live.Schedulable && change.Target.Schedulable {
+			if err := c.updateSchedulable(ctx, change.AccountID, true); err != nil {
 				accountResult.Status = applyStatusFailed
 				accountResult.Message = err.Error()
 				result.Results = append(result.Results, accountResult)
@@ -135,7 +144,7 @@ func (c *AdminClient) ApplyPlan(ctx context.Context, plan *Plan, dryRun bool) (*
 			result.Summary.Failed++
 			continue
 		}
-		if !accountSnapshotMatchesTarget(final, *change.Target) {
+		if !accountSnapshotMatchesTarget(final, change.Current, *change.Target) {
 			accountResult.Status = applyStatusFailed
 			accountResult.Message = "final account state does not match target"
 			result.Results = append(result.Results, accountResult)
@@ -242,22 +251,23 @@ func normalizeAdminBaseURL(raw string) string {
 
 func accountSnapshotMatchesPlannedCurrent(live, planned AccountSnapshot) bool {
 	return live.Name == planned.Name &&
+		live.Platform == planned.Platform &&
+		live.Type == planned.Type &&
+		live.Status == planned.Status &&
 		floatEqual(live.RateMultiplier, planned.RateMultiplier) &&
 		int64SlicesEqual(normalizeInt64Slice(live.GroupIDs), normalizeInt64Slice(planned.GroupIDs)) &&
 		live.Priority == planned.Priority &&
 		live.Schedulable == planned.Schedulable
 }
 
-func accountSnapshotMatchesTarget(live AccountSnapshot, target AccountTarget) bool {
+func accountSnapshotMatchesTarget(live AccountSnapshot, planned AccountSnapshot, target AccountTarget) bool {
 	return live.Name == target.Name &&
+		live.Platform == planned.Platform &&
+		live.Type == planned.Type &&
 		floatEqual(live.RateMultiplier, target.RateMultiplier) &&
 		int64SlicesEqual(normalizeInt64Slice(live.GroupIDs), normalizeInt64Slice(target.GroupIDs)) &&
 		live.Priority == target.Priority &&
 		live.Schedulable == target.Schedulable
-}
-
-func floatEqual(left, right float64) bool {
-	return math.Abs(left-right) <= 1e-9
 }
 
 type adminEnvelope struct {

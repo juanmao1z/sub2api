@@ -39,11 +39,7 @@ var trailingRateSuffixPattern = regexp.MustCompile(`^(.*-)([0-9]+(?:\.[0-9]+)?)$
 func BuildPlan(cfg *Config, accounts []AccountSnapshot, collections []CollectionResult, now time.Time) Plan {
 	plan := Plan{
 		GeneratedAt: now,
-		Config: PlanConfigSnapshot{
-			LocalBaseURL: cfg.LocalSub2API.BaseURL,
-			SalesGroups:  append([]SaleGroupConfig(nil), cfg.Policy.SalesGroups...),
-			SafetyMargin: cfg.Policy.SafetyMargin,
-		},
+		Config:      BuildPlanConfigSnapshot(cfg),
 		Collections: append([]CollectionResult(nil), collections...),
 		Accounts:    make([]PlanAccountChange, 0, len(accounts)),
 	}
@@ -58,9 +54,9 @@ func BuildPlan(cfg *Config, accounts []AccountSnapshot, collections []Collection
 		candidates = append(candidates, buildPlanCandidate(cfg, account, collectionByUpstream))
 	}
 
-	priorityByAccountID := assignUpstreamPriorities(cfg, candidates)
+	priorityByAccountID := assignCostPriorities(cfg, candidates)
 	for _, candidate := range candidates {
-		change := candidateToPlanChange(cfg, candidate, priorityByAccountID)
+		change := candidateToPlanChange(candidate, priorityByAccountID)
 		plan.Accounts = append(plan.Accounts, change)
 		switch change.Status {
 		case PlanChangeStatusReady:
@@ -168,13 +164,13 @@ func buildPlanCandidate(cfg *Config, account AccountSnapshot, collections map[st
 	return candidate
 }
 
-func assignUpstreamPriorities(cfg *Config, candidates []planCandidate) map[int64]int {
+func assignCostPriorities(cfg *Config, candidates []planCandidate) map[int64]int {
 	ranksByGroupID := make(map[int64]map[int64]int)
 	for _, group := range cfg.Policy.SalesGroups {
 		rates := make([]float64, 0)
 		seen := map[string]struct{}{}
 		for _, candidate := range candidates {
-			if candidate.blocked || candidate.match.Kind != AccountKindUpstream {
+			if candidate.blocked || !candidateUsesCostPriority(candidate) {
 				continue
 			}
 			if !candidateTargetsGroup(candidate, group.GroupID) {
@@ -198,7 +194,7 @@ func assignUpstreamPriorities(cfg *Config, candidates []planCandidate) map[int64
 
 	priorityByAccountID := make(map[int64]int)
 	for _, candidate := range candidates {
-		if candidate.blocked || candidate.match.Kind != AccountKindUpstream || len(candidate.targetGroups) == 0 {
+		if candidate.blocked || !candidateUsesCostPriority(candidate) || len(candidate.targetGroups) == 0 {
 			continue
 		}
 		priority := cfg.Policy.Priority.UpstreamStart
@@ -213,7 +209,7 @@ func assignUpstreamPriorities(cfg *Config, candidates []planCandidate) map[int64
 	return priorityByAccountID
 }
 
-func candidateToPlanChange(cfg *Config, candidate planCandidate, priorityByAccountID map[int64]int) PlanAccountChange {
+func candidateToPlanChange(candidate planCandidate, priorityByAccountID map[int64]int) PlanAccountChange {
 	change := PlanAccountChange{
 		AccountID:     candidate.account.ID,
 		AccountName:   candidate.account.Name,
@@ -243,7 +239,9 @@ func candidateToPlanChange(cfg *Config, candidate planCandidate, priorityByAccou
 	}
 	switch candidate.match.Kind {
 	case AccountKindSelfBuilt:
-		target.Priority = cfg.Policy.Priority.SelfBuilt
+		if priority, ok := priorityByAccountID[candidate.account.ID]; ok {
+			target.Priority = priority
+		}
 	case AccountKindUpstream:
 		target.Name = renameTrailingRateSuffix(candidate.account.Name, candidate.cost)
 		if priority, ok := priorityByAccountID[candidate.account.ID]; ok {
@@ -262,6 +260,10 @@ func candidateToPlanChange(cfg *Config, candidate planCandidate, priorityByAccou
 	change.Status = PlanChangeStatusReady
 	change.Target = &target
 	return change
+}
+
+func candidateUsesCostPriority(candidate planCandidate) bool {
+	return candidate.match.Kind == AccountKindUpstream || candidate.match.Kind == AccountKindSelfBuilt
 }
 
 func admittedSalesGroups(cfg *Config, allowed []string, cost float64) []SaleGroupConfig {

@@ -21,6 +21,7 @@ type AccountSnapshot struct {
 	Name           string    `json:"name"`
 	Platform       string    `json:"platform,omitempty"`
 	Type           string    `json:"type,omitempty"`
+	Status         string    `json:"status,omitempty"`
 	RateMultiplier float64   `json:"rate_multiplier"`
 	GroupIDs       []int64   `json:"group_ids,omitempty"`
 	Priority       int       `json:"priority"`
@@ -55,9 +56,14 @@ type Plan struct {
 }
 
 type PlanConfigSnapshot struct {
-	LocalBaseURL string            `json:"local_base_url"`
-	SalesGroups  []SaleGroupConfig `json:"sales_groups"`
-	SafetyMargin float64           `json:"safety_margin"`
+	LocalBaseURL      string                   `json:"local_base_url"`
+	SalesGroups       []SaleGroupConfig        `json:"sales_groups"`
+	SafetyMargin      float64                  `json:"safety_margin"`
+	SelfBuiltRate     float64                  `json:"self_built_rate"`
+	Priority          PriorityConfig           `json:"priority"`
+	Upstreams         []UpstreamConfig         `json:"upstreams"`
+	Accounts          []AccountRuleConfig      `json:"accounts"`
+	SelfBuiltAccounts []SelfBuiltAccountConfig `json:"self_built_accounts"`
 }
 
 type PlanSummary struct {

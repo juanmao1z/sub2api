@@ -1,6 +1,7 @@
 package poolmaintainer
 
 import (
+	"encoding/json"
 	"testing"
 	"time"
 
@@ -142,10 +143,63 @@ func TestBuildPlanAssignsPriorityPerSalesGroupByCost(t *testing.T) {
 	require.NotNil(t, selfBuilt.Target)
 	require.NotNil(t, cheap.Target)
 	require.NotNil(t, costlier.Target)
-	require.Equal(t, 1, selfBuilt.Target.Priority)
+	require.Equal(t, 5, selfBuilt.Target.Priority)
+	require.Equal(t, 10, cheap.Target.Priority)
+	require.Equal(t, 15, costlier.Target.Priority)
+	require.Equal(t, []int64{18, 25}, costlier.Target.GroupIDs)
+}
+
+func TestBuildPlanRanksSelfBuiltWithSameCostUpstreams(t *testing.T) {
+	now := time.Date(2026, 7, 3, 4, 31, 30, 0, time.UTC)
+	cfg := plannerTestConfig()
+	cfg.Policy.SelfBuiltRate = 0.08
+	accounts := []AccountSnapshot{
+		accountSnapshot(1, "self-main", []int64{12, 18, 25}, 50, 0.5, true),
+		accountSnapshot(2, "https://api.mdkj.lol-pro-0.2", []int64{18}, 50, 0.2, true),
+		accountSnapshot(3, "https://api.mdkj.lol-plus-0.2", []int64{18}, 50, 0.2, true),
+	}
+	collections := []CollectionResult{
+		collectionResult(now, CollectionStatusOK, collected("pro", 0.08), collected("plus", 0.15)),
+	}
+
+	plan := BuildPlan(cfg, accounts, collections, now)
+
+	selfBuilt := findPlanChange(t, plan, 1)
+	cheap := findPlanChange(t, plan, 2)
+	costlier := findPlanChange(t, plan, 3)
+	require.NotNil(t, selfBuilt.Target)
+	require.NotNil(t, cheap.Target)
+	require.NotNil(t, costlier.Target)
+	require.Equal(t, cheap.Target.Priority, selfBuilt.Target.Priority)
+	require.Equal(t, 5, selfBuilt.Target.Priority)
 	require.Equal(t, 5, cheap.Target.Priority)
 	require.Equal(t, 10, costlier.Target.Priority)
-	require.Equal(t, []int64{18, 25}, costlier.Target.GroupIDs)
+}
+
+func TestBuildPlanConfigSnapshotIncludesAllPlanningInputs(t *testing.T) {
+	now := time.Date(2026, 7, 3, 4, 31, 45, 0, time.UTC)
+	cfg := plannerTestConfig()
+
+	plan := BuildPlan(cfg, nil, nil, now)
+
+	raw, err := json.Marshal(plan.Config)
+	require.NoError(t, err)
+	var snapshot map[string]any
+	require.NoError(t, json.Unmarshal(raw, &snapshot))
+	for _, key := range []string{
+		"local_base_url",
+		"sales_groups",
+		"safety_margin",
+		"self_built_rate",
+		"priority",
+		"upstreams",
+		"accounts",
+		"self_built_accounts",
+	} {
+		require.Contains(t, snapshot, key)
+	}
+	require.Equal(t, 1.0, snapshot["priority"].(map[string]any)["self_built"])
+	require.Len(t, snapshot["accounts"], len(cfg.Accounts))
 }
 
 func TestBuildPlanKeepsFailedCollectionAccountsUnchanged(t *testing.T) {

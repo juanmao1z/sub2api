@@ -18,15 +18,15 @@ type Config struct {
 }
 
 type LocalSub2APIConfig struct {
-	BaseURL       string `yaml:"base_url"`
-	AdminTokenEnv string `yaml:"admin_token_env"`
+	BaseURL       string `yaml:"base_url" json:"base_url"`
+	AdminTokenEnv string `yaml:"admin_token_env" json:"admin_token_env"`
 }
 
 type PolicyConfig struct {
-	SafetyMargin  float64           `yaml:"safety_margin"`
-	SelfBuiltRate float64           `yaml:"self_built_rate"`
-	SalesGroups   []SaleGroupConfig `yaml:"sales_groups"`
-	Priority      PriorityConfig    `yaml:"priority"`
+	SafetyMargin  float64           `yaml:"safety_margin" json:"safety_margin"`
+	SelfBuiltRate float64           `yaml:"self_built_rate" json:"self_built_rate"`
+	SalesGroups   []SaleGroupConfig `yaml:"sales_groups" json:"sales_groups"`
+	Priority      PriorityConfig    `yaml:"priority" json:"priority"`
 }
 
 type SaleGroupConfig struct {
@@ -36,29 +36,29 @@ type SaleGroupConfig struct {
 }
 
 type PriorityConfig struct {
-	SelfBuilt     int `yaml:"self_built"`
-	UpstreamStart int `yaml:"upstream_start"`
-	UpstreamStep  int `yaml:"upstream_step"`
+	SelfBuilt     int `yaml:"self_built" json:"self_built"`
+	UpstreamStart int `yaml:"upstream_start" json:"upstream_start"`
+	UpstreamStep  int `yaml:"upstream_step" json:"upstream_step"`
 }
 
 type UpstreamConfig struct {
-	ID               string              `yaml:"id"`
-	BaseURL          string              `yaml:"base_url"`
-	PricingPageURL   string              `yaml:"pricing_page_url"`
-	BrowserProfile   string              `yaml:"browser_profile"`
-	GroupNameAliases map[string][]string `yaml:"group_name_aliases"`
+	ID               string              `yaml:"id" json:"id"`
+	BaseURL          string              `yaml:"base_url" json:"base_url"`
+	PricingPageURL   string              `yaml:"pricing_page_url" json:"pricing_page_url"`
+	BrowserProfile   string              `yaml:"browser_profile" json:"browser_profile,omitempty"`
+	GroupNameAliases map[string][]string `yaml:"group_name_aliases" json:"group_name_aliases,omitempty"`
 }
 
 type AccountRuleConfig struct {
-	MatchName          string   `yaml:"match_name"`
-	UpstreamID         string   `yaml:"upstream_id"`
-	UpstreamGroup      string   `yaml:"upstream_group"`
-	AllowedSalesGroups []string `yaml:"allowed_sales_groups"`
+	MatchName          string   `yaml:"match_name" json:"match_name"`
+	UpstreamID         string   `yaml:"upstream_id" json:"upstream_id"`
+	UpstreamGroup      string   `yaml:"upstream_group" json:"upstream_group"`
+	AllowedSalesGroups []string `yaml:"allowed_sales_groups" json:"allowed_sales_groups"`
 }
 
 type SelfBuiltAccountConfig struct {
-	MatchName          string   `yaml:"match_name"`
-	AllowedSalesGroups []string `yaml:"allowed_sales_groups"`
+	MatchName          string   `yaml:"match_name" json:"match_name"`
+	AllowedSalesGroups []string `yaml:"allowed_sales_groups" json:"allowed_sales_groups"`
 }
 
 func LoadConfig(path string) (*Config, error) {

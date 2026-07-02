@@ -4,7 +4,10 @@ local_sub2api:
 
 policy:
   safety_margin: 0.02
-  self_built_rate: 0
+  # First version uses this as the self-built account cost for the same priority
+  # ranking as upstream accounts. policy.priority.self_built is retained for
+  # compatibility and is not used as an absolute priority override.
+  self_built_rate: 0.10
   sales_groups:
     - name: "0.12"
       group_id: 101
