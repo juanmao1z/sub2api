@@ -4,6 +4,7 @@ package service
 
 import (
 	"context"
+	"encoding/json"
 	"testing"
 
 	"github.com/Wei-Shaw/sub2api/internal/config"
@@ -102,6 +103,38 @@ func TestSettingService_GetPublicSettings_ExposesAllowUserViewErrorRequests(t *t
 	settings, err := svc.GetPublicSettings(context.Background())
 	require.NoError(t, err)
 	require.True(t, settings.AllowUserViewErrorRequests)
+}
+
+func TestSettingService_GetPublicSettings_NormalizesCustomMenuVisibility(t *testing.T) {
+	svc := NewSettingService(&settingPublicRepoStub{
+		values: map[string]string{
+			SettingKeyCustomMenuItems: `[` +
+				`{"id":"legacy-user","label":"Legacy User","url":"https://example.com/legacy"},` +
+				`{"id":"explicit-user","label":"Explicit User","url":"https://example.com/user","visibility":"user"},` +
+				`{"id":"admin-only","label":"Admin Only","url":"https://example.com/admin","visibility":"admin"}` +
+				`]`,
+		},
+	}, &config.Config{})
+
+	settings, err := svc.GetPublicSettings(context.Background())
+	require.NoError(t, err)
+
+	var payload struct {
+		CustomMenuItems json.RawMessage `json:"custom_menu_items"`
+	}
+	injected, err := svc.GetPublicSettingsForInjection(context.Background())
+	require.NoError(t, err)
+	encoded, err := json.Marshal(injected)
+	require.NoError(t, err)
+	require.NoError(t, json.Unmarshal(encoded, &payload))
+
+	require.JSONEq(t, `[
+		{"id":"legacy-user","label":"Legacy User","url":"https://example.com/legacy","visibility":"user","sort_order":0},
+		{"id":"explicit-user","label":"Explicit User","url":"https://example.com/user","visibility":"user","sort_order":0}
+	]`, string(payload.CustomMenuItems))
+	require.Contains(t, settings.CustomMenuItems, `"id":"legacy-user"`)
+	require.Contains(t, settings.CustomMenuItems, `"id":"explicit-user"`)
+	require.Contains(t, settings.CustomMenuItems, `"id":"admin-only"`)
 }
 
 func TestSettingService_GetPublicSettings_ExposesWeChatOAuthModeCapabilities(t *testing.T) {

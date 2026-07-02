@@ -9,6 +9,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/Wei-Shaw/sub2api/internal/server/middleware"
 	"github.com/gin-gonic/gin"
@@ -344,6 +345,52 @@ func TestFrontendServer_ServeIndexHTML(t *testing.T) {
 		server.serveIndexHTML(c)
 
 		assert.Equal(t, "no-cache", w.Header().Get("Cache-Control"))
+	})
+
+	t.Run("refreshes_settings_after_cache_ttl", func(t *testing.T) {
+		provider := &mockSettingsProvider{
+			settings: map[string]any{
+				"custom_menu_items": []map[string]string{},
+			},
+		}
+
+		server, err := NewFrontendServer(provider)
+		require.NoError(t, err)
+		server.cacheTTL = time.Nanosecond
+
+		w1 := httptest.NewRecorder()
+		c1, _ := gin.CreateTestContext(w1)
+		c1.Request = httptest.NewRequest(http.MethodGet, "/", nil)
+		c1.Set(middleware.CSPNonceKey, "nonce1")
+
+		server.serveIndexHTML(c1)
+		require.Equal(t, http.StatusOK, w1.Code)
+		require.Equal(t, 1, provider.called)
+		require.Contains(t, w1.Body.String(), `"custom_menu_items":[]`)
+
+		provider.settings = map[string]any{
+			"custom_menu_items": []map[string]string{
+				{
+					"id":         "usage-leaderboard",
+					"label":      "使用排行榜",
+					"url":        "https://api.zhouz.online/leaderboard/",
+					"visibility": "user",
+				},
+			},
+		}
+		time.Sleep(time.Millisecond)
+
+		w2 := httptest.NewRecorder()
+		c2, _ := gin.CreateTestContext(w2)
+		c2.Request = httptest.NewRequest(http.MethodGet, "/", nil)
+		c2.Set(middleware.CSPNonceKey, "nonce2")
+
+		server.serveIndexHTML(c2)
+
+		require.Equal(t, http.StatusOK, w2.Code)
+		require.Equal(t, 2, provider.called)
+		require.Contains(t, w2.Body.String(), `"id":"usage-leaderboard"`)
+		require.Contains(t, w2.Body.String(), `"label":"使用排行榜"`)
 	})
 
 	t.Run("fallback_on_settings_error", func(t *testing.T) {

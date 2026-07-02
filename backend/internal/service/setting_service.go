@@ -1704,24 +1704,25 @@ func filterUserVisibleMenuItems(raw string) json.RawMessage {
 	if raw == "" || raw == "[]" {
 		return json.RawMessage("[]")
 	}
-	var items []struct {
-		Visibility string `json:"visibility"`
-	}
+	var items []map[string]any
 	if err := json.Unmarshal([]byte(raw), &items); err != nil {
 		return json.RawMessage("[]")
 	}
 
-	// Parse full items to preserve all fields
-	var fullItems []json.RawMessage
-	if err := json.Unmarshal([]byte(raw), &fullItems); err != nil {
-		return json.RawMessage("[]")
-	}
-
-	var filtered []json.RawMessage
-	for i, item := range items {
-		if item.Visibility != "admin" {
-			filtered = append(filtered, fullItems[i])
+	filtered := make([]map[string]any, 0, len(items))
+	for _, item := range items {
+		visibility, _ := item["visibility"].(string)
+		visibility = strings.TrimSpace(visibility)
+		if visibility == "admin" {
+			continue
 		}
+		if visibility == "" {
+			item["visibility"] = "user"
+		}
+		if _, ok := item["sort_order"]; !ok {
+			item["sort_order"] = 0
+		}
+		filtered = append(filtered, item)
 	}
 	if len(filtered) == 0 {
 		return json.RawMessage("[]")

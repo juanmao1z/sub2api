@@ -37,3 +37,10 @@ describe('AppSidebar recharge nav item', () => {
     expect(componentSource).toContain("label: t('nav.recharge')")
   })
 })
+
+describe('AppSidebar custom menu visibility', () => {
+  it('treats legacy blank visibility custom menu items as user-visible', () => {
+    expect(componentSource).toContain("item.visibility !== 'admin'")
+    expect(componentSource).not.toContain("item.visibility === 'user'")
+  })
+})

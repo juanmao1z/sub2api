@@ -96,6 +96,7 @@
         <!-- Iframe embed mode -->
         <div v-else class="custom-embed-shell">
           <a
+            v-if="showOpenInNewTab"
             :href="embeddedUrl"
             target="_blank"
             rel="noopener noreferrer"
@@ -189,6 +190,8 @@ const isValidUrl = computed(() => {
   const url = embeddedUrl.value
   return url.startsWith('http://') || url.startsWith('https://')
 })
+
+const showOpenInNewTab = computed(() => menuItemId.value !== 'usage-leaderboard')
 
 function generateHeadingId(text: string, index: number): string {
   const base = text
