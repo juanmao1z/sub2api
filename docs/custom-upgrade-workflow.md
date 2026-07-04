@@ -8,13 +8,23 @@ This workflow keeps the customized Sub2API app aligned with upstream releases wh
 - Leaderboard sidecar repository: `D:\Desktop\sub2api\sub2api-leaderboard`
 - Production deployment path: `/opt/sub2api-deploy`
 
+Set these values first, then keep every example aligned with them:
+
+```powershell
+$oldTag = 'v0.1.143'
+$newTag = 'v0.1.144'
+$oldImageTag = '0.1.143-ui1'
+$newImageTag = '0.1.144-ui1'
+$backupSuffix = 'bak-v0144'
+```
+
 ## 1. Confirm the Upstream Tag
 
 ```powershell
 cd D:\Desktop\sub2api\sub2api-custom
-git -c http.proxy=http://127.0.0.1:10808 -c https.proxy=http://127.0.0.1:10808 ls-remote --tags upstream "v0.1.*"
-git -c http.proxy=http://127.0.0.1:10808 -c https.proxy=http://127.0.0.1:10808 fetch upstream tag v0.1.143
-git diff --stat v0.1.142..v0.1.143
+git -c http.proxy=http://127.0.0.1:10808 -c https.proxy=http://127.0.0.1:10808 ls-remote --tags upstream "$newTag"
+git -c http.proxy=http://127.0.0.1:10808 -c https.proxy=http://127.0.0.1:10808 fetch upstream tag $newTag
+git diff --stat "$oldTag..$newTag"
 ```
 
 Replace tag names for future upgrades. Keep proxy flags only when direct GitHub access fails.
@@ -24,7 +34,7 @@ Replace tag names for future upgrades. Keep proxy flags only when direct GitHub 
 ```powershell
 git status --short
 $local = git diff --name-only
-$up = git diff --name-only v0.1.142..v0.1.143
+$up = git diff --name-only "$oldTag..$newTag"
 Compare-Object -ReferenceObject $local -DifferenceObject $up -IncludeEqual -ExcludeDifferent | ForEach-Object { $_.InputObject }
 ```
 
@@ -39,8 +49,8 @@ Review these recurring custom areas:
 ## 3. Merge the Release
 
 ```powershell
-git stash push -u -m "custom work before v0.1.143"
-git merge --no-ff v0.1.143 -m "merge upstream v0.1.143 into custom build"
+git stash push -u -m "custom work before v0.1.144"
+git merge --no-ff v0.1.144 -m "merge upstream v0.1.144 into custom build"
 git stash apply 'stash@{0}'
 ```
 
@@ -61,7 +71,7 @@ The leaderboard sidecar normally does not merge upstream Sub2API code. Recheck t
 - Compose service names `sub2api`, `postgres`, and `sub2api-network`.
 - OpenResty overrides for `/custom/usage-leaderboard` and `/leaderboard/`.
 
-For `v0.1.143`, no leaderboard Go code change was required.
+For `v0.1.144`, no leaderboard Go code change was required beyond verifying the existing sidecar contracts.
 
 ## 5. Local Validation
 
@@ -101,7 +111,7 @@ exit $composeExit
 cd D:\Desktop\sub2api\sub2api-custom
 git status -sb
 git add <intended files>
-git commit -m "chore: update custom build for v0.1.143"
+git commit -m "chore: update custom build for v0.1.144"
 git push -u origin codex/fix-custom-menu-injection
 
 cd D:\Desktop\sub2api\sub2api-leaderboard
@@ -124,18 +134,19 @@ cd D:\Desktop\sub2api\sub2api-custom
 pnpm --dir frontend run build
 
 cd D:\Desktop\sub2api\sub2api-custom\backend
+$tag = '0.1.144-ui1'
 New-Item -ItemType Directory -Force -Path '..\build-local' | Out-Null
 $commit = git -C .. rev-parse --short HEAD
 $date = (Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ')
 $env:CGO_ENABLED='0'
 $env:GOOS='linux'
 $env:GOARCH='amd64'
-go build -tags embed -trimpath -ldflags "-s -w -X main.Version=0.1.143-ui1 -X main.Commit=$commit -X main.Date=$date -X main.BuildType=release" -o ..\build-local\sub2api .\cmd\server
+go build -tags embed -trimpath -ldflags "-s -w -X main.Version=$tag -X main.Commit=$commit -X main.Date=$date -X main.BuildType=release" -o ..\build-local\sub2api .\cmd\server
 ```
 
 ```powershell
 cd D:\Desktop\sub2api\sub2api-custom
-$tag = '0.1.143-ui1'
+$tag = '0.1.144-ui1'
 $artifactRoot = Join-Path (Get-Location) 'deploy-artifacts'
 $contextRoot = Join-Path $artifactRoot "sub2api-custom-$tag-context"
 $archive = Join-Path $artifactRoot "sub2api-custom-$tag-context.tar.gz"
@@ -154,20 +165,24 @@ scp $archive root@23.95.229.165:/opt/sub2api-build/sub2api-custom-$tag/context.t
 ```
 
 ```bash
-cd /opt/sub2api-build/sub2api-custom-0.1.143-ui1
+tag=0.1.144-ui1
+cd /opt/sub2api-build/sub2api-custom-$tag
 rm -rf context
 mkdir context
 tar -xzf context.tar.gz -C context
-docker build -t sub2api-custom:0.1.143-ui1 context
+docker build -t sub2api-custom:$tag context
 ```
 
 ## 8. Deploy on Server
 
 ```bash
 cd /opt/sub2api-deploy
+old_tag=0.1.143-ui1
+new_tag=0.1.144-ui1
+backup_suffix=bak-v0144
 ts=$(date +%Y%m%d-%H%M%S)
-cp docker-compose.override.yml docker-compose.override.yml.bak-v0143-$ts
-sed -i 's#sub2api-custom:0\.1\.142-ui3#sub2api-custom:0.1.143-ui1#' docker-compose.override.yml
+cp docker-compose.override.yml docker-compose.override.yml.$backup_suffix-$ts
+sed -i "s#sub2api-custom:${old_tag}#sub2api-custom:${new_tag}#" docker-compose.override.yml
 docker compose -f docker-compose.local.yml -f docker-compose.override.yml -f docker-compose.leaderboard.yml up -d sub2api
 ```
 
@@ -185,7 +200,7 @@ exit 1
 
 ```bash
 cd /opt/sub2api-deploy
-docker compose -f docker-compose.local.yml -f docker-compose.leaderboard.yml ps
+docker compose -f docker-compose.local.yml -f docker-compose.override.yml -f docker-compose.leaderboard.yml ps
 curl -fsS http://127.0.0.1:8080/health
 curl -fsS http://127.0.0.1:8095/leaderboard/health
 docker exec sub2api-postgres psql -U sub2api -d sub2api -c "\d public.usage_logs"
