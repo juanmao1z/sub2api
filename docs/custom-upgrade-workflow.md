@@ -11,11 +11,11 @@ This workflow keeps the customized Sub2API app aligned with upstream releases wh
 Set these values first, then keep every example aligned with them:
 
 ```powershell
-$oldTag = 'v0.1.144'
-$newTag = 'v0.1.146'
-$oldImageTag = '0.1.144-ui1'
-$newImageTag = '0.1.146-ui1'
-$backupSuffix = 'bak-v0146'
+$oldTag = 'v0.1.146'
+$newTag = 'v0.1.149'
+$oldImageTag = '0.1.146-ui1'
+$newImageTag = '0.1.149-ui1'
+$backupSuffix = 'bak-v0149'
 ```
 
 ## 1. Confirm the Upstream Tag
@@ -44,17 +44,17 @@ Compare-Object -ReferenceObject $local -DifferenceObject $up -IncludeEqual -Excl
 Review these recurring custom areas:
 
 - `backend/internal/config/config.go`: CSP must keep `https://pay.ldxp.cn`.
-- `backend/internal/service/setting_service.go`: upstream public settings and custom menu normalization must both remain.
+- `backend/internal/service/setting_public.go`: upstream public settings and custom menu normalization must both remain.
 - `frontend/src/components/layout/AppSidebar.vue`: `/recharge` and custom menu sidebar behavior must remain visible to users.
-- `frontend/src/i18n/locales/en.ts` and `frontend/src/i18n/locales/zh.ts`: recharge text must remain valid.
+- `frontend/src/i18n/locales/en/common.ts` and `frontend/src/i18n/locales/zh/common.ts`: recharge text must remain valid.
 - `frontend/src/views/user/CustomPageView.vue`: iframe token handling must remain.
 - `backend/internal/web/*`: embedded frontend override must still serve the customized app shell.
 
 ## 3. Merge the Release
 
 ```powershell
-git stash push -u -m "custom work before v0.1.146"
-git merge --no-ff v0.1.146 -m "merge upstream v0.1.146 into custom build"
+git stash push -u -m "custom work before v0.1.149"
+git merge --no-ff v0.1.149 -m "merge upstream v0.1.149 into custom build"
 git stash apply 'stash@{0}'
 ```
 
@@ -75,7 +75,7 @@ The leaderboard sidecar normally does not merge upstream Sub2API code. Recheck t
 - Compose service names `sub2api`, `postgres`, and `sub2api-network`.
 - OpenResty overrides for `/custom/usage-leaderboard` and `/leaderboard/`.
 
-For `v0.1.146`, no leaderboard Go code change was required beyond verifying the existing sidecar contracts.
+For `v0.1.149`, no leaderboard Go code change was required beyond verifying the existing sidecar contracts and required `usage_logs` columns.
 
 ## 5. Local Validation
 
@@ -115,7 +115,7 @@ exit $composeExit
 cd D:\Desktop\sub2api\sub2api-custom
 git status -sb
 git add <intended files>
-git commit -m "chore: update custom build for v0.1.146"
+git commit -m "chore: update custom build for v0.1.149"
 git push -u origin codex/fix-custom-menu-injection
 
 cd D:\Desktop\sub2api\sub2api-leaderboard
@@ -138,7 +138,7 @@ cd D:\Desktop\sub2api\sub2api-custom
 pnpm --dir frontend run build
 
 cd D:\Desktop\sub2api\sub2api-custom\backend
-$tag = '0.1.146-ui1'
+$tag = '0.1.149-ui1'
 New-Item -ItemType Directory -Force -Path '..\build-local' | Out-Null
 $commit = git -C .. rev-parse --short HEAD
 $date = (Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ')
@@ -150,7 +150,7 @@ go build -tags embed -trimpath -ldflags "-s -w -X main.Version=$tag -X main.Comm
 
 ```powershell
 cd D:\Desktop\sub2api\sub2api-custom
-$tag = '0.1.146-ui1'
+$tag = '0.1.149-ui1'
 $artifactRoot = Join-Path (Get-Location) 'deploy-artifacts'
 $contextRoot = Join-Path $artifactRoot "sub2api-custom-$tag-context"
 $archive = Join-Path $artifactRoot "sub2api-custom-$tag-context.tar.gz"
@@ -169,7 +169,7 @@ scp $archive root@23.95.229.165:/opt/sub2api-build/sub2api-custom-$tag/context.t
 ```
 
 ```bash
-tag=0.1.146-ui1
+tag=0.1.149-ui1
 cd /opt/sub2api-build/sub2api-custom-$tag
 rm -rf context
 mkdir context
@@ -181,9 +181,9 @@ docker build -t sub2api-custom:$tag context
 
 ```bash
 cd /opt/sub2api-deploy
-old_tag=0.1.144-ui1
-new_tag=0.1.146-ui1
-backup_suffix=bak-v0146
+old_tag=0.1.146-ui1
+new_tag=0.1.149-ui1
+backup_suffix=bak-v0149
 ts=$(date +%Y%m%d-%H%M%S)
 cp docker-compose.override.yml docker-compose.override.yml.$backup_suffix-$ts
 sed -i "s#sub2api-custom:${old_tag}#sub2api-custom:${new_tag}#" docker-compose.override.yml
