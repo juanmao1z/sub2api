@@ -174,8 +174,11 @@ cd /opt/sub2api-build/sub2api-custom-$tag
 rm -rf context
 mkdir context
 tar -xzf context.tar.gz -C context
+test -f context/Dockerfile || { echo "Dockerfile is not at context root; repack with tar -C contextRoot . or re-extract with --strip-components=1"; exit 1; }
 docker build -t sub2api-custom:$tag context
 ```
+
+The archive must place `Dockerfile`, `build-local/`, `backend/`, and `deploy/` at the extraction root. If the archive accidentally contains a top-level `sub2api-custom-...-context/` directory, re-extract with `tar --strip-components=1 -xzf context.tar.gz -C context` before building.
 
 ## 8. Deploy on Server
 
