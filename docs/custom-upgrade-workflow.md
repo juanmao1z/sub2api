@@ -11,11 +11,11 @@ This workflow keeps the customized Sub2API app aligned with upstream releases wh
 Set these values first, then keep every example aligned with them:
 
 ```powershell
-$oldTag = 'v0.1.149'
-$newTag = 'v0.1.150'
-$oldImageTag = '0.1.149-ui1'
-$newImageTag = '0.1.150-ui1'
-$backupSuffix = 'bak-v0150'
+$oldTag = 'v0.1.150'
+$newTag = 'v0.1.151'
+$oldImageTag = '0.1.150-ui1'
+$newImageTag = '0.1.151-ui1'
+$backupSuffix = 'bak-v0151'
 ```
 
 ## 1. Confirm the Upstream Tag
@@ -53,8 +53,8 @@ Review these recurring custom areas:
 ## 3. Merge the Release
 
 ```powershell
-git stash push -u -m "custom work before v0.1.150"
-git merge --no-ff v0.1.150 -m "merge upstream v0.1.150 into custom build"
+git stash push -u -m "custom work before v0.1.151"
+git merge --no-ff v0.1.151 -m "merge upstream v0.1.151 into custom build"
 git stash apply 'stash@{0}'
 ```
 
@@ -75,7 +75,7 @@ The leaderboard sidecar normally does not merge upstream Sub2API code. Recheck t
 - Compose service names `sub2api`, `postgres`, and `sub2api-network`.
 - OpenResty overrides for `/custom/usage-leaderboard` and `/leaderboard/`.
 
-For `v0.1.150`, no leaderboard Go code change is required. The release does not change the database schema, `GET /api/v1/auth/me`, or the compose service/network names; still verify the required `usage_logs` and `users` columns after deployment.
+For `v0.1.151`, the upstream release does not overlap the custom UI files. External payment-page and leaderboard validation were intentionally skipped for this upgrade at the operator's request.
 
 ## 5. Local Validation
 
@@ -115,8 +115,8 @@ exit $composeExit
 cd D:\Desktop\sub2api\sub2api-custom
 git status -sb
 git add <intended files>
-git commit -m "chore: update custom build for v0.1.150"
-git push -u origin codex/update-v0.1.150-custom
+git commit -m "chore: update custom build for v0.1.151"
+git push -u origin codex/update-v0.1.151-custom
 
 cd D:\Desktop\sub2api\sub2api-leaderboard
 git status -sb
@@ -138,7 +138,7 @@ cd D:\Desktop\sub2api\sub2api-custom
 pnpm --dir frontend run build
 
 cd D:\Desktop\sub2api\sub2api-custom\backend
-$tag = '0.1.150-ui1'
+$tag = '0.1.151-ui1'
 New-Item -ItemType Directory -Force -Path '..\build-local' | Out-Null
 $commit = git -C .. rev-parse --short HEAD
 $date = (Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ')
@@ -150,7 +150,7 @@ go build -tags embed -trimpath -ldflags "-s -w -X main.Version=$tag -X main.Comm
 
 ```powershell
 cd D:\Desktop\sub2api\sub2api-custom
-$tag = '0.1.150-ui1'
+$tag = '0.1.151-ui1'
 $artifactRoot = Join-Path (Get-Location) 'deploy-artifacts'
 $contextRoot = Join-Path $artifactRoot "sub2api-custom-$tag-context"
 $archive = Join-Path $artifactRoot "sub2api-custom-$tag-context.tar.gz"
@@ -169,7 +169,7 @@ scp $archive root@23.95.229.165:/opt/sub2api-build/sub2api-custom-$tag/context.t
 ```
 
 ```bash
-tag=0.1.150-ui1
+tag=0.1.151-ui1
 cd /opt/sub2api-build/sub2api-custom-$tag
 rm -rf context
 mkdir context
@@ -184,9 +184,9 @@ The archive must place `Dockerfile`, `build-local/`, `backend/`, and `deploy/` a
 
 ```bash
 cd /opt/sub2api-deploy
-old_tag=0.1.149-ui1
-new_tag=0.1.150-ui1
-backup_suffix=bak-v0150
+old_tag=0.1.150-ui1
+new_tag=0.1.151-ui1
+backup_suffix=bak-v0151
 ts=$(date +%Y%m%d-%H%M%S)
 cp docker-compose.override.yml docker-compose.override.yml.$backup_suffix-$ts
 sed -i "s#sub2api-custom:${old_tag}#sub2api-custom:${new_tag}#" docker-compose.override.yml
@@ -216,11 +216,10 @@ docker exec sub2api-postgres psql -U sub2api -d sub2api -c "\d public.users"
 
 Then verify `/custom/usage-leaderboard` in the browser. The iframe should load, and the visible URL should not retain the user token.
 
-## 10. Notes From `v0.1.150`
+## 10. Notes From `v0.1.151`
 
-- The upstream release changes 80 files, primarily for GPT-5.6 support, compact/SSE reliability, billing concurrency, and payment recovery.
-- `frontend/src/router/index.ts` is the only recurring custom file changed by both sides. Preserve the local authenticated `/recharge` route and the upstream `publicSettingsLoaded` plus explicit-`false` feature guard semantics.
-- No database schema or migration file changes between `v0.1.149` and `v0.1.150`, so application-image rollback does not require a database restore.
-- Keep the custom `frame-src https://pay.ldxp.cn`, menu normalization, iframe token cleanup, and embedded frontend override behavior.
-- `sub2api-leaderboard` needs no Go source change, but still requires schema, auth endpoint, compose, CSP, and browser verification.
-- The tag's `backend/cmd/server/VERSION` may lag the tag name, so verify the runtime through the custom image tag, linked build metadata, `/health`, and UI behavior.
+- The upstream release changes 69 files for Codex originator/User-Agent pairing, user-level Fast/Flex rules, GPT-5.6 billing, Grok reasoning effort, image generation cleanup, and setup-token refresh.
+- No recurring custom UI or embedded-frontend file changed between `v0.1.150` and `v0.1.151`, so the merge requires no custom conflict resolution.
+- Migration `173_allow_cyber_blocked_usage_request_type.sql` broadens `usage_logs.request_type` from `0..3` to `0..4` without data backfill. `0.1.150-ui1` remains rollback-compatible.
+- External payment-page and leaderboard validation were intentionally skipped for this upgrade at the operator's request.
+- The tag's `backend/cmd/server/VERSION` may lag at `0.1.150`; verify the runtime through the custom image tag, linked build metadata, `/health`, and logs.
