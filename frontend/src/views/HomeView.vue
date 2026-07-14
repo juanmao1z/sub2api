@@ -138,7 +138,7 @@
           </p>
         </section>
 
-        <h1 class="brand-title mt-5 max-w-full text-4xl font-bold leading-none text-[#092321] dark:text-white sm:text-7xl md:text-8xl lg:text-[8rem]">
+        <h1 class="brand-title mt-5 max-w-full text-4xl font-[720] leading-none text-[#092321] dark:text-white sm:text-7xl md:text-8xl lg:text-[8rem]">
           {{ siteName }}
         </h1>
 
