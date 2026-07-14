@@ -199,13 +199,81 @@ describe('useRealtimeConcurrency', () => {
     wrapper.unmount()
   })
 
+  it('aborts a hidden request and refreshes immediately when visible again', async () => {
+    const firstRequest = deferred<RealtimeConcurrencyStatus>()
+    vi.mocked(statusAPI.getRealtimeConcurrency)
+      .mockReturnValueOnce(firstRequest.promise)
+      .mockResolvedValueOnce({
+        current: 11,
+        updated_at: '2026-07-14T12:00:01Z',
+      })
+    const { wrapper, state } = mountHarness(ref(true))
+    await flushPromises()
+
+    const firstSignal = vi.mocked(statusAPI.getRealtimeConcurrency).mock.calls[0][0] as AbortSignal
+    expect(firstSignal).toBeInstanceOf(AbortSignal)
+
+    hidden = true
+    document.dispatchEvent(new Event('visibilitychange'))
+    expect(firstSignal.aborted).toBe(true)
+
+    hidden = false
+    document.dispatchEvent(new Event('visibilitychange'))
+    await flushPromises()
+
+    expect(statusAPI.getRealtimeConcurrency).toHaveBeenCalledTimes(2)
+    expect(state.current.value).toBe(11)
+    expect(state.available.value).toBe(true)
+
+    firstRequest.resolve({ current: 99, updated_at: '2026-07-14T12:00:02Z' })
+    await flushPromises()
+    expect(state.current.value).toBe(11)
+    wrapper.unmount()
+  })
+
+  it('aborts a disabled request and refreshes immediately when re-enabled', async () => {
+    const firstRequest = deferred<RealtimeConcurrencyStatus>()
+    vi.mocked(statusAPI.getRealtimeConcurrency)
+      .mockReturnValueOnce(firstRequest.promise)
+      .mockResolvedValueOnce({
+        current: 12,
+        updated_at: '2026-07-14T12:00:01Z',
+      })
+    const enabled = ref(true)
+    const { wrapper, state } = mountHarness(enabled)
+    await flushPromises()
+
+    const firstSignal = vi.mocked(statusAPI.getRealtimeConcurrency).mock.calls[0][0] as AbortSignal
+    expect(firstSignal).toBeInstanceOf(AbortSignal)
+
+    enabled.value = false
+    await flushPromises()
+    expect(firstSignal.aborted).toBe(true)
+
+    enabled.value = true
+    await flushPromises()
+
+    expect(statusAPI.getRealtimeConcurrency).toHaveBeenCalledTimes(2)
+    expect(state.current.value).toBe(12)
+    expect(state.available.value).toBe(true)
+
+    firstRequest.resolve({ current: 99, updated_at: '2026-07-14T12:00:02Z' })
+    await flushPromises()
+    expect(state.current.value).toBe(12)
+    wrapper.unmount()
+  })
+
   it('discards a response and cleans up polling after unmount', async () => {
     const request = deferred<RealtimeConcurrencyStatus>()
     vi.mocked(statusAPI.getRealtimeConcurrency).mockReturnValue(request.promise)
     const { wrapper, state } = mountHarness(ref(true))
     await flushPromises()
 
+    const signal = vi.mocked(statusAPI.getRealtimeConcurrency).mock.calls[0][0] as AbortSignal
+
     wrapper.unmount()
+    expect(signal).toBeInstanceOf(AbortSignal)
+    expect(signal.aborted).toBe(true)
     request.resolve({ current: 10, updated_at: '2026-07-14T12:00:00Z' })
     await flushPromises()
     await vi.advanceTimersByTimeAsync(10000)
@@ -213,5 +281,24 @@ describe('useRealtimeConcurrency', () => {
     expect(state.current.value).toBeNull()
     expect(state.available.value).toBe(false)
     expect(statusAPI.getRealtimeConcurrency).toHaveBeenCalledTimes(1)
+  })
+
+  it('does not restart polling when visibility changes after unmount', async () => {
+    vi.mocked(statusAPI.getRealtimeConcurrency).mockResolvedValue({
+      current: 13,
+      updated_at: '2026-07-14T12:00:00Z',
+    })
+    const { wrapper } = mountHarness(ref(true))
+    await flushPromises()
+    wrapper.unmount()
+    vi.mocked(statusAPI.getRealtimeConcurrency).mockClear()
+
+    hidden = true
+    document.dispatchEvent(new Event('visibilitychange'))
+    hidden = false
+    document.dispatchEvent(new Event('visibilitychange'))
+    await vi.advanceTimersByTimeAsync(10000)
+
+    expect(statusAPI.getRealtimeConcurrency).not.toHaveBeenCalled()
   })
 })

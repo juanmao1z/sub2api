@@ -5,8 +5,8 @@ export interface RealtimeConcurrencyStatus {
   updated_at: string
 }
 
-async function getRealtimeConcurrency(): Promise<RealtimeConcurrencyStatus> {
-  const { data } = await apiClient.get<RealtimeConcurrencyStatus>('/status/concurrency')
+async function getRealtimeConcurrency(signal: AbortSignal): Promise<RealtimeConcurrencyStatus> {
+  const { data } = await apiClient.get<RealtimeConcurrencyStatus>('/status/concurrency', { signal })
   return data
 }
 

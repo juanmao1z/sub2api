@@ -10,37 +10,38 @@ export function useRealtimeConcurrency(
   let timer: ReturnType<typeof setInterval> | null = null
   let mounted = false
   let generation = 0
-  let inFlight = false
-  let immediateRefreshQueued = false
+  let activeRequest: {
+    generation: number
+    controller: AbortController
+  } | null = null
 
   function isActive() {
     return mounted && enabled.value && !document.hidden
   }
 
   async function refresh() {
-    if (!isActive() || inFlight) return
+    if (!isActive() || activeRequest !== null) return
 
-    const requestGeneration = generation
-    inFlight = true
+    const request = {
+      generation,
+      controller: new AbortController(),
+    }
+    activeRequest = request
 
     try {
-      const status = await statusAPI.getRealtimeConcurrency()
-      if (!isActive() || requestGeneration !== generation) return
+      const status = await statusAPI.getRealtimeConcurrency(request.controller.signal)
+      if (!isActive() || request.generation !== generation || activeRequest !== request) return
       if (!Number.isInteger(status.current) || status.current < 0) {
         throw new Error('invalid concurrency')
       }
       current.value = status.current
       available.value = true
     } catch {
-      if (!isActive() || requestGeneration !== generation) return
+      if (!isActive() || request.generation !== generation || activeRequest !== request) return
       current.value = null
       available.value = false
     } finally {
-      inFlight = false
-      if (immediateRefreshQueued) {
-        immediateRefreshQueued = false
-        if (isActive()) void refresh()
-      }
+      if (activeRequest === request) activeRequest = null
     }
   }
 
@@ -51,21 +52,15 @@ export function useRealtimeConcurrency(
 
   function invalidatePendingResult() {
     generation += 1
-    immediateRefreshQueued = false
-  }
-
-  function requestImmediateRefresh() {
-    if (inFlight) {
-      immediateRefreshQueued = true
-      return
-    }
-    void refresh()
+    const request = activeRequest
+    activeRequest = null
+    request?.controller.abort()
   }
 
   function start() {
     stopTimer()
     if (!isActive()) return
-    requestImmediateRefresh()
+    void refresh()
     timer = setInterval(() => void refresh(), intervalMs)
   }
 
