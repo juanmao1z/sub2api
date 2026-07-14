@@ -45,6 +45,20 @@ describe('useRealtimeConcurrency', () => {
     vi.useRealTimers()
   })
 
+  it('keeps the public status getter callable without an abort signal', async () => {
+    const status = {
+      current: 2,
+      updated_at: '2026-07-14T12:00:00Z',
+    }
+    vi.mocked(statusAPI.getRealtimeConcurrency).mockResolvedValue(status)
+
+    const getWithoutSignal: () => Promise<RealtimeConcurrencyStatus> =
+      statusAPI.getRealtimeConcurrency
+
+    await expect(getWithoutSignal()).resolves.toEqual(status)
+    expect(statusAPI.getRealtimeConcurrency).toHaveBeenCalledWith()
+  })
+
   it('fetches immediately and refreshes on the configured interval', async () => {
     vi.mocked(statusAPI.getRealtimeConcurrency).mockResolvedValue({
       current: 3,
