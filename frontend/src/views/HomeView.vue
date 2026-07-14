@@ -149,13 +149,10 @@
           >
             {{ t('home.navigation.dashboard') }}
           </router-link>
-          <router-link
-            :to="isAuthenticated ? '/redeem' : '/login'"
-            class="home-quick-link"
-          >
+          <a :href="redeemUrl" class="home-quick-link">
             {{ t('home.navigation.redeem') }}
-          </router-link>
-          <a v-if="leaderboardUrl" :href="leaderboardUrl" class="home-quick-link">
+          </a>
+          <a :href="leaderboardUrl" class="home-quick-link">
             {{ t('home.navigation.leaderboard') }}
           </a>
         </nav>
@@ -227,11 +224,8 @@ const isHomeContentUrl = computed(() => {
 
 const isAuthenticated = computed(() => authStore.isAuthenticated)
 const dashboardPath = computed(() => authStore.isAdmin ? '/admin/dashboard' : '/dashboard')
-const leaderboardUrl = computed(() => {
-  const item = appStore.cachedPublicSettings?.custom_menu_items
-    ?.find((menuItem) => menuItem.id === 'usage-leaderboard')
-  return sanitizeUrl(item?.url || '', { allowRelative: true })
-})
+const redeemUrl = 'https://pay.ldxp.cn/shop/1WGCPCG0'
+const leaderboardUrl = 'https://api.zhouz.online/custom/usage-leaderboard'
 
 const isDark = ref(document.documentElement.classList.contains('dark'))
 const mobileMenuOpen = ref(false)

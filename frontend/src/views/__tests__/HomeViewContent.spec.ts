@@ -11,10 +11,10 @@ describe('HomeView default content', () => {
     expect(source).toContain('home.status.stable')
     expect(source).toContain('{{ siteName }}')
     expect(source).toContain('useHomepageStatus(showDefaultHome, 60_000)')
-    expect(source).toContain('usage-leaderboard')
-    expect(source).toContain('custom_menu_items')
-    expect(source).toContain("sanitizeUrl(item?.url || '', { allowRelative: true })")
-
+    expect(source).toContain("const redeemUrl = 'https://pay.ldxp.cn/shop/1WGCPCG0'")
+    expect(source).toContain(
+      "const leaderboardUrl = 'https://api.zhouz.online/custom/usage-leaderboard'",
+    )
     expect(source).not.toContain('siteSubtitle')
     expect(source).not.toContain('RealtimeConcurrencyStatus')
     expect(source).not.toContain('useRealtimeConcurrency')
