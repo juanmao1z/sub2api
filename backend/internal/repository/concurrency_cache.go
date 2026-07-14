@@ -627,6 +627,36 @@ func (c *concurrencyCache) GetAccountConcurrencyBatch(ctx context.Context, accou
 	return result, nil
 }
 
+func (c *concurrencyCache) GetTotalAccountConcurrency(ctx context.Context) (int, error) {
+	now, err := c.redisUnixSeconds(ctx)
+	if err != nil {
+		return 0, err
+	}
+	members, err := c.rdb.ZRangeByScore(ctx, accountActiveIndexKey, &redis.ZRangeBy{
+		Min: "(" + strconv.FormatInt(now, 10),
+		Max: "+inf",
+	}).Result()
+	if err != nil {
+		return 0, fmt.Errorf("read active account index: %w", err)
+	}
+	accountIDs := make([]int64, 0, len(members))
+	for _, member := range members {
+		accountID, parseErr := strconv.ParseInt(member, 10, 64)
+		if parseErr == nil && accountID > 0 {
+			accountIDs = append(accountIDs, accountID)
+		}
+	}
+	counts, err := c.GetAccountConcurrencyBatch(ctx, accountIDs)
+	if err != nil {
+		return 0, err
+	}
+	total := 0
+	for _, count := range counts {
+		total += count
+	}
+	return total, nil
+}
+
 // User slot operations
 
 func (c *concurrencyCache) AcquireUserSlot(ctx context.Context, userID int64, maxConcurrency int, requestID string) (bool, error) {

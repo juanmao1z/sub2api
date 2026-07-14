@@ -16,33 +16,36 @@ import (
 
 // stubConcurrencyCacheForTest 用于并发服务单元测试的缓存桩
 type stubConcurrencyCacheForTest struct {
-	acquireResult        bool
-	acquireErr           error
-	releaseErr           error
-	concurrency          int
-	concurrencyErr       error
-	waitAllowed          bool
-	waitErr              error
-	waitCount            int
-	waitCountErr         error
-	loadBatch            map[int64]*AccountLoadInfo
-	loadBatchErr         error
-	usersLoadBatch       map[int64]*UserLoadInfo
-	usersLoadErr         error
-	cleanupErr           error
-	apiKeyTrackErr       error
-	apiKeyReleaseErr     error
-	apiKeyConcurrency    map[int64]int
-	apiKeyConcurrencyErr error
+	acquireResult              bool
+	acquireErr                 error
+	releaseErr                 error
+	concurrency                int
+	concurrencyErr             error
+	totalAccountConcurrency    int
+	totalAccountConcurrencyErr error
+	waitAllowed                bool
+	waitErr                    error
+	waitCount                  int
+	waitCountErr               error
+	loadBatch                  map[int64]*AccountLoadInfo
+	loadBatchErr               error
+	usersLoadBatch             map[int64]*UserLoadInfo
+	usersLoadErr               error
+	cleanupErr                 error
+	apiKeyTrackErr             error
+	apiKeyReleaseErr           error
+	apiKeyConcurrency          map[int64]int
+	apiKeyConcurrencyErr       error
 
 	// 记录调用
-	releasedAccountIDs       []int64
-	releasedRequestIDs       []string
-	loadBatchCalls           atomic.Int64
-	trackedAPIKeyIDs         []int64
-	trackedAPIKeyRequestIDs  []string
-	releasedAPIKeyIDs        []int64
-	releasedAPIKeyRequestIDs []string
+	releasedAccountIDs           []int64
+	releasedRequestIDs           []string
+	loadBatchCalls               atomic.Int64
+	totalAccountConcurrencyCalls atomic.Int64
+	trackedAPIKeyIDs             []int64
+	trackedAPIKeyRequestIDs      []string
+	releasedAPIKeyIDs            []int64
+	releasedAPIKeyRequestIDs     []string
 }
 
 type ingressLeaseCacheForTest struct {
@@ -107,6 +110,10 @@ func (c *stubConcurrencyCacheForTest) GetAccountConcurrencyBatch(_ context.Conte
 		result[accountID] = c.concurrency
 	}
 	return result, nil
+}
+func (c *stubConcurrencyCacheForTest) GetTotalAccountConcurrency(_ context.Context) (int, error) {
+	c.totalAccountConcurrencyCalls.Add(1)
+	return c.totalAccountConcurrency, c.totalAccountConcurrencyErr
 }
 func (c *stubConcurrencyCacheForTest) IncrementAccountWaitCount(_ context.Context, _ int64, _ int) (bool, error) {
 	return c.waitAllowed, c.waitErr
@@ -191,6 +198,27 @@ func TestCleanupStaleProcessSlots_DelegatesPrefix(t *testing.T) {
 	svc := NewConcurrencyService(cache)
 	require.NoError(t, svc.CleanupStaleProcessSlots(context.Background()))
 	require.Equal(t, RequestIDPrefix(), cache.cleanupPrefix)
+}
+
+func TestConcurrencyService_GetTotalAccountConcurrency(t *testing.T) {
+	cache := &stubConcurrencyCacheForTest{totalAccountConcurrency: 7}
+	svc := NewConcurrencyService(cache)
+
+	got, err := svc.GetTotalAccountConcurrency(context.Background())
+	require.NoError(t, err)
+	require.Equal(t, 7, got)
+	require.Equal(t, int64(1), cache.totalAccountConcurrencyCalls.Load())
+}
+
+func TestConcurrencyService_GetTotalAccountConcurrencyRejectsUnavailableCache(t *testing.T) {
+	_, err := NewConcurrencyService(nil).GetTotalAccountConcurrency(context.Background())
+	require.Error(t, err)
+}
+
+func TestConcurrencyService_GetTotalAccountConcurrencyRejectsNegativeValue(t *testing.T) {
+	cache := &stubConcurrencyCacheForTest{totalAccountConcurrency: -1}
+	_, err := NewConcurrencyService(cache).GetTotalAccountConcurrency(context.Background())
+	require.Error(t, err)
 }
 
 func TestAcquireAccountSlot_Success(t *testing.T) {

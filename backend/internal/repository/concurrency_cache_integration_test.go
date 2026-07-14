@@ -478,6 +478,38 @@ func (s *ConcurrencyCacheSuite) TestGetAccountConcurrency_Missing() {
 	require.Equal(s.T(), 0, cur)
 }
 
+func (s *ConcurrencyCacheSuite) TestTotalAccountConcurrency_UsesActiveIndexAndDropsExpiredSlots() {
+	require.NoError(s.T(), s.rdb.FlushDB(s.ctx).Err())
+
+	ok, err := s.rawCache.AcquireAccountSlot(s.ctx, 701, 5, "req-701-a")
+	require.NoError(s.T(), err)
+	require.True(s.T(), ok)
+	ok, err = s.rawCache.AcquireAccountSlot(s.ctx, 701, 5, "req-701-b")
+	require.NoError(s.T(), err)
+	require.True(s.T(), ok)
+	ok, err = s.rawCache.AcquireAccountSlot(s.ctx, 702, 5, "req-702-a")
+	require.NoError(s.T(), err)
+	require.True(s.T(), ok)
+
+	now, err := s.rawCache.redisUnixSeconds(s.ctx)
+	require.NoError(s.T(), err)
+	require.NoError(s.T(), s.rdb.ZAdd(s.ctx, accountSlotKey(703), redis.Z{
+		Score: float64(now - int64(s.rawCache.slotTTLSeconds) - 1), Member: "expired",
+	}).Err())
+	require.NoError(s.T(), s.rdb.ZAdd(s.ctx, accountActiveIndexKey, redis.Z{
+		Score: float64(now + int64(s.rawCache.slotTTLSeconds)), Member: "703",
+	}).Err())
+
+	got, err := s.rawCache.GetTotalAccountConcurrency(s.ctx)
+	require.NoError(s.T(), err)
+	require.Equal(s.T(), 3, got)
+
+	require.NoError(s.T(), s.rawCache.ReleaseAccountSlot(s.ctx, 701, "req-701-a"))
+	got, err = s.rawCache.GetTotalAccountConcurrency(s.ctx)
+	require.NoError(s.T(), err)
+	require.Equal(s.T(), 2, got)
+}
+
 func (s *ConcurrencyCacheSuite) TestGetUserConcurrency_Missing() {
 	// When no slots exist, GetUserConcurrency should return 0
 	cur, err := s.cache.GetUserConcurrency(s.ctx, 999)
