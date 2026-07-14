@@ -11,10 +11,13 @@ This workflow keeps the customized Sub2API app aligned with upstream releases wh
 Set these values first, then keep every example aligned with them:
 
 ```powershell
+$ErrorActionPreference = 'Stop'
+Set-StrictMode -Version Latest
+
 $oldTag = 'v0.1.153'
 $newTag = 'v0.1.155'
-$oldImageTag = '0.1.153-ui2'
-$newImageTag = '0.1.155-ui2'
+$oldImageTag = '0.1.155-ui2'
+$newImageTag = '0.1.155-ui3'
 $backupSuffix = 'bak-v0155'
 ```
 
@@ -134,23 +137,32 @@ gh repo create juanmao1z/sub2api-leaderboard --private --source . --remote origi
 ## 7. Build Custom Runtime Image
 
 ```powershell
+$ErrorActionPreference = 'Stop'
+Set-StrictMode -Version Latest
+
 cd D:\Desktop\sub2api\sub2api-custom
-pnpm --dir frontend run build
+& pnpm --dir frontend run build
+if ($LASTEXITCODE -ne 0) { throw "frontend build failed with exit code $LASTEXITCODE" }
 
 cd D:\Desktop\sub2api\sub2api-custom\backend
-$tag = '0.1.155-ui2'
+$tag = '0.1.155-ui3'
 New-Item -ItemType Directory -Force -Path '..\build-local' | Out-Null
-$commit = git -C .. rev-parse --short HEAD
+$commit = & git -C .. rev-parse --short HEAD
+if ($LASTEXITCODE -ne 0) { throw "git rev-parse failed with exit code $LASTEXITCODE" }
 $date = (Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ')
 $env:CGO_ENABLED='0'
 $env:GOOS='linux'
 $env:GOARCH='amd64'
-go build -tags embed -trimpath -ldflags "-s -w -X main.Version=$tag -X main.Commit=$commit -X main.Date=$date -X main.BuildType=release" -o ..\build-local\sub2api .\cmd\server
+& go build -tags embed -trimpath -ldflags "-s -w -X main.Version=$tag -X main.Commit=$commit -X main.Date=$date -X main.BuildType=release" -o ..\build-local\sub2api .\cmd\server
+if ($LASTEXITCODE -ne 0) { throw "backend build failed with exit code $LASTEXITCODE" }
 ```
 
 ```powershell
+$ErrorActionPreference = 'Stop'
+Set-StrictMode -Version Latest
+
 cd D:\Desktop\sub2api\sub2api-custom
-$tag = '0.1.155-ui2'
+$tag = '0.1.155-ui3'
 $artifactRoot = Join-Path (Get-Location) 'deploy-artifacts'
 $contextRoot = Join-Path $artifactRoot "sub2api-custom-$tag-context"
 $archive = Join-Path $artifactRoot "sub2api-custom-$tag-context.tar.gz"
@@ -163,13 +175,16 @@ Copy-Item -LiteralPath 'build-local\sub2api' -Destination (Join-Path $contextRoo
 Copy-Item -LiteralPath 'backend\resources' -Destination (Join-Path $contextRoot 'backend\resources') -Recurse
 Copy-Item -LiteralPath 'deploy\docker-entrypoint.sh' -Destination (Join-Path $contextRoot 'deploy\docker-entrypoint.sh')
 if (Test-Path -LiteralPath $archive) { Remove-Item -LiteralPath $archive -Force }
-tar -czf $archive -C $contextRoot .
-ssh root@23.95.229.165 "mkdir -p /opt/sub2api-build/sub2api-custom-$tag"
-scp $archive root@23.95.229.165:/opt/sub2api-build/sub2api-custom-$tag/context.tar.gz
+& tar -czf $archive -C $contextRoot .
+if ($LASTEXITCODE -ne 0) { throw "tar failed with exit code $LASTEXITCODE" }
+& ssh -p 2222 root@23.95.229.165 "mkdir -p /opt/sub2api-build/sub2api-custom-$tag"
+if ($LASTEXITCODE -ne 0) { throw "ssh failed with exit code $LASTEXITCODE" }
+& scp -P 2222 $archive root@23.95.229.165:/opt/sub2api-build/sub2api-custom-$tag/context.tar.gz
+if ($LASTEXITCODE -ne 0) { throw "scp failed with exit code $LASTEXITCODE" }
 ```
 
 ```bash
-tag=0.1.155-ui2
+tag=0.1.155-ui3
 cd /opt/sub2api-build/sub2api-custom-$tag
 rm -rf context
 mkdir context
@@ -184,8 +199,8 @@ The archive must place `Dockerfile`, `build-local/`, `backend/`, and `deploy/` a
 
 ```bash
 cd /opt/sub2api-deploy
-old_tag=0.1.153-ui2
-new_tag=0.1.155-ui2
+old_tag=0.1.155-ui2
+new_tag=0.1.155-ui3
 backup_suffix=bak-v0155
 ts=$(date +%Y%m%d-%H%M%S)
 cp docker-compose.override.yml docker-compose.override.yml.$backup_suffix-$ts
@@ -222,5 +237,6 @@ Then verify `/custom/usage-leaderboard` in the browser. The iframe should load, 
 - The only recurring custom-file overlap is `backend/internal/config/config.go`; the merge preserves `https://pay.ldxp.cn` in the payment CSP alongside the new server-timing and image-keepalive settings.
 - The custom image also includes the homepage real-time concurrency feature already deployed in the `0.1.153-ui2` production lineage.
 - Migrations add usage-log and system-log columns, a concurrent system-log host index, OpenAI account JSON defaults/triggers, and Grok monitor constraints. `0.1.153-ui2` can tolerate the additive schema for immediate rollback, but operators should not create Grok monitor data while running the old image.
+- `0.1.155-ui3` adds the CI-safe concurrency type guard and preserves the integration-test Redis prefix hook; production rollback targets `0.1.155-ui2`.
 - External payment-page and leaderboard validation remain intentionally skipped at the operator's request.
 - Verify the runtime through the custom image tag, linked build metadata, `/health`, public settings, migration rows, index readiness, and startup logs.
