@@ -57,6 +57,10 @@ export default {
       balanceQuota: '用多少付多少',
       balanceQuotaDesc: '按实际使用量计费，支持设置配额上限，团队用量一目了然。'
     },
+    realtimeConcurrency: {
+      title: '实时 API 并发',
+      refreshHint: '每 5 秒更新'
+    },
     // 优势对比
     comparison: {
       title: '为什么选择我们？',
