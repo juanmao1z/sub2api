@@ -103,7 +103,10 @@ func (s *OpsService) GetPublicHomepageStatus(ctx context.Context) (*PublicHomepa
 		if result.Err != nil {
 			return nil, result.Err
 		}
-		status := result.Val.(PublicHomepageStatus)
+		status, ok := result.Val.(PublicHomepageStatus)
+		if !ok {
+			return nil, newPublicHomepageUnavailableError()
+		}
 		return &status, nil
 	}
 }
