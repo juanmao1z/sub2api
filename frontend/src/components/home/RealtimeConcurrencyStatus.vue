@@ -6,7 +6,7 @@
         aria-hidden="true"
         class="h-2 w-2 rounded-full"
         :class="
-          available
+          hasValidData
             ? 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.65)]'
             : 'bg-gray-300 dark:bg-dark-600'
         "
@@ -30,7 +30,12 @@ import { useI18n } from 'vue-i18n'
 
 const props = defineProps<{ current: number | null; available: boolean }>()
 const { t } = useI18n()
-const displayValue = computed(() =>
-  props.available && props.current !== null ? String(props.current) : '--',
+const hasValidData = computed(
+  () =>
+    props.available &&
+    props.current !== null &&
+    Number.isInteger(props.current) &&
+    props.current >= 0,
 )
+const displayValue = computed(() => (hasValidData.value ? String(props.current) : '--'))
 </script>

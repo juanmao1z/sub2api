@@ -51,4 +51,15 @@ describe('RealtimeConcurrencyStatus', () => {
     expect(wrapper.text()).toContain('Updates every 5 seconds')
     expect(wrapper.get('[data-testid="status-dot"]').classes()).not.toContain('bg-emerald-500')
   })
+
+  it.each([
+    { name: 'negative', current: -1 },
+    { name: 'non-integer', current: 1.5 },
+    { name: 'null', current: null },
+  ])('treats $name current as unavailable even when available is true', ({ current }) => {
+    const wrapper = mountStatus(current, true, 'en')
+
+    expect(wrapper.text()).toContain('--')
+    expect(wrapper.get('[data-testid="status-dot"]').classes()).not.toContain('bg-emerald-500')
+  })
 })

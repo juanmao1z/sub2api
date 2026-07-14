@@ -90,6 +90,10 @@ func (c *ingressLeaseCacheForTest) ReleaseOpenAIWSIngressLease(ctx context.Conte
 var _ ConcurrencyCache = (*stubConcurrencyCacheForTest)(nil)
 var _ OpenAIWSIngressLeaseCache = (*ingressLeaseCacheForTest)(nil)
 
+type concurrencyCacheWithoutTotalForTest struct {
+	ConcurrencyCache
+}
+
 func (c *stubConcurrencyCacheForTest) AcquireAccountSlot(_ context.Context, _ int64, _ int, _ string) (bool, error) {
 	return c.acquireResult, c.acquireErr
 }
@@ -213,6 +217,15 @@ func TestConcurrencyService_GetTotalAccountConcurrency(t *testing.T) {
 func TestConcurrencyService_GetTotalAccountConcurrencyRejectsUnavailableCache(t *testing.T) {
 	_, err := NewConcurrencyService(nil).GetTotalAccountConcurrency(context.Background())
 	require.Error(t, err)
+}
+
+func TestConcurrencyService_GetTotalAccountConcurrencyRejectsUnsupportedCache(t *testing.T) {
+	cache := &concurrencyCacheWithoutTotalForTest{
+		ConcurrencyCache: &stubConcurrencyCacheForTest{},
+	}
+
+	_, err := NewConcurrencyService(cache).GetTotalAccountConcurrency(context.Background())
+	require.EqualError(t, err, "total account concurrency is unsupported")
 }
 
 func TestConcurrencyService_GetTotalAccountConcurrencyRejectsNegativeValue(t *testing.T) {

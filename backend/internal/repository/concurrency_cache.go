@@ -632,27 +632,41 @@ func (c *concurrencyCache) GetTotalAccountConcurrency(ctx context.Context) (int,
 	if err != nil {
 		return 0, err
 	}
-	members, err := c.rdb.ZRangeByScore(ctx, accountActiveIndexKey, &redis.ZRangeBy{
-		Min: "(" + strconv.FormatInt(now, 10),
-		Max: "+inf",
-	}).Result()
-	if err != nil {
-		return 0, fmt.Errorf("read active account index: %w", err)
-	}
-	accountIDs := make([]int64, 0, len(members))
-	for _, member := range members {
-		accountID, parseErr := strconv.ParseInt(member, 10, 64)
-		if parseErr == nil && accountID > 0 {
-			accountIDs = append(accountIDs, accountID)
-		}
-	}
-	counts, err := c.GetAccountConcurrencyBatch(ctx, accountIDs)
-	if err != nil {
-		return 0, err
-	}
+
 	total := 0
-	for _, count := range counts {
-		total += count
+	for offset := int64(0); ; {
+		members, rangeErr := c.rdb.ZRangeByScore(ctx, accountActiveIndexKey, &redis.ZRangeBy{
+			Min:    "(" + strconv.FormatInt(now, 10),
+			Max:    "+inf",
+			Offset: offset,
+			Count:  activeIndexPipelineChunkSize,
+		}).Result()
+		if rangeErr != nil {
+			return 0, fmt.Errorf("read active account index: %w", rangeErr)
+		}
+		if len(members) == 0 {
+			break
+		}
+
+		accountIDs := make([]int64, 0, len(members))
+		for _, member := range members {
+			accountID, parseErr := strconv.ParseInt(member, 10, 64)
+			if parseErr == nil && accountID > 0 {
+				accountIDs = append(accountIDs, accountID)
+			}
+		}
+		counts, batchErr := c.GetAccountConcurrencyBatch(ctx, accountIDs)
+		if batchErr != nil {
+			return 0, batchErr
+		}
+		for _, count := range counts {
+			total += count
+		}
+
+		offset += int64(len(members))
+		if len(members) < activeIndexPipelineChunkSize {
+			break
+		}
 	}
 	return total, nil
 }

@@ -106,6 +106,17 @@ type blockingTotalConcurrencyCacheForTest struct {
 	once    sync.Once
 }
 
+type observedDoneContextForTest struct {
+	context.Context
+	observed chan struct{}
+	once     sync.Once
+}
+
+func (c *observedDoneContextForTest) Done() <-chan struct{} {
+	c.once.Do(func() { close(c.observed) })
+	return c.Context.Done()
+}
+
 func (c *blockingTotalConcurrencyCacheForTest) GetTotalAccountConcurrency(ctx context.Context) (int, error) {
 	c.totalAccountConcurrencyCalls.Add(1)
 	c.once.Do(func() { close(c.started) })
@@ -155,6 +166,66 @@ func TestOpsService_GetPublicConcurrencyCoalescesConcurrentColdCache(t *testing.
 		require.NotNil(t, status)
 		require.Equal(t, 9, status.Current)
 		require.False(t, status.UpdatedAt.Before(aggregationCompletedAfter))
+	}
+	require.Equal(t, int64(1), cache.totalAccountConcurrencyCalls.Load())
+}
+
+func TestOpsService_GetPublicConcurrencyCanceledLeaderDoesNotCancelSharedRefresh(t *testing.T) {
+	cache := &blockingTotalConcurrencyCacheForTest{
+		stubConcurrencyCacheForTest: stubConcurrencyCacheForTest{totalAccountConcurrency: 11},
+		started:                     make(chan struct{}),
+		release:                     make(chan struct{}),
+	}
+	svc := &OpsService{
+		concurrencyService:        NewConcurrencyService(cache),
+		publicConcurrencyCacheTTL: 2 * time.Second,
+	}
+
+	leaderCtx, cancelLeader := context.WithCancel(context.Background())
+	leaderErr := make(chan error, 1)
+	go func() {
+		_, err := svc.GetPublicConcurrency(leaderCtx)
+		leaderErr <- err
+	}()
+
+	<-cache.started
+	cancelLeader()
+	select {
+	case err := <-leaderErr:
+		require.ErrorIs(t, err, context.Canceled)
+	case <-time.After(time.Second):
+		t.Fatal("canceled leader did not return promptly")
+	}
+
+	type result struct {
+		status *PublicConcurrencyStatus
+		err    error
+	}
+	followerBaseCtx, cancelFollower := context.WithCancel(context.Background())
+	defer cancelFollower()
+	followerCtx := &observedDoneContextForTest{
+		Context:  followerBaseCtx,
+		observed: make(chan struct{}),
+	}
+	followerResult := make(chan result, 1)
+	go func() {
+		status, err := svc.GetPublicConcurrency(followerCtx)
+		followerResult <- result{status: status, err: err}
+	}()
+
+	select {
+	case <-followerCtx.observed:
+	case <-time.After(time.Second):
+		t.Fatal("follower did not join the shared refresh")
+	}
+	close(cache.release)
+	select {
+	case got := <-followerResult:
+		require.NoError(t, got.err)
+		require.NotNil(t, got.status)
+		require.Equal(t, 11, got.status.Current)
+	case <-time.After(time.Second):
+		t.Fatal("follower did not receive the shared refresh result")
 	}
 	require.Equal(t, int64(1), cache.totalAccountConcurrencyCalls.Load())
 }

@@ -9,6 +9,7 @@ import (
 
 const (
 	defaultPublicConcurrencyCacheTTL = 2 * time.Second
+	publicConcurrencyRefreshTimeout  = 3 * time.Second
 	publicConcurrencyFlightKey       = "public-concurrency"
 	publicConcurrencyUnavailable     = "CONCURRENCY_STATUS_UNAVAILABLE"
 )
@@ -27,6 +28,9 @@ func (s *OpsService) GetPublicConcurrency(ctx context.Context) (*PublicConcurren
 	if s == nil || s.concurrencyService == nil {
 		return nil, newPublicConcurrencyUnavailableError()
 	}
+	if ctx == nil {
+		ctx = context.Background()
+	}
 
 	now := time.Now().UTC()
 	s.publicConcurrencyMu.Lock()
@@ -37,7 +41,7 @@ func (s *OpsService) GetPublicConcurrency(ctx context.Context) (*PublicConcurren
 	}
 	s.publicConcurrencyMu.Unlock()
 
-	value, err, _ := s.publicConcurrencyGroup.Do(publicConcurrencyFlightKey, func() (any, error) {
+	resultCh := s.publicConcurrencyGroup.DoChan(publicConcurrencyFlightKey, func() (any, error) {
 		now := time.Now().UTC()
 		s.publicConcurrencyMu.Lock()
 		if now.Before(s.publicConcurrencyCache.expiresAt) {
@@ -47,7 +51,9 @@ func (s *OpsService) GetPublicConcurrency(ctx context.Context) (*PublicConcurren
 		}
 		s.publicConcurrencyMu.Unlock()
 
-		current, err := s.concurrencyService.GetTotalAccountConcurrency(ctx)
+		refreshCtx, cancel := context.WithTimeout(context.Background(), publicConcurrencyRefreshTimeout)
+		defer cancel()
+		current, err := s.concurrencyService.GetTotalAccountConcurrency(refreshCtx)
 		if err != nil {
 			return nil, newPublicConcurrencyUnavailableError().WithCause(err)
 		}
@@ -68,11 +74,17 @@ func (s *OpsService) GetPublicConcurrency(ctx context.Context) (*PublicConcurren
 
 		return status, nil
 	})
-	if err != nil {
-		return nil, err
+
+	select {
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	case result := <-resultCh:
+		if result.Err != nil {
+			return nil, result.Err
+		}
+		status := result.Val.(PublicConcurrencyStatus)
+		return &status, nil
 	}
-	status := value.(PublicConcurrencyStatus)
-	return &status, nil
 }
 
 func newPublicConcurrencyUnavailableError() *infraerrors.ApplicationError {
