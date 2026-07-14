@@ -561,12 +561,10 @@ func (s *ConcurrencyCacheSuite) TestTotalAccountConcurrency_BoundsPipelineChunks
 	_, err = seed.Exec(s.ctx)
 	require.NoError(s.T(), err)
 
-	observedClient := redis.NewClient(s.rdb.Options())
-	s.T().Cleanup(func() { require.NoError(s.T(), observedClient.Close()) })
 	hook := &pipelineCommandLimitHook{limit: activeIndexPipelineChunkSize * 2}
-	observedClient.AddHook(hook)
+	s.rdb.AddHook(hook)
 	cache := NewConcurrencyCache(
-		observedClient,
+		s.rdb,
 		testSlotTTLMinutes,
 		int(testSlotTTL.Seconds()),
 	).(*concurrencyCache)

@@ -82,7 +82,10 @@ func (s *OpsService) GetPublicConcurrency(ctx context.Context) (*PublicConcurren
 		if result.Err != nil {
 			return nil, result.Err
 		}
-		status := result.Val.(PublicConcurrencyStatus)
+		status, ok := result.Val.(PublicConcurrencyStatus)
+		if !ok {
+			return nil, newPublicConcurrencyUnavailableError()
+		}
 		return &status, nil
 	}
 }
