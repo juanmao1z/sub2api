@@ -18,7 +18,7 @@ $oldTag = 'v0.1.153'
 $newTag = 'v0.1.155'
 $oldImageTag = '0.1.155-ui2'
 $newImageTag = '0.1.155-ui3'
-$backupSuffix = 'bak-v0155'
+$backupSuffix = 'bak-v0155-ui3'
 ```
 
 ## 1. Confirm the Upstream Tag
@@ -201,11 +201,11 @@ The archive must place `Dockerfile`, `build-local/`, `backend/`, and `deploy/` a
 cd /opt/sub2api-deploy
 old_tag=0.1.155-ui2
 new_tag=0.1.155-ui3
-backup_suffix=bak-v0155
+backup_suffix=bak-v0155-ui3
 ts=$(date +%Y%m%d-%H%M%S)
 cp docker-compose.override.yml docker-compose.override.yml.$backup_suffix-$ts
 sed -i "s#sub2api-custom:${old_tag}#sub2api-custom:${new_tag}#" docker-compose.override.yml
-docker compose -f docker-compose.local.yml -f docker-compose.override.yml -f docker-compose.leaderboard.yml up -d sub2api
+docker compose -f docker-compose.local.yml -f docker-compose.override.yml -f docker-compose.leaderboard.yml up -d --no-deps sub2api
 ```
 
 ```bash
@@ -224,12 +224,11 @@ exit 1
 cd /opt/sub2api-deploy
 docker compose -f docker-compose.local.yml -f docker-compose.override.yml -f docker-compose.leaderboard.yml ps
 curl -fsS http://127.0.0.1:8080/health
-curl -fsS http://127.0.0.1:8095/leaderboard/health
 docker exec sub2api-postgres psql -U sub2api -d sub2api -c "\d public.usage_logs"
 docker exec sub2api-postgres psql -U sub2api -d sub2api -c "\d public.users"
 ```
 
-Then verify `/custom/usage-leaderboard` in the browser. The iframe should load, and the visible URL should not retain the user token.
+For this `v0.1.155-ui3` deployment, external payment-page and leaderboard functional checks are intentionally skipped at the operator's request.
 
 ## 10. Notes From `v0.1.155`
 
