@@ -13,8 +13,8 @@ Set these values first, then keep every example aligned with them:
 ```powershell
 $oldTag = 'v0.1.153'
 $newTag = 'v0.1.155'
-$oldImageTag = '0.1.153-ui1'
-$newImageTag = '0.1.155-ui1'
+$oldImageTag = '0.1.153-ui2'
+$newImageTag = '0.1.155-ui2'
 $backupSuffix = 'bak-v0155'
 ```
 
@@ -138,7 +138,7 @@ cd D:\Desktop\sub2api\sub2api-custom
 pnpm --dir frontend run build
 
 cd D:\Desktop\sub2api\sub2api-custom\backend
-$tag = '0.1.155-ui1'
+$tag = '0.1.155-ui2'
 New-Item -ItemType Directory -Force -Path '..\build-local' | Out-Null
 $commit = git -C .. rev-parse --short HEAD
 $date = (Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ')
@@ -150,7 +150,7 @@ go build -tags embed -trimpath -ldflags "-s -w -X main.Version=$tag -X main.Comm
 
 ```powershell
 cd D:\Desktop\sub2api\sub2api-custom
-$tag = '0.1.155-ui1'
+$tag = '0.1.155-ui2'
 $artifactRoot = Join-Path (Get-Location) 'deploy-artifacts'
 $contextRoot = Join-Path $artifactRoot "sub2api-custom-$tag-context"
 $archive = Join-Path $artifactRoot "sub2api-custom-$tag-context.tar.gz"
@@ -169,7 +169,7 @@ scp $archive root@23.95.229.165:/opt/sub2api-build/sub2api-custom-$tag/context.t
 ```
 
 ```bash
-tag=0.1.155-ui1
+tag=0.1.155-ui2
 cd /opt/sub2api-build/sub2api-custom-$tag
 rm -rf context
 mkdir context
@@ -184,8 +184,8 @@ The archive must place `Dockerfile`, `build-local/`, `backend/`, and `deploy/` a
 
 ```bash
 cd /opt/sub2api-deploy
-old_tag=0.1.153-ui1
-new_tag=0.1.155-ui1
+old_tag=0.1.153-ui2
+new_tag=0.1.155-ui2
 backup_suffix=bak-v0155
 ts=$(date +%Y%m%d-%H%M%S)
 cp docker-compose.override.yml docker-compose.override.yml.$backup_suffix-$ts
@@ -220,6 +220,7 @@ Then verify `/custom/usage-leaderboard` in the browser. The iframe should load, 
 
 - The upstream release changes 238 files for Grok health monitoring and Web SSO import, optional server timing, OpenAI long-context billing, scheduler rebuild fixes, image keepalive, and Responses namespace preservation.
 - The only recurring custom-file overlap is `backend/internal/config/config.go`; the merge preserves `https://pay.ldxp.cn` in the payment CSP alongside the new server-timing and image-keepalive settings.
-- Migrations add usage-log and system-log columns, a concurrent system-log host index, OpenAI account JSON defaults/triggers, and Grok monitor constraints. `0.1.153-ui1` can tolerate the additive schema for immediate rollback, but operators should not create Grok monitor data while running the old image.
+- The custom image also includes the homepage real-time concurrency feature already deployed in the `0.1.153-ui2` production lineage.
+- Migrations add usage-log and system-log columns, a concurrent system-log host index, OpenAI account JSON defaults/triggers, and Grok monitor constraints. `0.1.153-ui2` can tolerate the additive schema for immediate rollback, but operators should not create Grok monitor data while running the old image.
 - External payment-page and leaderboard validation remain intentionally skipped at the operator's request.
 - Verify the runtime through the custom image tag, linked build metadata, `/health`, public settings, migration rows, index readiness, and startup logs.
