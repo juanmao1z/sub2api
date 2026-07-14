@@ -7,33 +7,65 @@ import zhLanding from '@/i18n/locales/zh/landing'
 const source = readFileSync(resolve(process.cwd(), 'src/views/HomeView.vue'), 'utf8')
 
 describe('HomeView default content', () => {
-  it('replaces the provider section and footer with the realtime status after the feature grid', () => {
+  it('uses the status-first brand layout and removes the old marketing surface', () => {
+    expect(source).toContain('home.status.stable')
+    expect(source).toContain('{{ siteName }}')
+    expect(source).toContain('useHomepageStatus(showDefaultHome, 60_000)')
+    expect(source).toContain('usage-leaderboard')
+    expect(source).toContain('custom_menu_items')
+    expect(source).toContain("sanitizeUrl(item?.url || '', { allowRelative: true })")
+
+    expect(source).not.toContain('siteSubtitle')
+    expect(source).not.toContain('RealtimeConcurrencyStatus')
+    expect(source).not.toContain('useRealtimeConcurrency')
+    expect(source).not.toContain('terminal-window')
+    expect(source).not.toContain('home.features.')
+    expect(source).not.toContain('home.tags.')
     expect(source).not.toContain('home.providers.')
-    expect(source).not.toContain('<footer')
-    expect(source).not.toContain('githubUrl')
-    expect(source).not.toContain('currentYear')
-    expect(source).toContain('<RealtimeConcurrencyStatus')
-    expect(source).toContain('useRealtimeConcurrency')
-    expect(source).toMatch(
-      /t\('home\.features\.balanceQuotaDesc'\)[\s\S]*?<\/p>\s*<\/div>\s*<\/div>\s*<RealtimeConcurrencyStatus/,
-    )
   })
 
   it('keeps polling disabled until settings resolve to the default home', () => {
     expect(source).toContain(
       'computed(() => appStore.publicSettingsLoaded && !homeContent.value)',
     )
-    expect(source).toContain('useRealtimeConcurrency(showDefaultHome, 5000)')
+    expect(source).toContain('useHomepageStatus(showDefaultHome, 60_000)')
   })
 
-  it('defines the exact realtime status copy in both locales', () => {
-    expect(zhLanding.home.realtimeConcurrency).toEqual({
-      title: '实时 API 并发',
-      refreshHint: '每 5 秒更新',
+  it('keeps custom URL and HTML home modes intact', () => {
+    expect(source).toContain('v-if="homeContent"')
+    expect(source).toContain('v-if="isHomeContentUrl"')
+    expect(source).toContain(':src="homeContent.trim()"')
+    expect(source).toContain('v-else v-html="homeContent"')
+  })
+
+  it('defines the homepage navigation and status copy in both locales', () => {
+    expect(zhLanding.home.navigation).toEqual({
+      home: '首页',
+      dashboard: '控制台',
+      redeem: '兑换码',
+      leaderboard: '排行榜',
+      openMenu: '打开导航菜单',
+      closeMenu: '关闭导航菜单',
     })
-    expect(enLanding.home.realtimeConcurrency).toEqual({
-      title: 'Live API concurrency',
-      refreshHint: 'Updates every 5 seconds',
+    expect(enLanding.home.navigation).toEqual({
+      home: 'Home',
+      dashboard: 'Dashboard',
+      redeem: 'Redeem',
+      leaderboard: 'Leaderboard',
+      openMenu: 'Open navigation menu',
+      closeMenu: 'Close navigation menu',
+    })
+    expect(zhLanding.home.status).toMatchObject({
+      stable: '本站已稳定运行',
+      activeUsers: '近 1 小时活跃用户',
+      successRate: '今日成功率',
+      totalTokens: '累计处理 Token',
+    })
+    expect(enLanding.home.status).toMatchObject({
+      stable: 'Service uptime',
+      activeUsers: 'Active users (1h)',
+      successRate: 'Success rate today',
+      totalTokens: 'Total tokens processed',
     })
   })
 })

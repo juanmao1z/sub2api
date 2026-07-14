@@ -10,26 +10,43 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type publicConcurrencyProvider interface {
+type publicStatusProvider interface {
 	GetPublicConcurrency(context.Context) (*service.PublicConcurrencyStatus, error)
+	GetPublicHomepageStatus(context.Context) (*service.PublicHomepageStatus, error)
 }
 
 // RegisterCommonRoutes 注册通用路由（健康检查、状态等）
-func RegisterCommonRoutes(r *gin.Engine, concurrencyProvider publicConcurrencyProvider) {
+func RegisterCommonRoutes(r *gin.Engine, statusProvider publicStatusProvider) {
 	// 健康检查
 	r.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"status": "ok"})
 	})
 
 	r.GET("/api/v1/status/concurrency", func(c *gin.Context) {
-		if concurrencyProvider == nil {
+		if statusProvider == nil {
 			response.ErrorFrom(c, infraerrors.ServiceUnavailable(
 				"CONCURRENCY_STATUS_UNAVAILABLE",
 				"realtime concurrency unavailable",
 			))
 			return
 		}
-		status, err := concurrencyProvider.GetPublicConcurrency(c.Request.Context())
+		status, err := statusProvider.GetPublicConcurrency(c.Request.Context())
+		if err != nil {
+			response.ErrorFrom(c, err)
+			return
+		}
+		c.JSON(http.StatusOK, status)
+	})
+
+	r.GET("/api/v1/status/homepage", func(c *gin.Context) {
+		if statusProvider == nil {
+			response.ErrorFrom(c, infraerrors.ServiceUnavailable(
+				"HOMEPAGE_STATUS_UNAVAILABLE",
+				"homepage status unavailable",
+			))
+			return
+		}
+		status, err := statusProvider.GetPublicHomepageStatus(c.Request.Context())
 		if err != nil {
 			response.ErrorFrom(c, err)
 			return

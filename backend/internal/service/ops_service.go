@@ -38,6 +38,11 @@ type OpsService struct {
 	publicConcurrencyCache    cachedPublicConcurrency
 	publicConcurrencyCacheTTL time.Duration
 	publicConcurrencyGroup    singleflight.Group
+	publicHomepageRepo        PublicHomepageStatusRepository
+	publicHomepageMu          sync.Mutex
+	publicHomepageCache       cachedPublicHomepageStatus
+	publicHomepageCacheTTL    time.Duration
+	publicHomepageGroup       singleflight.Group
 	gatewayService            *GatewayService
 	openAIGatewayService      *OpenAIGatewayService
 	geminiCompatService       *GeminiMessagesCompatService
@@ -101,11 +106,15 @@ func NewOpsService(
 
 		concurrencyService:        concurrencyService,
 		publicConcurrencyCacheTTL: defaultPublicConcurrencyCacheTTL,
+		publicHomepageCacheTTL:    defaultPublicHomepageCacheTTL,
 		gatewayService:            gatewayService,
 		openAIGatewayService:      openAIGatewayService,
 		geminiCompatService:       geminiCompatService,
 		antigravityGatewayService: antigravityGatewayService,
 		systemLogSink:             systemLogSink,
+	}
+	if repo, ok := opsRepo.(PublicHomepageStatusRepository); ok {
+		svc.publicHomepageRepo = repo
 	}
 	svc.applyRuntimeLogConfigOnStartup(context.Background())
 	return svc

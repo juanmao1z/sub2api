@@ -14,6 +14,27 @@ export default {
     login: 'Login',
     getStarted: 'Get Started',
     goToDashboard: 'Go to Dashboard',
+    navigation: {
+      home: 'Home',
+      dashboard: 'Dashboard',
+      redeem: 'Redeem',
+      leaderboard: 'Leaderboard',
+      openMenu: 'Open navigation menu',
+      closeMenu: 'Close navigation menu'
+    },
+    status: {
+      stable: 'Service uptime',
+      since: 'Since {date} UTC+8',
+      activeUsers: 'Active users (1h)',
+      successRate: 'Success rate today',
+      totalTokens: 'Total tokens processed',
+      years: 'y',
+      months: 'mo',
+      days: 'd',
+      hours: 'h',
+      minutes: 'm',
+      seconds: 's'
+    },
     // User-focused value proposition
     heroSubtitle: 'One Key, All AI Models',
     heroDescription: 'No need to manage multiple subscriptions. Access Claude, GPT, Gemini and more with a single API key',
