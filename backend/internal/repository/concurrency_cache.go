@@ -627,6 +627,59 @@ func (c *concurrencyCache) GetAccountConcurrencyBatch(ctx context.Context, accou
 	return result, nil
 }
 
+func (c *concurrencyCache) GetTotalAccountConcurrency(ctx context.Context) (int, error) {
+	now, err := c.redisUnixSeconds(ctx)
+	if err != nil {
+		return 0, err
+	}
+
+	return totalAccountConcurrencyFromSnapshot(
+		ctx,
+		func(ctx context.Context) ([]string, error) {
+			return c.rdb.ZRangeByScore(ctx, accountActiveIndexKey, &redis.ZRangeBy{
+				Min: "(" + strconv.FormatInt(now, 10),
+				Max: "+inf",
+			}).Result()
+		},
+		c.GetAccountConcurrencyBatch,
+	)
+}
+
+func totalAccountConcurrencyFromSnapshot(
+	ctx context.Context,
+	readActiveMembers func(context.Context) ([]string, error),
+	readBatch func(context.Context, []int64) (map[int64]int, error),
+) (int, error) {
+	members, err := readActiveMembers(ctx)
+	if err != nil {
+		return 0, fmt.Errorf("read active account index: %w", err)
+	}
+
+	total := 0
+	for start := 0; start < len(members); start += activeIndexPipelineChunkSize {
+		end := start + activeIndexPipelineChunkSize
+		if end > len(members) {
+			end = len(members)
+		}
+
+		accountIDs := make([]int64, 0, end-start)
+		for _, member := range members[start:end] {
+			accountID, parseErr := strconv.ParseInt(member, 10, 64)
+			if parseErr == nil && accountID > 0 {
+				accountIDs = append(accountIDs, accountID)
+			}
+		}
+		counts, batchErr := readBatch(ctx, accountIDs)
+		if batchErr != nil {
+			return 0, batchErr
+		}
+		for _, count := range counts {
+			total += count
+		}
+	}
+	return total, nil
+}
+
 // User slot operations
 
 func (c *concurrencyCache) AcquireUserSlot(ctx context.Context, userID int64, maxConcurrency int, requestID string) (bool, error) {

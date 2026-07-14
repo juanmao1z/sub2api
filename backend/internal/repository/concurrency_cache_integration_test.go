@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -42,6 +43,35 @@ type apiKeyConcurrencyCacheForTest interface {
 	TrackAPIKeySlot(ctx context.Context, apiKeyID int64, requestID string) error
 	ReleaseAPIKeySlot(ctx context.Context, apiKeyID int64, requestID string) error
 	GetAPIKeyConcurrencyBatch(ctx context.Context, apiKeyIDs []int64) (map[int64]int, error)
+}
+
+type pipelineCommandLimitHook struct {
+	limit   int
+	largest atomic.Int64
+}
+
+func (h *pipelineCommandLimitHook) DialHook(next redis.DialHook) redis.DialHook {
+	return next
+}
+
+func (h *pipelineCommandLimitHook) ProcessHook(next redis.ProcessHook) redis.ProcessHook {
+	return next
+}
+
+func (h *pipelineCommandLimitHook) ProcessPipelineHook(next redis.ProcessPipelineHook) redis.ProcessPipelineHook {
+	return func(ctx context.Context, cmds []redis.Cmder) error {
+		commandCount := int64(len(cmds))
+		for {
+			previous := h.largest.Load()
+			if commandCount <= previous || h.largest.CompareAndSwap(previous, commandCount) {
+				break
+			}
+		}
+		if len(cmds) > h.limit {
+			return fmt.Errorf("pipeline contained %d commands, limit is %d", len(cmds), h.limit)
+		}
+		return next(ctx, cmds)
+	}
 }
 
 func (s *ConcurrencyCacheSuite) apiKeyConcurrencyCache() apiKeyConcurrencyCacheForTest {
@@ -476,6 +506,75 @@ func (s *ConcurrencyCacheSuite) TestGetAccountConcurrency_Missing() {
 	cur, err := s.cache.GetAccountConcurrency(s.ctx, 999)
 	require.NoError(s.T(), err)
 	require.Equal(s.T(), 0, cur)
+}
+
+func (s *ConcurrencyCacheSuite) TestTotalAccountConcurrency_UsesActiveIndexAndDropsExpiredSlots() {
+	require.NoError(s.T(), s.rdb.FlushDB(s.ctx).Err())
+
+	ok, err := s.rawCache.AcquireAccountSlot(s.ctx, 701, 5, "req-701-a")
+	require.NoError(s.T(), err)
+	require.True(s.T(), ok)
+	ok, err = s.rawCache.AcquireAccountSlot(s.ctx, 701, 5, "req-701-b")
+	require.NoError(s.T(), err)
+	require.True(s.T(), ok)
+	ok, err = s.rawCache.AcquireAccountSlot(s.ctx, 702, 5, "req-702-a")
+	require.NoError(s.T(), err)
+	require.True(s.T(), ok)
+
+	now, err := s.rawCache.redisUnixSeconds(s.ctx)
+	require.NoError(s.T(), err)
+	require.NoError(s.T(), s.rdb.ZAdd(s.ctx, accountSlotKey(703), redis.Z{
+		Score: float64(now - int64(s.rawCache.slotTTLSeconds) - 1), Member: "expired",
+	}).Err())
+	require.NoError(s.T(), s.rdb.ZAdd(s.ctx, accountActiveIndexKey, redis.Z{
+		Score: float64(now + int64(s.rawCache.slotTTLSeconds)), Member: "703",
+	}).Err())
+
+	got, err := s.rawCache.GetTotalAccountConcurrency(s.ctx)
+	require.NoError(s.T(), err)
+	require.Equal(s.T(), 3, got)
+
+	require.NoError(s.T(), s.rawCache.ReleaseAccountSlot(s.ctx, 701, "req-701-a"))
+	got, err = s.rawCache.GetTotalAccountConcurrency(s.ctx)
+	require.NoError(s.T(), err)
+	require.Equal(s.T(), 2, got)
+}
+
+func (s *ConcurrencyCacheSuite) TestTotalAccountConcurrency_BoundsPipelineChunks() {
+	require.NoError(s.T(), s.rdb.FlushDB(s.ctx).Err())
+
+	now, err := s.rawCache.redisUnixSeconds(s.ctx)
+	require.NoError(s.T(), err)
+	seed := s.rdb.Pipeline()
+	accountCount := activeIndexPipelineChunkSize + 1
+	for accountID := 1; accountID <= accountCount; accountID++ {
+		member := strconv.Itoa(accountID)
+		seed.ZAdd(s.ctx, accountActiveIndexKey, redis.Z{
+			Score:  float64(now + int64(s.rawCache.slotTTLSeconds)),
+			Member: member,
+		})
+		seed.ZAdd(s.ctx, accountSlotKey(int64(accountID)), redis.Z{
+			Score:  float64(now),
+			Member: "active",
+		})
+	}
+	_, err = seed.Exec(s.ctx)
+	require.NoError(s.T(), err)
+
+	observedClient := redis.NewClient(s.rdb.Options())
+	s.T().Cleanup(func() { require.NoError(s.T(), observedClient.Close()) })
+	hook := &pipelineCommandLimitHook{limit: activeIndexPipelineChunkSize * 2}
+	observedClient.AddHook(hook)
+	cache := NewConcurrencyCache(
+		observedClient,
+		testSlotTTLMinutes,
+		int(testSlotTTL.Seconds()),
+	).(*concurrencyCache)
+
+	total, err := cache.GetTotalAccountConcurrency(s.ctx)
+	require.NoError(s.T(), err)
+	require.Equal(s.T(), accountCount, total)
+	require.Equal(s.T(), int64(activeIndexPipelineChunkSize*2), hook.largest.Load())
 }
 
 func (s *ConcurrencyCacheSuite) TestGetUserConcurrency_Missing() {

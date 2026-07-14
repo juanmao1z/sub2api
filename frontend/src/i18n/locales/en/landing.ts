@@ -57,6 +57,10 @@ export default {
       balanceQuota: 'Pay What You Use',
       balanceQuotaDesc: 'Usage-based billing with quota limits. Full visibility into team consumption.'
     },
+    realtimeConcurrency: {
+      title: 'Live API concurrency',
+      refreshHint: 'Updates every 5 seconds'
+    },
     // Comparison section
     comparison: {
       title: 'Why Choose Us?',
