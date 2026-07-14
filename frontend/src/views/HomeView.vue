@@ -20,9 +20,9 @@
     <header class="relative z-30 shrink-0 px-4 py-4 sm:px-6 lg:px-8">
       <nav class="mx-auto flex h-10 max-w-6xl items-center justify-between" aria-label="Primary">
         <router-link to="/home" class="flex min-w-0 items-center gap-2.5" @click="closeMobileMenu">
-          <span class="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#102523] dark:bg-white">
+          <span class="flex h-9 w-9 shrink-0 items-center justify-center">
             <img
-              :src="siteLogo || '/logo.png'"
+              :src="siteLogo || '/logo.png?v=20260715'"
               :alt="`${siteName} logo`"
               class="h-full w-full object-contain"
             />
