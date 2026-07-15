@@ -89,7 +89,7 @@ GET /api/v1/status/concurrency
 
 1. 在本机完成前端构建，输出到 Go embed 目录。
 2. 在本机构建 Linux amd64 后端二进制。
-3. 在本机使用 `Dockerfile.prebuilt-binary` 构建完整运行镜像。
+3. 在本机使用 `Dockerfile.prebuilt-binary` 构建完整运行镜像；Docker Hub 不可用时，用 `Dockerfile.rebase-binary` 从上一版已验证镜像离线重建应用层。
 4. 在本机导出、压缩并计算镜像归档 SHA-256。
 5. 服务器只校验归档、执行 `docker load` 并切换应用容器。
 6. 通过镜像内 `sub2api -version` 校验版本和构建元数据。
@@ -155,6 +155,7 @@ if ($LASTEXITCODE -ne 0) { throw "backend embed tests failed" }
 | `backend/` | Go API、公开状态聚合和嵌入式前端 |
 | `deploy/` | 官方基础部署文件 |
 | `Dockerfile.prebuilt-binary` | 预编译二进制运行镜像 |
+| `Dockerfile.rebase-binary` | 无法访问镜像仓库时，从上一版可信运行镜像离线重建 |
 | `CUSTOM_UI_NOTES.md` | 当前定制边界和生产约束 |
 | `docs/custom-upgrade-workflow.md` | 上游升级、构建、部署和回滚流程 |
 

@@ -42,7 +42,7 @@
    - 预编译二进制 Dockerfile，如服务器资源不足仍需要使用
 4. 本地运行前端测试、类型检查、后端 CSP 测试和生产构建。
 5. 本地构建 Linux amd64 后端二进制到 `build-local/sub2api`。
-6. 本地用 `Dockerfile.prebuilt-binary` 构建 `sub2api-custom:0.1.156-ui1`。
+6. 本地用 `Dockerfile.prebuilt-binary` 构建 `sub2api-custom:0.1.156-ui1`；Docker Hub 不可用时，用 `Dockerfile.rebase-binary` 基于 `0.1.155-ui9` 离线重建。
 7. 本地执行 `docker save`、压缩并计算 SHA-256，上传到 `/opt/sub2api-images/0.1.156-ui1`。
 8. 服务器校验归档后只执行 `docker load`，再备份 `docker-compose.override.yml` 并只重建 `sub2api` 应用容器。
 9. 验证 `/health`、容器健康、版本信息、`/recharge`、充值页 JS 和 CSP。

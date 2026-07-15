@@ -155,7 +155,11 @@ $env:GOARCH = 'amd64'
 if ($LASTEXITCODE -ne 0) { throw "backend build failed with exit code $LASTEXITCODE" }
 
 & docker build --file Dockerfile.prebuilt-binary --tag $image .
-if ($LASTEXITCODE -ne 0) { throw "local docker build failed with exit code $LASTEXITCODE" }
+if ($LASTEXITCODE -ne 0) {
+  # Registry metadata may be unavailable even when the previous verified image is cached.
+  & docker build --file Dockerfile.rebase-binary --build-arg 'RUNTIME_BASE_IMAGE=sub2api-custom:0.1.155-ui9' --tag $image .
+  if ($LASTEXITCODE -ne 0) { throw "local Docker builds failed with exit code $LASTEXITCODE" }
+}
 & docker run --rm --entrypoint /app/sub2api $image -version
 if ($LASTEXITCODE -ne 0) { throw "image version check failed with exit code $LASTEXITCODE" }
 ```
@@ -253,3 +257,4 @@ Only after those checks:
 - Direct custom overlaps are `backend/cmd/server/VERSION`, `backend/internal/config/config.go`, `backend/internal/service/ops_service.go`, `backend/internal/web/embed_on.go`, `backend/internal/web/embed_test.go`, and `README.md`.
 - Keep the custom payment CSP, homepage status services, embedded-frontend cache behavior, branded README, default `/home` login redirect, and community modal.
 - The official `v0.1.156` tag still contains `backend/cmd/server/VERSION=0.1.155`; the custom build corrects it to `0.1.156`.
+- `Dockerfile.rebase-binary` provides a local-only fallback when Docker Hub is unavailable by replacing the application layer on the previous verified runtime image.
