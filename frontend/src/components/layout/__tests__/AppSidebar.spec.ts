@@ -54,6 +54,13 @@ describe('AppSidebar header styles', () => {
   })
 })
 
+describe('AppSidebar header navigation', () => {
+  it('routes both the logo and site name to the public home page', () => {
+    expect(componentSource).toContain("const homePath = '/home'")
+    expect(componentSource).not.toContain("isAdmin.value ? '/admin/dashboard' : '/dashboard'")
+  })
+})
+
 describe('AppSidebar recharge nav item', () => {
   it('contains the custom recharge route and label key', () => {
     expect(componentSource).toContain("path: '/recharge'")

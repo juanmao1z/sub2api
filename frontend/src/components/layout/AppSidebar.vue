@@ -250,7 +250,7 @@ const isAdmin = computed(() => authStore.isAdmin)
 const sidebarNavRef = ref<HTMLElement | null>(null)
 const isDark = ref(document.documentElement.classList.contains('dark'))
 
-const homePath = computed(() => (isAdmin.value ? '/admin/dashboard' : '/dashboard'))
+const homePath = '/home'
 
 // Track which parent nav groups are expanded
 const expandedGroups = ref<Set<string>>(new Set())
