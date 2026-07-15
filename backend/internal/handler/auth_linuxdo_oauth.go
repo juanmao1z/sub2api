@@ -39,7 +39,7 @@ const (
 	linuxDoOAuthBindUserCookieName = "linuxdo_oauth_bind_user"
 	oauthBindAccessTokenCookieName = "oauth_bind_access_token"
 	linuxDoOAuthCookieMaxAgeSec    = 10 * 60 // 10 minutes
-	linuxDoOAuthDefaultRedirectTo  = "/dashboard"
+	linuxDoOAuthDefaultRedirectTo  = "/home"
 	linuxDoOAuthDefaultFrontendCB  = "/auth/linuxdo/callback"
 
 	linuxDoOAuthMaxRedirectLen      = 2048
@@ -80,7 +80,7 @@ func (e *linuxDoTokenExchangeError) Error() string {
 }
 
 // LinuxDoOAuthStart 启动 LinuxDo Connect OAuth 登录流程。
-// GET /api/v1/auth/oauth/linuxdo/start?redirect=/dashboard
+// GET /api/v1/auth/oauth/linuxdo/start?redirect=/home
 func (h *AuthHandler) LinuxDoOAuthStart(c *gin.Context) {
 	cfg, err := h.getLinuxDoOAuthConfig(c.Request.Context())
 	if err != nil {

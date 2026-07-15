@@ -19,8 +19,14 @@ export default {
       dashboard: '控制台',
       redeem: '兑换码',
       leaderboard: '排行榜',
+      community: '社群',
       openMenu: '打开导航菜单',
       closeMenu: '关闭导航菜单'
+    },
+    community: {
+      title: '社群',
+      imageAlt: '社群图片',
+      close: '关闭社群图片'
     },
     status: {
       stable: '本站已稳定运行',

@@ -32,7 +32,7 @@ const (
 	wechatOAuthIntentCookieName   = "wechat_oauth_intent"
 	wechatOAuthModeCookieName     = "wechat_oauth_mode"
 	wechatOAuthBindUserCookieName = "wechat_oauth_bind_user"
-	wechatOAuthDefaultRedirectTo  = "/dashboard"
+	wechatOAuthDefaultRedirectTo  = "/home"
 	wechatOAuthDefaultFrontendCB  = "/auth/wechat/callback"
 	wechatOAuthProviderKey        = "wechat-main"
 	wechatOAuthLegacyProviderKey  = "wechat"

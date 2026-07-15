@@ -41,7 +41,7 @@ const (
 	oidcOAuthIntentCookieName   = "oidc_oauth_intent"
 	oidcOAuthBindUserCookieName = "oidc_oauth_bind_user"
 	oidcOAuthCookieMaxAgeSec    = 10 * 60 // 10 minutes
-	oidcOAuthDefaultRedirectTo  = "/dashboard"
+	oidcOAuthDefaultRedirectTo  = "/home"
 	oidcOAuthDefaultFrontendCB  = "/auth/oidc/callback"
 )
 
@@ -113,7 +113,7 @@ type oidcJWK struct {
 }
 
 // OIDCOAuthStart 启动通用 OIDC OAuth 登录流程。
-// GET /api/v1/auth/oauth/oidc/start?redirect=/dashboard
+// GET /api/v1/auth/oauth/oidc/start?redirect=/home
 func (h *AuthHandler) OIDCOAuthStart(c *gin.Context) {
 	cfg, err := h.getOIDCOAuthConfig(c.Request.Context())
 	if err != nil {

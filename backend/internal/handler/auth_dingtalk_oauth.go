@@ -59,7 +59,7 @@ const (
 	dingTalkOAuthIntentCookieName   = "dingtalk_oauth_intent"
 	dingTalkOAuthBindUserCookieName = "dingtalk_oauth_bind_user"
 	dingTalkOAuthCookieMaxAgeSec    = 600 // 10 分钟
-	dingTalkOAuthDefaultRedirectTo  = "/dashboard"
+	dingTalkOAuthDefaultRedirectTo  = "/home"
 	dingTalkOAuthDefaultFrontendCB  = "/auth/dingtalk/callback"
 
 	dingTalkLevelThreeEnabled = true
@@ -111,7 +111,7 @@ func clearDingTalkCookie(c *gin.Context, name string, secure bool) {
 // ─── DingTalkOAuthStart ────────────────────────────────────────────────────
 
 // DingTalkOAuthStart 启动 DingTalk Connect OAuth 登录流程。
-// GET /api/v1/auth/oauth/dingtalk/start?redirect=/dashboard&intent=login
+// GET /api/v1/auth/oauth/dingtalk/start?redirect=/home&intent=login
 func (h *AuthHandler) DingTalkOAuthStart(c *gin.Context) {
 	cfg, err := h.getDingTalkOAuthConfig(c.Request.Context())
 	if err != nil {

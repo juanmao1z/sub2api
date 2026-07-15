@@ -27,7 +27,7 @@ const (
 	emailOAuthProviderCookie  = "email_oauth_provider"
 	emailOAuthAffiliateCookie = "email_oauth_affiliate"
 	emailOAuthCookieMaxAgeSec = 10 * 60
-	emailOAuthDefaultRedirect = "/dashboard"
+	emailOAuthDefaultRedirect = "/home"
 )
 
 type emailOAuthTokenResponse struct {

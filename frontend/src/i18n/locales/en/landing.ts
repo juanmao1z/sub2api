@@ -19,8 +19,14 @@ export default {
       dashboard: 'Dashboard',
       redeem: 'Redeem',
       leaderboard: 'Leaderboard',
+      community: 'Community',
       openMenu: 'Open navigation menu',
       closeMenu: 'Close navigation menu'
+    },
+    community: {
+      title: 'Community',
+      imageAlt: 'Community image',
+      close: 'Close community image'
     },
     status: {
       stable: 'Service uptime',

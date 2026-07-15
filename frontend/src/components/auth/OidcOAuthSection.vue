@@ -46,7 +46,7 @@ const normalizedProviderName = computed(() => {
 const providerInitial = computed(() => normalizedProviderName.value.charAt(0).toUpperCase() || 'O')
 
 function startLogin(): void {
-  const redirectTo = (route.query.redirect as string) || '/dashboard'
+  const redirectTo = (route.query.redirect as string) || '/home'
   storeOAuthAffiliateCode(resolveAffiliateReferralCode(props.affCode, route.query.aff, route.query.aff_code))
   const apiBase = (import.meta.env.VITE_API_BASE_URL as string | undefined) || '/api/v1'
   const normalized = apiBase.replace(/\/$/, '')

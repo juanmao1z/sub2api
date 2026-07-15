@@ -15,6 +15,10 @@ describe('HomeView default content', () => {
     expect(source).toContain(
       "const leaderboardUrl = 'https://api.zhouz.online/custom/usage-leaderboard'",
     )
+    expect(source).toContain("src=\"/community-placeholder.jpg?v=20260715\"")
+    expect(source).toContain("{{ t('home.navigation.community') }}")
+    expect(source).toContain('aria-haspopup="dialog"')
+    expect(source).toContain('@click.self="closeCommunity"')
     expect(source).toContain('font-[720]')
     expect(source).not.toContain('siteSubtitle')
     expect(source).not.toContain('RealtimeConcurrencyStatus')
@@ -45,6 +49,7 @@ describe('HomeView default content', () => {
       dashboard: '控制台',
       redeem: '兑换码',
       leaderboard: '排行榜',
+      community: '社群',
       openMenu: '打开导航菜单',
       closeMenu: '关闭导航菜单',
     })
@@ -53,6 +58,7 @@ describe('HomeView default content', () => {
       dashboard: 'Dashboard',
       redeem: 'Redeem',
       leaderboard: 'Leaderboard',
+      community: 'Community',
       openMenu: 'Open navigation menu',
       closeMenu: 'Close navigation menu',
     })

@@ -276,7 +276,7 @@ const needsInvitation = ref(false)
 const invitationCode = ref('')
 const isSubmitting = ref(false)
 const invitationError = ref('')
-const redirectTo = ref('/dashboard')
+const redirectTo = ref('/home')
 const adoptionRequired = ref(false)
 const suggestedDisplayName = ref('')
 const suggestedAvatarUrl = ref('')
@@ -380,11 +380,11 @@ function readLegacyFragmentLogin(params: URLSearchParams): OAuthTokenResponse | 
 }
 
 function sanitizeRedirectPath(path: string | null | undefined): string {
-  if (!path) return '/dashboard'
-  if (!path.startsWith('/')) return '/dashboard'
-  if (path.startsWith('//')) return '/dashboard'
-  if (path.includes('://')) return '/dashboard'
-  if (path.includes('\n') || path.includes('\r')) return '/dashboard'
+  if (!path) return '/home'
+  if (!path.startsWith('/')) return '/home'
+  if (path.startsWith('//')) return '/home'
+  if (path.includes('://')) return '/home'
+  if (path.includes('\n') || path.includes('\r')) return '/home'
   return path
 }
 
@@ -747,7 +747,7 @@ onMounted(async () => {
   const error = params.get('error')
   const errorDesc = params.get('error_description') || params.get('error_message') || ''
   const redirect = sanitizeRedirectPath(
-    params.get('redirect') || (route.query.redirect as string | undefined) || '/dashboard'
+    params.get('redirect') || (route.query.redirect as string | undefined) || '/home'
   )
 
   try {
@@ -776,7 +776,7 @@ onMounted(async () => {
 
     const completion = await exchangePendingOAuthCompletion()
     const completionRedirect = sanitizeRedirectPath(
-      completion.redirect || (route.query.redirect as string | undefined) || '/dashboard'
+      completion.redirect || (route.query.redirect as string | undefined) || '/home'
     )
     applyAdoptionSuggestionState(completion)
     redirectTo.value = completionRedirect
