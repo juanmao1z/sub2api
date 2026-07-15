@@ -211,7 +211,7 @@
           role="dialog"
           aria-modal="true"
           aria-labelledby="community-dialog-title"
-          class="w-full max-w-md overflow-hidden rounded-lg border border-[#dce5e1] bg-white shadow-2xl dark:border-[#33413d] dark:bg-[#17201e]"
+          class="flex max-h-[calc(100vh-2rem)] w-full max-w-md flex-col overflow-hidden rounded-lg border border-[#dce5e1] bg-white shadow-2xl dark:border-[#33413d] dark:bg-[#17201e]"
         >
           <header class="flex h-12 items-center justify-between border-b border-[#e4ebe8] px-4 dark:border-[#33413d]">
             <h2 id="community-dialog-title" class="text-sm font-semibold text-[#102523] dark:text-white">
@@ -227,11 +227,11 @@
               <Icon name="x" size="md" />
             </button>
           </header>
-          <div class="p-3">
+          <div class="min-h-0 flex-1 overflow-auto p-3">
             <img
-              src="/community-placeholder.jpg?v=20260715"
+              src="/community-placeholder.jpg?v=20260715-222714"
               :alt="t('home.community.imageAlt')"
-              class="aspect-square w-full rounded-md object-cover"
+              class="mx-auto h-auto max-h-[calc(100vh-6.5rem)] w-full rounded-md object-contain"
             />
           </div>
         </section>

@@ -17,9 +17,9 @@ Set-StrictMode -Version Latest
 
 $oldTag = 'v0.1.155'
 $newTag = 'v0.1.156'
-$oldImage = 'sub2api-custom:0.1.155-ui9'
-$newImage = 'sub2api-custom:0.1.156-ui1'
-$backupSuffix = 'bak-v0156-ui1'
+$oldImage = 'sub2api-custom:0.1.156-ui1'
+$newImage = 'sub2api-custom:0.1.156-ui2'
+$backupSuffix = 'bak-v0156-ui2'
 ```
 
 ## 1. Fetch and Audit
@@ -136,7 +136,7 @@ Set-StrictMode -Version Latest
 
 $repo = 'D:\Desktop\sub2api\sub2api-custom'
 $version = '0.1.156'
-$image = 'sub2api-custom:0.1.156-ui1'
+$image = 'sub2api-custom:0.1.156-ui2'
 Set-Location -LiteralPath $repo
 
 & pnpm --dir frontend run build
@@ -157,7 +157,7 @@ if ($LASTEXITCODE -ne 0) { throw "backend build failed with exit code $LASTEXITC
 & docker build --file Dockerfile.prebuilt-binary --tag $image .
 if ($LASTEXITCODE -ne 0) {
   # Registry metadata may be unavailable even when the previous verified image is cached.
-  & docker build --file Dockerfile.rebase-binary --build-arg 'RUNTIME_BASE_IMAGE=sub2api-custom:0.1.155-ui9' --tag $image .
+  & docker build --file Dockerfile.rebase-binary --build-arg 'RUNTIME_BASE_IMAGE=sub2api-custom:0.1.156-ui1' --tag $image .
   if ($LASTEXITCODE -ne 0) { throw "local Docker builds failed with exit code $LASTEXITCODE" }
 }
 & docker run --rm --entrypoint /app/sub2api $image -version
@@ -170,8 +170,8 @@ if ($LASTEXITCODE -ne 0) { throw "image version check failed with exit code $LAS
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 
-$image = 'sub2api-custom:0.1.156-ui1'
-$tag = '0.1.156-ui1'
+$image = 'sub2api-custom:0.1.156-ui2'
+$tag = '0.1.156-ui2'
 $artifactRoot = Join-Path ([System.IO.Path]::GetTempPath()) ('sub2api-deploy-' + $tag + '-' + [guid]::NewGuid().ToString('N'))
 New-Item -ItemType Directory -Path $artifactRoot | Out-Null
 $imageTar = Join-Path $artifactRoot 'image.tar'
@@ -204,9 +204,9 @@ Set-StrictMode -Version Latest
 $remoteScript = @'
 set -euo pipefail
 cd /opt/sub2api-deploy
-old_image='sub2api-custom:0.1.155-ui9'
-new_image='sub2api-custom:0.1.156-ui1'
-backup_suffix='bak-v0156-ui1'
+old_image='sub2api-custom:0.1.156-ui1'
+new_image='sub2api-custom:0.1.156-ui2'
+backup_suffix='bak-v0156-ui2'
 timestamp="$(date +%Y%m%d-%H%M%S)"
 
 docker image inspect "$new_image" >/dev/null
@@ -228,7 +228,7 @@ $remoteScript | & ssh -p 2222 root@23.95.229.165 "tr -d '\r' | bash -s"
 if ($LASTEXITCODE -ne 0) { throw "production switch failed with exit code $LASTEXITCODE" }
 ```
 
-If health fails, restore the timestamped Compose backup or replace the image with `sub2api-custom:0.1.155-ui9`, then rerun the same single-service Compose command.
+If health fails, restore the timestamped Compose backup or replace the image with `sub2api-custom:0.1.156-ui1`, then rerun the same single-service Compose command.
 
 ## 8. Verify and Clean Up
 
@@ -244,9 +244,9 @@ Required checks:
 
 Only after those checks:
 
-- Delete `/opt/sub2api-images/0.1.156-ui1`.
-- Delete the older `sub2api-custom:0.1.155-ui8` image.
-- Keep current `sub2api-custom:0.1.156-ui1` and rollback `sub2api-custom:0.1.155-ui9`.
+- Delete `/opt/sub2api-images/0.1.156-ui2`.
+- Delete the older `sub2api-custom:0.1.155-ui9` image.
+- Keep current `sub2api-custom:0.1.156-ui2` and rollback `sub2api-custom:0.1.156-ui1`.
 - Delete the local temporary artifact directory.
 - Do not run a broad volume prune on production.
 
