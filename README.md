@@ -19,7 +19,7 @@
 
 本 README 重点记录相对于官方 `v0.1.156` 的增量。官方通用功能、配置项和基础安装说明请以[官方仓库](https://github.com/Wei-Shaw/sub2api)为准。
 
-## 相对官方的主要增加
+## 相对官方的主要差异
 
 | 领域 | 本仓库增加的内容 | 主要实现位置 |
 | --- | --- | --- |
@@ -28,7 +28,7 @@
 | 公开状态 API | 首页聚合状态与实时 API 并发查询，包含短时缓存、并发请求合并和超时保护 | `backend/internal/service/ops_homepage_status.go`、`ops_public_status.go` |
 | 登录与社群 | 登录成功默认进入 `/home`，首页社群按钮与本地图片弹窗 | `frontend/src/views/auth/`、`frontend/src/views/HomeView.vue` |
 | 外部充值 | 登录后 `/recharge` 页面、内嵌支付页、新窗口打开入口、支付域名 CSP 放行 | `frontend/src/views/user/ExternalRechargeView.vue` |
-| 自定义菜单 | 公开菜单可见性规范化、用户/管理员菜单隔离、内嵌页面兼容 | `backend/internal/service/setting_public.go`、`CustomPageView.vue` |
+| 自定义菜单 | 公开菜单可见性规范化、用户/管理员菜单隔离、移除账号菜单中的官方 GitHub 入口、内嵌页面兼容 | `backend/internal/service/setting_public.go`、`AppHeader.vue`、`CustomPageView.vue` |
 | 排行榜接入 | 首页快捷入口和 `usage-leaderboard` 自定义页面适配 | `frontend/src/views/HomeView.vue`、`CustomPageView.vue` |
 | 生产构建 | 本机完成前后端与 Docker 镜像构建，服务器只加载和运行镜像 | `Dockerfile.prebuilt-binary` |
 | 升级发布 | 上游合并检查、定制项保护、单应用容器切换、健康检查和回滚记录 | `docs/custom-upgrade-workflow.md` |
