@@ -15,9 +15,9 @@
 
 ## 项目定位
 
-本项目基于 [Wei-Shaw/sub2api](https://github.com/Wei-Shaw/sub2api) 开发，当前定制基线为官方 `v0.1.155`。官方项目负责通用的账号池、API Key、计费、并发控制、负载均衡、请求转发、管理后台以及 PostgreSQL/Redis 基础能力；本仓库在此基础上增加 zhouz.online 的品牌、公开状态页、外部充值入口、排行榜接入和生产部署流程。
+本项目基于 [Wei-Shaw/sub2api](https://github.com/Wei-Shaw/sub2api) 开发，当前定制基线为官方 `v0.1.156`。官方项目负责通用的账号池、API Key、计费、并发控制、负载均衡、请求转发、管理后台以及 PostgreSQL/Redis 基础能力；本仓库在此基础上增加 zhouz.online 的品牌、公开状态页、外部充值入口、排行榜接入和生产部署流程。
 
-本 README 重点记录相对于官方 `v0.1.155` 的增量。官方通用功能、配置项和基础安装说明请以[官方仓库](https://github.com/Wei-Shaw/sub2api)为准。
+本 README 重点记录相对于官方 `v0.1.156` 的增量。官方通用功能、配置项和基础安装说明请以[官方仓库](https://github.com/Wei-Shaw/sub2api)为准。
 
 ## 相对官方的主要增加
 
@@ -26,10 +26,11 @@
 | 品牌 | zhouz.online 青绿色渐变 `Z` 图标、站点图标缓存刷新、Public Sans 字体 | `frontend/public/logo.png`、`frontend/index.html` |
 | 公开首页 | 重新设计的轻量首页、运行时长、近 1 小时活跃用户、当日成功率、累计 Token | `frontend/src/views/HomeView.vue` |
 | 公开状态 API | 首页聚合状态与实时 API 并发查询，包含短时缓存、并发请求合并和超时保护 | `backend/internal/service/ops_homepage_status.go`、`ops_public_status.go` |
+| 登录与社群 | 登录成功默认进入 `/home`，首页社群按钮与本地图片弹窗 | `frontend/src/views/auth/`、`frontend/src/views/HomeView.vue` |
 | 外部充值 | 登录后 `/recharge` 页面、内嵌支付页、新窗口打开入口、支付域名 CSP 放行 | `frontend/src/views/user/ExternalRechargeView.vue` |
 | 自定义菜单 | 公开菜单可见性规范化、用户/管理员菜单隔离、内嵌页面兼容 | `backend/internal/service/setting_public.go`、`CustomPageView.vue` |
 | 排行榜接入 | 首页快捷入口和 `usage-leaderboard` 自定义页面适配 | `frontend/src/views/HomeView.vue`、`CustomPageView.vue` |
-| 生产构建 | 本机生成 Linux 二进制，服务器仅执行轻量 Docker 镜像组装 | `Dockerfile.prebuilt-binary` |
+| 生产构建 | 本机完成前后端与 Docker 镜像构建，服务器只加载和运行镜像 | `Dockerfile.prebuilt-binary` |
 | 升级发布 | 上游合并检查、定制项保护、单应用容器切换、健康检查和回滚记录 | `docs/custom-upgrade-workflow.md` |
 
 ## 1. 品牌化公开首页
@@ -40,6 +41,8 @@
 - 首页导航、标题、状态信息和快捷入口采用紧凑的生产状态页布局。
 - 展示站点运行时长、近 1 小时活跃用户、当日成功率和累计处理 Token。
 - 快捷入口直接连接控制台、兑换/充值页面和使用排行榜。
+- 登录与 OAuth 回调没有显式跳转目标时默认返回 `/home`。
+- 首页社群按钮打开带本地占位图片的无障碍弹窗，支持遮罩、关闭按钮和 Escape 关闭。
 - 支持中英文界面、深色模式和移动端导航。
 
 首页状态来自匿名只读接口：
@@ -86,11 +89,12 @@ GET /api/v1/status/concurrency
 
 1. 在本机完成前端构建，输出到 Go embed 目录。
 2. 在本机构建 Linux amd64 后端二进制。
-3. 将二进制、资源文件和 entrypoint 打成部署上下文。
-4. 服务器只复制文件并组装 Alpine 运行镜像。
-5. 通过镜像内 `sub2api -version` 校验版本和构建元数据。
+3. 在本机使用 `Dockerfile.prebuilt-binary` 构建完整运行镜像。
+4. 在本机导出、压缩并计算镜像归档 SHA-256。
+5. 服务器只校验归档、执行 `docker load` 并切换应用容器。
+6. 通过镜像内 `sub2api -version` 校验版本和构建元数据。
 
-生产环境只替换 `sub2api` 应用容器，不重建 PostgreSQL、Redis 或排行榜服务。Compose 覆盖文件会在切换前备份，新容器未通过健康检查时可恢复上一镜像。
+生产服务器不执行 `go build`、`pnpm build` 或 `docker build`。生产环境只替换 `sub2api` 应用容器，不重建 PostgreSQL、Redis 或排行榜服务。Compose 覆盖文件会在切换前备份，新容器未通过健康检查时可恢复上一镜像。
 
 完整命令、归档结构和回滚步骤见[定制升级流程](docs/custom-upgrade-workflow.md)。
 

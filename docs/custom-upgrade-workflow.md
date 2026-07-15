@@ -1,241 +1,255 @@
-# Custom Upgrade Workflow
+# Sub2API Custom Upgrade Workflow
 
-This workflow keeps the customized Sub2API app aligned with upstream releases while preserving the local custom menu, embedded page, and leaderboard sidecar contracts.
+This workspace contains the customized Sub2API app and the standalone leaderboard sidecar:
 
-## Scope
+- App repository: `D:\Desktop\sub2api\sub2api-custom`
+- Leaderboard repository: `D:\Desktop\sub2api\sub2api-leaderboard`
+- Production deployment: `root@23.95.229.165:2222:/opt/sub2api-deploy`
+- GitHub proxy: `http://127.0.0.1:10808`
 
-- Main app repository: `D:\Desktop\sub2api\sub2api-custom`
-- Leaderboard sidecar repository: `D:\Desktop\sub2api\sub2api-leaderboard`
-- Production deployment path: `/opt/sub2api-deploy`
+The fixed deployment rule is: build the frontend, Linux binary, and Docker image locally. The production server only verifies the archive, loads the image, and runs it. Never run `pnpm build`, `go build`, or `docker build` on production.
 
-Set these values first, then keep every example aligned with them:
-
-```powershell
-$ErrorActionPreference = 'Stop'
-Set-StrictMode -Version Latest
-
-$oldTag = 'v0.1.153'
-$newTag = 'v0.1.155'
-$oldImageTag = '0.1.155-ui2'
-$newImageTag = '0.1.155-ui3'
-$backupSuffix = 'bak-v0155-ui3'
-```
-
-## 1. Confirm the Upstream Tag
-
-```powershell
-cd D:\Desktop\sub2api\sub2api-custom
-git -c http.proxy=http://127.0.0.1:10808 -c https.proxy=http://127.0.0.1:10808 ls-remote --tags upstream "$newTag"
-git -c http.proxy=http://127.0.0.1:10808 -c https.proxy=http://127.0.0.1:10808 fetch upstream tag $newTag
-git diff --stat "$oldTag..$newTag"
-```
-
-Replace tag names for future upgrades. Keep proxy flags only when direct GitHub access fails.
-
-## 2. Audit Local Customizations
-
-```powershell
-git status --short
-$trackedDirty = git diff --name-only
-$staged = git diff --cached --name-only
-$untracked = git ls-files --others --exclude-standard
-$local = @($trackedDirty; $staged; $untracked) | Where-Object { $_ } | Sort-Object -Unique
-$up = git diff --name-only "$oldTag..$newTag"
-Compare-Object -ReferenceObject $local -DifferenceObject $up -IncludeEqual -ExcludeDifferent | ForEach-Object { $_.InputObject }
-```
-
-Review these recurring custom areas:
-
-- `backend/internal/config/config.go`: CSP must keep `https://pay.ldxp.cn`.
-- `backend/internal/service/setting_public.go`: upstream public settings and custom menu normalization must both remain.
-- `frontend/src/components/layout/AppSidebar.vue`: `/recharge` and custom menu sidebar behavior must remain visible to users.
-- `frontend/src/i18n/locales/en/common.ts` and `frontend/src/i18n/locales/zh/common.ts`: recharge text must remain valid.
-- `frontend/src/views/user/CustomPageView.vue`: iframe token handling must remain.
-- `backend/internal/web/*`: embedded frontend override must still serve the customized app shell.
-
-## 3. Merge the Release
-
-```powershell
-git stash push -u -m "custom work before v0.1.155"
-git merge --no-ff v0.1.155 -m "merge upstream v0.1.155 into custom build"
-git stash apply 'stash@{0}'
-```
-
-Resolve conflicts by preserving both upstream release changes and local custom behavior. After verification, optionally drop the temporary stash:
-
-```powershell
-git stash list
-git stash drop 'stash@{0}'
-```
-
-## 4. Check Leaderboard Compatibility
-
-The leaderboard sidecar normally does not merge upstream Sub2API code. Recheck these contracts after every Sub2API upgrade:
-
-- `SUB2API_BASE_URL`, default `http://sub2api:8080`.
-- `GET /api/v1/auth/me` with `Authorization: Bearer <token>`.
-- `public.usage_logs` and `public.users` columns used by `internal/store`.
-- Compose service names `sub2api`, `postgres`, and `sub2api-network`.
-- OpenResty overrides for `/custom/usage-leaderboard` and `/leaderboard/`.
-
-For `v0.1.155`, the only recurring custom-file overlap is `backend/internal/config/config.go`; the merge preserves both the custom payment CSP and the upstream server-timing/image-keepalive settings. External payment-page and leaderboard validation remain intentionally skipped at the operator's request.
-
-## 5. Local Validation
-
-```powershell
-cd D:\Desktop\sub2api\sub2api-custom\backend
-go test -tags unit ./internal/service -run "TestSettingService_GetPublicSettings_"
-go test -tags embed ./internal/web
-
-cd D:\Desktop\sub2api\sub2api-custom\frontend
-pnpm test:run AppSidebar CustomPageView
-pnpm typecheck
-
-cd D:\Desktop\sub2api\sub2api-leaderboard
-go test ./...
-```
-
-Validate the compose overlay in a temporary production-like layout:
-
-```powershell
-$checkRoot = Join-Path $env:TEMP ('sub2api-compose-check-' + [guid]::NewGuid().ToString('N'))
-New-Item -ItemType Directory -Path $checkRoot | Out-Null
-New-Item -ItemType Directory -Path (Join-Path $checkRoot 'leaderboard') | Out-Null
-Copy-Item -LiteralPath 'D:\Desktop\sub2api\sub2api-custom\deploy\docker-compose.local.yml' -Destination (Join-Path $checkRoot 'docker-compose.local.yml')
-Copy-Item -LiteralPath 'D:\Desktop\sub2api\sub2api-leaderboard\deploy\docker-compose.leaderboard.yml' -Destination (Join-Path $checkRoot 'docker-compose.leaderboard.yml')
-New-Item -ItemType File -Path (Join-Path $checkRoot 'leaderboard\.env') | Out-Null
-$env:POSTGRES_PASSWORD='dummy-compose-check'
-$env:REDIS_PASSWORD='dummy-compose-check'
-docker compose --project-directory $checkRoot -f (Join-Path $checkRoot 'docker-compose.local.yml') -f (Join-Path $checkRoot 'docker-compose.leaderboard.yml') config --quiet
-$composeExit = $LASTEXITCODE
-Remove-Item -LiteralPath $checkRoot -Recurse -Force
-exit $composeExit
-```
-
-## 6. Publish to GitHub
-
-```powershell
-cd D:\Desktop\sub2api\sub2api-custom
-git status -sb
-git add <intended files>
-git commit -m "chore: update custom build for v0.1.155"
-git push -u origin codex/update-v0.1.155-custom
-
-cd D:\Desktop\sub2api\sub2api-leaderboard
-git status -sb
-git add <intended files>
-git commit -m "chore: prepare leaderboard deployment refresh"
-git push -u origin codex/usage-leaderboard
-```
-
-If the leaderboard repository has no remote yet, create a private GitHub repository:
-
-```powershell
-gh repo create juanmao1z/sub2api-leaderboard --private --source . --remote origin --push
-```
-
-## 7. Build Custom Runtime Image
+Set the release values once:
 
 ```powershell
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 
-cd D:\Desktop\sub2api\sub2api-custom
+$oldTag = 'v0.1.155'
+$newTag = 'v0.1.156'
+$oldImage = 'sub2api-custom:0.1.155-ui9'
+$newImage = 'sub2api-custom:0.1.156-ui1'
+$backupSuffix = 'bak-v0156-ui1'
+```
+
+## 1. Fetch and Audit
+
+```powershell
+$ErrorActionPreference = 'Stop'
+Set-StrictMode -Version Latest
+
+$env:HTTP_PROXY = 'http://127.0.0.1:10808'
+$env:HTTPS_PROXY = 'http://127.0.0.1:10808'
+$env:NO_PROXY = 'localhost,127.0.0.1'
+
+Set-Location -LiteralPath 'D:\Desktop\sub2api\sub2api-custom'
+& git status --short --branch
+if ($LASTEXITCODE -ne 0) { throw "git status failed with exit code $LASTEXITCODE" }
+& git fetch upstream --tags --prune
+if ($LASTEXITCODE -ne 0) { throw "git fetch failed with exit code $LASTEXITCODE" }
+& git diff --stat "$oldTag..$newTag"
+if ($LASTEXITCODE -ne 0) { throw "git diff failed with exit code $LASTEXITCODE" }
+```
+
+Protect these custom boundaries during every merge:
+
+- `backend/internal/config/config.go`: keep `https://pay.ldxp.cn` in CSP.
+- `backend/internal/service/setting_public.go`: keep public menu filtering.
+- `backend/internal/service/ops_homepage_status.go` and `ops_public_status.go`: keep public status APIs.
+- `frontend/src/views/HomeView.vue`: keep the branded homepage and community modal.
+- `frontend/src/views/auth/`: keep the default successful-login fallback at `/home`.
+- `frontend/src/views/user/ExternalRechargeView.vue`: keep the protected recharge page.
+- `frontend/public/logo.png` and `community-placeholder.jpg`: keep local brand assets.
+- `backend/internal/web/*`: keep the customized embedded frontend behavior.
+- `README.md`: keep the custom-edition README rather than restoring the upstream README.
+
+## 2. Merge the Release
+
+Only merge with a clean worktree:
+
+```powershell
+$ErrorActionPreference = 'Stop'
+Set-StrictMode -Version Latest
+
+Set-Location -LiteralPath 'D:\Desktop\sub2api\sub2api-custom'
+& git merge --no-ff v0.1.156 -m 'merge upstream v0.1.156 into custom build'
+if ($LASTEXITCODE -ne 0) { throw "resolve merge conflicts before continuing" }
+```
+
+Upstream release tags can contain a stale `backend/cmd/server/VERSION`. Confirm it matches the release and correct it when necessary.
+
+The leaderboard does not merge upstream app code. Recheck its contracts:
+
+- `GET /api/v1/auth/me` with bearer authentication.
+- `public.usage_logs` and `public.users`.
+- Compose services `sub2api`, `postgres`, and network `sub2api-network`.
+- Proxy routes `/custom/usage-leaderboard` and `/leaderboard/`.
+
+## 3. Validate Locally
+
+```powershell
+$ErrorActionPreference = 'Stop'
+Set-StrictMode -Version Latest
+
+Set-Location -LiteralPath 'D:\Desktop\sub2api\sub2api-custom'
+& git diff --check
+if ($LASTEXITCODE -ne 0) { throw "git diff check failed with exit code $LASTEXITCODE" }
+& pnpm --dir frontend run test:run
+if ($LASTEXITCODE -ne 0) { throw "frontend tests failed with exit code $LASTEXITCODE" }
+& pnpm --dir frontend run typecheck
+if ($LASTEXITCODE -ne 0) { throw "frontend typecheck failed with exit code $LASTEXITCODE" }
+& pnpm --dir frontend run lint:check
+if ($LASTEXITCODE -ne 0) { throw "frontend lint failed with exit code $LASTEXITCODE" }
 & pnpm --dir frontend run build
 if ($LASTEXITCODE -ne 0) { throw "frontend build failed with exit code $LASTEXITCODE" }
 
-cd D:\Desktop\sub2api\sub2api-custom\backend
-$tag = '0.1.155-ui3'
-New-Item -ItemType Directory -Force -Path '..\build-local' | Out-Null
-$commit = & git -C .. rev-parse --short HEAD
-if ($LASTEXITCODE -ne 0) { throw "git rev-parse failed with exit code $LASTEXITCODE" }
-$date = (Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ')
-$env:CGO_ENABLED='0'
-$env:GOOS='linux'
-$env:GOARCH='amd64'
-& go build -tags embed -trimpath -ldflags "-s -w -X main.Version=$tag -X main.Commit=$commit -X main.Date=$date -X main.BuildType=release" -o ..\build-local\sub2api .\cmd\server
-if ($LASTEXITCODE -ne 0) { throw "backend build failed with exit code $LASTEXITCODE" }
+& go -C backend test -tags unit ./internal/service -run 'TestSettingService_GetPublicSettings_|TestOpsService_GetPublic'
+if ($LASTEXITCODE -ne 0) { throw "backend service tests failed with exit code $LASTEXITCODE" }
+& go -C backend test -tags embed ./internal/web
+if ($LASTEXITCODE -ne 0) { throw "backend embed tests failed with exit code $LASTEXITCODE" }
+
+Set-Location -LiteralPath 'D:\Desktop\sub2api\sub2api-leaderboard'
+& go test ./...
+if ($LASTEXITCODE -ne 0) { throw "leaderboard tests failed with exit code $LASTEXITCODE" }
 ```
+
+## 4. Commit and Push
+
+Push the validated custom merge directly to the fork's `main` branch:
 
 ```powershell
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 
-cd D:\Desktop\sub2api\sub2api-custom
-$tag = '0.1.155-ui3'
-$artifactRoot = Join-Path (Get-Location) 'deploy-artifacts'
-$contextRoot = Join-Path $artifactRoot "sub2api-custom-$tag-context"
-$archive = Join-Path $artifactRoot "sub2api-custom-$tag-context.tar.gz"
-if (Test-Path -LiteralPath $contextRoot) { Remove-Item -LiteralPath $contextRoot -Recurse -Force }
-New-Item -ItemType Directory -Force -Path (Join-Path $contextRoot 'build-local') | Out-Null
-New-Item -ItemType Directory -Force -Path (Join-Path $contextRoot 'backend') | Out-Null
-New-Item -ItemType Directory -Force -Path (Join-Path $contextRoot 'deploy') | Out-Null
-Copy-Item -LiteralPath 'Dockerfile.prebuilt-binary' -Destination (Join-Path $contextRoot 'Dockerfile')
-Copy-Item -LiteralPath 'build-local\sub2api' -Destination (Join-Path $contextRoot 'build-local\sub2api')
-Copy-Item -LiteralPath 'backend\resources' -Destination (Join-Path $contextRoot 'backend\resources') -Recurse
-Copy-Item -LiteralPath 'deploy\docker-entrypoint.sh' -Destination (Join-Path $contextRoot 'deploy\docker-entrypoint.sh')
-if (Test-Path -LiteralPath $archive) { Remove-Item -LiteralPath $archive -Force }
-& tar -czf $archive -C $contextRoot .
-if ($LASTEXITCODE -ne 0) { throw "tar failed with exit code $LASTEXITCODE" }
-& ssh -p 2222 root@23.95.229.165 "mkdir -p /opt/sub2api-build/sub2api-custom-$tag"
-if ($LASTEXITCODE -ne 0) { throw "ssh failed with exit code $LASTEXITCODE" }
-& scp -P 2222 $archive root@23.95.229.165:/opt/sub2api-build/sub2api-custom-$tag/context.tar.gz
-if ($LASTEXITCODE -ne 0) { throw "scp failed with exit code $LASTEXITCODE" }
+$env:HTTP_PROXY = 'http://127.0.0.1:10808'
+$env:HTTPS_PROXY = 'http://127.0.0.1:10808'
+$env:NO_PROXY = 'localhost,127.0.0.1'
+
+Set-Location -LiteralPath 'D:\Desktop\sub2api\sub2api-custom'
+& git add --all
+if ($LASTEXITCODE -ne 0) { throw "git add failed with exit code $LASTEXITCODE" }
+& git commit
+if ($LASTEXITCODE -ne 0) { throw "git commit failed with exit code $LASTEXITCODE" }
+& git push origin main
+if ($LASTEXITCODE -ne 0) { throw "git push failed with exit code $LASTEXITCODE" }
 ```
 
-```bash
-tag=0.1.155-ui3
-cd /opt/sub2api-build/sub2api-custom-$tag
-rm -rf context
-mkdir context
-tar -xzf context.tar.gz -C context
-test -f context/Dockerfile || { echo "Dockerfile is not at context root; repack with tar -C contextRoot . or re-extract with --strip-components=1"; exit 1; }
-docker build -t sub2api-custom:$tag context
+Wait for both GitHub Actions workflows, `CI` and `Security Scan`, to succeed before production cleanup.
+
+## 5. Build the Image Locally
+
+The binary reports the upstream version; the Docker tag carries the custom build suffix.
+
+```powershell
+$ErrorActionPreference = 'Stop'
+Set-StrictMode -Version Latest
+
+$repo = 'D:\Desktop\sub2api\sub2api-custom'
+$version = '0.1.156'
+$image = 'sub2api-custom:0.1.156-ui1'
+Set-Location -LiteralPath $repo
+
+& pnpm --dir frontend run build
+if ($LASTEXITCODE -ne 0) { throw "frontend build failed with exit code $LASTEXITCODE" }
+
+$commit = (& git rev-parse --short=8 HEAD).Trim()
+if ($LASTEXITCODE -ne 0) { throw "git rev-parse failed with exit code $LASTEXITCODE" }
+$date = (Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ')
+$binary = Join-Path $repo 'build-local\sub2api'
+New-Item -ItemType Directory -Force -Path (Split-Path -Parent $binary) | Out-Null
+
+$env:CGO_ENABLED = '0'
+$env:GOOS = 'linux'
+$env:GOARCH = 'amd64'
+& go -C backend build -tags embed -trimpath -ldflags "-s -w -X main.Version=$version -X main.Commit=$commit -X main.Date=$date -X main.BuildType=release" -o $binary ./cmd/server
+if ($LASTEXITCODE -ne 0) { throw "backend build failed with exit code $LASTEXITCODE" }
+
+& docker build --file Dockerfile.prebuilt-binary --tag $image .
+if ($LASTEXITCODE -ne 0) { throw "local docker build failed with exit code $LASTEXITCODE" }
+& docker run --rm --entrypoint /app/sub2api $image -version
+if ($LASTEXITCODE -ne 0) { throw "image version check failed with exit code $LASTEXITCODE" }
 ```
 
-The archive must place `Dockerfile`, `build-local/`, `backend/`, and `deploy/` at the extraction root. If the archive accidentally contains a top-level `sub2api-custom-...-context/` directory, re-extract with `tar --strip-components=1 -xzf context.tar.gz -C context` before building.
+## 6. Export and Upload the Image
 
-## 8. Deploy on Server
+```powershell
+$ErrorActionPreference = 'Stop'
+Set-StrictMode -Version Latest
 
-```bash
+$image = 'sub2api-custom:0.1.156-ui1'
+$tag = '0.1.156-ui1'
+$artifactRoot = Join-Path ([System.IO.Path]::GetTempPath()) ('sub2api-deploy-' + $tag + '-' + [guid]::NewGuid().ToString('N'))
+New-Item -ItemType Directory -Path $artifactRoot | Out-Null
+$imageTar = Join-Path $artifactRoot 'image.tar'
+$archive = Join-Path $artifactRoot 'image.tar.gz'
+
+& docker image save --output $imageTar $image
+if ($LASTEXITCODE -ne 0) { throw "docker save failed with exit code $LASTEXITCODE" }
+& tar -czf $archive -C $artifactRoot 'image.tar'
+if ($LASTEXITCODE -ne 0) { throw "archive compression failed with exit code $LASTEXITCODE" }
+$hash = (Get-FileHash -LiteralPath $archive -Algorithm SHA256).Hash.ToLowerInvariant()
+
+& ssh -p 2222 root@23.95.229.165 "mkdir -p /opt/sub2api-images/$tag"
+if ($LASTEXITCODE -ne 0) { throw "remote directory creation failed with exit code $LASTEXITCODE" }
+& scp -P 2222 $archive "root@23.95.229.165:/opt/sub2api-images/$tag/image.tar.gz"
+if ($LASTEXITCODE -ne 0) { throw "image upload failed with exit code $LASTEXITCODE" }
+& ssh -p 2222 root@23.95.229.165 "cd /opt/sub2api-images/$tag && echo '$hash  image.tar.gz' | sha256sum -c - && tar -xzf image.tar.gz"
+if ($LASTEXITCODE -ne 0) { throw "remote archive verification failed with exit code $LASTEXITCODE" }
+& ssh -p 2222 root@23.95.229.165 "docker load -i /opt/sub2api-images/$tag/image.tar"
+if ($LASTEXITCODE -ne 0) { throw "remote docker load failed with exit code $LASTEXITCODE" }
+```
+
+## 7. Switch Only the App Container
+
+Run this Bash script through the PowerShell SSH boundary. It does not stop PostgreSQL, Redis, or leaderboard.
+
+```powershell
+$ErrorActionPreference = 'Stop'
+Set-StrictMode -Version Latest
+
+$remoteScript = @'
+set -euo pipefail
 cd /opt/sub2api-deploy
-old_tag=0.1.155-ui2
-new_tag=0.1.155-ui3
-backup_suffix=bak-v0155-ui3
-ts=$(date +%Y%m%d-%H%M%S)
-cp docker-compose.override.yml docker-compose.override.yml.$backup_suffix-$ts
-sed -i "s#sub2api-custom:${old_tag}#sub2api-custom:${new_tag}#" docker-compose.override.yml
-docker compose -f docker-compose.local.yml -f docker-compose.override.yml -f docker-compose.leaderboard.yml up -d --no-deps sub2api
-```
+old_image='sub2api-custom:0.1.155-ui9'
+new_image='sub2api-custom:0.1.156-ui1'
+backup_suffix='bak-v0156-ui1'
+timestamp="$(date +%Y%m%d-%H%M%S)"
 
-```bash
-for i in $(seq 1 30); do
-  status=$(docker inspect -f "{{.State.Health.Status}}" sub2api 2>/dev/null || echo missing)
-  echo "sub2api health=$status"
-  [ "$status" = healthy ] && exit 0
+docker image inspect "$new_image" >/dev/null
+grep -Fq "image: $old_image" docker-compose.override.yml
+cp docker-compose.override.yml "docker-compose.override.yml.${backup_suffix}-${timestamp}"
+sed -i "s#image: $old_image#image: $new_image#" docker-compose.override.yml
+
+docker compose -f docker-compose.local.yml -f docker-compose.override.yml -f docker-compose.leaderboard.yml up -d --no-deps sub2api
+for attempt in $(seq 1 45); do
+  health="$(docker inspect --format '{{if .State.Health}}{{.State.Health.Status}}{{else}}missing{{end}}' sub2api 2>/dev/null || true)"
+  echo "health=$health attempt=$attempt"
+  [ "$health" = healthy ] && exit 0
   sleep 2
 done
 exit 1
+'@
+
+$remoteScript | & ssh -p 2222 root@23.95.229.165 "tr -d '\r' | bash -s"
+if ($LASTEXITCODE -ne 0) { throw "production switch failed with exit code $LASTEXITCODE" }
 ```
 
-## 9. Server Validation
+If health fails, restore the timestamped Compose backup or replace the image with `sub2api-custom:0.1.155-ui9`, then rerun the same single-service Compose command.
 
-```bash
-cd /opt/sub2api-deploy
-docker compose -f docker-compose.local.yml -f docker-compose.override.yml -f docker-compose.leaderboard.yml ps
-curl -fsS http://127.0.0.1:8080/health
-docker exec sub2api-postgres psql -U sub2api -d sub2api -c "\d public.usage_logs"
-docker exec sub2api-postgres psql -U sub2api -d sub2api -c "\d public.users"
-```
+## 8. Verify and Clean Up
 
-For this `v0.1.155-ui3` deployment, external payment-page and leaderboard functional checks are intentionally skipped at the operator's request.
+Required checks:
 
-## 10. Notes From `v0.1.155`
+- Container is `running | healthy | restart=0`.
+- `https://api.zhouz.online/health` and `/home` return 200.
+- The binary reports `Sub2API 0.1.156` and the deployed commit.
+- Branded logo, community image, homepage asset, and `/home` login fallback are embedded.
+- Recent logs contain no panic, fatal, or structured access `status_code: 5xx`.
+- GitHub `CI` and `Security Scan` pass for the deployed commit.
+- PostgreSQL, Redis, leaderboard, volumes, and deployment data remain intact.
 
-- The upstream release changes 238 files for Grok health monitoring and Web SSO import, optional server timing, OpenAI long-context billing, scheduler rebuild fixes, image keepalive, and Responses namespace preservation.
-- The only recurring custom-file overlap is `backend/internal/config/config.go`; the merge preserves `https://pay.ldxp.cn` in the payment CSP alongside the new server-timing and image-keepalive settings.
-- The custom image also includes the homepage real-time concurrency feature already deployed in the `0.1.153-ui2` production lineage.
-- Migrations add usage-log and system-log columns, a concurrent system-log host index, OpenAI account JSON defaults/triggers, and Grok monitor constraints. `0.1.153-ui2` can tolerate the additive schema for immediate rollback, but operators should not create Grok monitor data while running the old image.
-- `0.1.155-ui3` adds the CI-safe concurrency type guard and preserves the integration-test Redis prefix hook; production rollback targets `0.1.155-ui2`.
-- External payment-page and leaderboard validation remain intentionally skipped at the operator's request.
-- Verify the runtime through the custom image tag, linked build metadata, `/health`, public settings, migration rows, index readiness, and startup logs.
+Only after those checks:
+
+- Delete `/opt/sub2api-images/0.1.156-ui1`.
+- Delete the older `sub2api-custom:0.1.155-ui8` image.
+- Keep current `sub2api-custom:0.1.156-ui1` and rollback `sub2api-custom:0.1.155-ui9`.
+- Delete the local temporary artifact directory.
+- Do not run a broad volume prune on production.
+
+## 9. Notes for v0.1.156
+
+- Upstream changes 253 files and adds Codex Agent Identity authentication, safe account duplication, optional ID columns, and configurable OpenAI WebSocket first-message timeout.
+- The release improves failover behavior, Responses streaming boundaries, Grok OAuth and image routing, scheduler cache lifecycle, and GPT-5.6 long-context billing.
+- Direct custom overlaps are `backend/cmd/server/VERSION`, `backend/internal/config/config.go`, `backend/internal/service/ops_service.go`, `backend/internal/web/embed_on.go`, `backend/internal/web/embed_test.go`, and `README.md`.
+- Keep the custom payment CSP, homepage status services, embedded-frontend cache behavior, branded README, default `/home` login redirect, and community modal.
+- The official `v0.1.156` tag still contains `backend/cmd/server/VERSION=0.1.155`; the custom build corrects it to `0.1.156`.
