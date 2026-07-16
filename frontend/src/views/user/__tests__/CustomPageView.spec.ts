@@ -120,6 +120,8 @@ describe('CustomPageView', () => {
     expect(wrapper.find('.custom-open-fab').exists()).toBe(false)
     expect(wrapper.text()).not.toContain('新窗口打开')
     expect(wrapper.get('iframe').attributes('src')).toBe('https://api.zhouz.online/leaderboard/')
+    expect(wrapper.get('.leaderboard-embed-host').classes()).not.toContain('card')
+    expect(wrapper.get('.custom-embed-shell').classes()).toContain('custom-embed-shell-leaderboard')
   })
 
   it('keeps the new-window shortcut for other custom iframe pages', () => {
@@ -129,5 +131,7 @@ describe('CustomPageView', () => {
 
     expect(wrapper.get('.custom-open-fab').text()).toContain('新窗口打开')
     expect(wrapper.get('.custom-open-fab').attributes('href')).toBe('https://docs.example.com/')
+    expect(wrapper.get('.custom-page-layout > div').classes()).toContain('card')
+    expect(wrapper.get('.custom-embed-shell').classes()).not.toContain('custom-embed-shell-leaderboard')
   })
 })

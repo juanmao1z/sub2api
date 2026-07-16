@@ -1,7 +1,10 @@
 <template>
   <AppLayout>
     <div class="custom-page-layout">
-      <div class="card flex-1 min-h-0 overflow-hidden">
+      <div
+        class="flex-1 min-h-0 overflow-hidden"
+        :class="menuItemId === 'usage-leaderboard' ? 'leaderboard-embed-host' : 'card'"
+      >
         <div v-if="loading" class="flex h-full items-center justify-center py-12">
           <div
             class="h-8 w-8 animate-spin rounded-full border-2 border-primary-500 border-t-transparent"
@@ -94,7 +97,11 @@
         </div>
 
         <!-- Iframe embed mode -->
-        <div v-else class="custom-embed-shell">
+        <div
+          v-else
+          class="custom-embed-shell"
+          :class="{ 'custom-embed-shell-leaderboard': menuItemId === 'usage-leaderboard' }"
+        >
           <a
             v-if="showOpenInNewTab"
             :href="embeddedUrl"
@@ -445,6 +452,15 @@ onUnmounted(() => {
   @apply h-full w-full overflow-hidden rounded-2xl;
   @apply bg-gradient-to-b from-gray-50 to-white dark:from-dark-900 dark:to-dark-950;
   @apply p-0;
+}
+
+.leaderboard-embed-host,
+.custom-embed-shell-leaderboard {
+  background: transparent;
+}
+
+.custom-embed-shell-leaderboard {
+  border-radius: 0;
 }
 
 .custom-open-fab {
