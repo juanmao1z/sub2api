@@ -14,9 +14,9 @@
 - 线上部署路径：`/opt/sub2api-deploy`
 - 镜像暂存路径：`/opt/sub2api-images`
 - compose 文件：`docker-compose.local.yml` + `docker-compose.override.yml`
-- 当前升级目标镜像：`sub2api-custom:0.1.158-ui1`
+- 当前升级目标镜像：`sub2api-custom:0.1.160-ui1`
 - 当前回滚镜像：`sub2api-custom:0.1.156-ui5`
-- 当前定制基线：官方 `v0.1.158` + 本仓库自定义品牌首页、默认 `/home` 登录跳转、社群弹窗、账号菜单移除官方 GitHub 入口、`/recharge` 页面、`usage-leaderboard` 自定义菜单入口与首页实时并发状态
+- 当前定制基线：官方 `v0.1.160` + 本仓库自定义品牌首页、默认 `/home` 登录跳转、社群弹窗、账号菜单移除官方 GitHub 入口、`/recharge` 页面、`usage-leaderboard` 自定义菜单入口与首页实时并发状态
 - 线上切换方式：只修改 `/opt/sub2api-deploy/docker-compose.override.yml` 中 `sub2api` 服务镜像，再执行 `docker compose -f docker-compose.local.yml -f docker-compose.override.yml up -d sub2api`
 
 ## 自定义充值页
@@ -32,7 +32,7 @@
 ## 升级流程
 
 1. 从 `upstream` 获取新的官方 tag 或分支。
-2. 将官方版本合并到定制 `main`，例如 `git merge --no-ff v0.1.158`。
+2. 将官方版本合并到定制 `main`，例如 `git merge --no-ff v0.1.160`。
 3. 只重放必要的定制改动：
    - `/recharge` 前端页面
    - 侧边栏入口
@@ -42,8 +42,8 @@
    - 预编译二进制 Dockerfile，如服务器资源不足仍需要使用
 4. 本地运行前端测试、类型检查、后端 CSP 测试和生产构建。
 5. 本地构建 Linux amd64 后端二进制到 `build-local/sub2api`。
-6. 本地用 `Dockerfile.prebuilt-binary` 构建 `sub2api-custom:0.1.158-ui1`；Docker Hub 不可用时，用 `Dockerfile.rebase-binary` 基于 `0.1.156-ui5` 离线重建。
-7. 本地执行 `docker save`、压缩并计算 SHA-256，上传到 `/opt/sub2api-images/0.1.158-ui1`。
+6. 本地用 `Dockerfile.prebuilt-binary` 构建 `sub2api-custom:0.1.160-ui1`；Docker Hub 不可用时，用 `Dockerfile.rebase-binary` 基于 `0.1.158-ui1` 离线重建。
+7. 本地执行 `docker save`、压缩并计算 SHA-256，上传到 `/opt/sub2api-images/0.1.160-ui1`。
 8. 服务器校验归档后只执行 `docker load`，再备份 `docker-compose.override.yml` 并只重建 `sub2api` 应用容器。
 9. 验证 `/health`、容器健康、版本信息、`/recharge`、充值页 JS 和 CSP。
 10. 将升级工作流同步到 `docs/custom-upgrade-workflow.md` 并随分支 push 到 GitHub。
