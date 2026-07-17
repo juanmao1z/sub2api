@@ -15,11 +15,11 @@ Set the release values once:
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 
-$oldTag = 'v0.1.156'
-$newTag = 'v0.1.158'
-$oldImage = 'sub2api-custom:0.1.156-ui5'
-$newImage = 'sub2api-custom:0.1.158-ui1'
-$backupSuffix = 'bak-v0158-ui1'
+$oldTag = 'v0.1.158'
+$newTag = 'v0.1.160'
+$oldImage = 'sub2api-custom:0.1.158-ui1'
+$newImage = 'sub2api-custom:0.1.160-ui1'
+$backupSuffix = 'bak-v0160-ui1'
 ```
 
 ## 1. Fetch and Audit
@@ -135,8 +135,8 @@ $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 
 $repo = 'D:\Desktop\sub2api\sub2api-custom'
-$version = '0.1.158'
-$image = 'sub2api-custom:0.1.158-ui1'
+$version = '0.1.160'
+$image = 'sub2api-custom:0.1.160-ui1'
 Set-Location -LiteralPath $repo
 
 & pnpm --dir frontend run build
@@ -157,7 +157,7 @@ if ($LASTEXITCODE -ne 0) { throw "backend build failed with exit code $LASTEXITC
 & docker build --file Dockerfile.prebuilt-binary --tag $image .
 if ($LASTEXITCODE -ne 0) {
   # Registry metadata may be unavailable even when the previous verified image is cached.
-  & docker build --file Dockerfile.rebase-binary --build-arg 'RUNTIME_BASE_IMAGE=sub2api-custom:0.1.156-ui5' --tag $image .
+  & docker build --file Dockerfile.rebase-binary --build-arg 'RUNTIME_BASE_IMAGE=sub2api-custom:0.1.158-ui1' --tag $image .
   if ($LASTEXITCODE -ne 0) { throw "local Docker builds failed with exit code $LASTEXITCODE" }
 }
 & docker run --rm --entrypoint /app/sub2api $image -version
