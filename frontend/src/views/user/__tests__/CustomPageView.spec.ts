@@ -1,4 +1,4 @@
-import { mount } from '@vue/test-utils'
+import { flushPromises, mount } from '@vue/test-utils'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import CustomPageView from '../CustomPageView.vue'
@@ -133,5 +133,29 @@ describe('CustomPageView', () => {
     expect(wrapper.get('.custom-open-fab').attributes('href')).toBe('https://docs.example.com/')
     expect(wrapper.get('.custom-page-layout > div').classes()).toContain('card')
     expect(wrapper.get('.custom-embed-shell').classes()).not.toContain('custom-embed-shell-leaderboard')
+  })
+
+  it('renders the built-in CC Switch guide with desktop and mobile contents', async () => {
+    const wrapper = mountCustomPage('cc-switch-guide', [
+      menuItem({
+        id: 'cc-switch-guide',
+        label: '使用说明',
+        url: 'md:cc-switch-codex',
+      }),
+    ])
+
+    await flushPromises()
+
+    expect(wrapper.find('iframe').exists()).toBe(false)
+    expect(wrapper.get('.guide-reader')).toBeTruthy()
+    expect(wrapper.get('.markdown-page-content h1').text()).toBe('CC Switch 配置 Codex')
+    expect(wrapper.get('.markdown-page-content').text()).toContain('https://api.zhouz.online/v1')
+
+    const desktopTocItems = wrapper.findAll('.toc-sidebar .toc-item')
+    expect(desktopTocItems.length).toBeGreaterThan(3)
+    expect(desktopTocItems.some((item) => item.text() === '开始前的准备')).toBe(true)
+    expect(desktopTocItems.some((item) => item.text() === 'CC Switch 配置 Codex')).toBe(false)
+
+    expect(wrapper.get('.guide-mobile-toc summary').text()).toBe('customPage.tableOfContents')
   })
 })
