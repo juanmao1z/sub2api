@@ -15,9 +15,9 @@
 
 ## 项目定位
 
-本项目基于 [Wei-Shaw/sub2api](https://github.com/Wei-Shaw/sub2api) 开发，当前定制基线为官方 `v0.1.160`。官方项目负责通用的账号池、API Key、计费、并发控制、负载均衡、请求转发、管理后台以及 PostgreSQL/Redis 基础能力；本仓库在此基础上增加 zhouz.online 的品牌、公开状态页、外部充值入口、排行榜接入和生产部署流程。
+本项目基于 [Wei-Shaw/sub2api](https://github.com/Wei-Shaw/sub2api) 开发，当前定制基线为官方 `v0.1.161`。官方项目负责通用的账号池、API Key、计费、并发控制、负载均衡、请求转发、管理后台以及 PostgreSQL/Redis 基础能力；本仓库在此基础上增加 zhouz.online 的品牌、公开状态页、外部充值入口、排行榜接入和生产部署流程。
 
-本 README 重点记录相对于官方 `v0.1.160` 的增量。官方通用功能、配置项和基础安装说明请以[官方仓库](https://github.com/Wei-Shaw/sub2api)为准。本次官方升级新增独立的提示词安全审计引擎和管理控制台，并修复 Grok 媒体资格隔离、参考图处理、被动 `image_gen` 命名空间权限判断及 S3 备份敏感操作验证问题。
+本 README 重点记录相对于官方 `v0.1.161` 的增量。官方通用功能、配置项和基础安装说明请以[官方仓库](https://github.com/Wei-Shaw/sub2api)为准。本次官方升级将敏感操作 step-up 2FA 和会话 IP/UA 绑定改为可控开关，并完善 Grok 受保护媒体、模型级冷却隔离、OpenAI Responses 流事件、账号计费倍率探测和 Docker 交叉编译构建。
 
 ## 相对官方的主要差异
 
