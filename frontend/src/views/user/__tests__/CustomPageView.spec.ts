@@ -150,6 +150,8 @@ describe('CustomPageView', () => {
     expect(wrapper.get('.guide-reader')).toBeTruthy()
     expect(wrapper.get('.markdown-page-content h1').text()).toBe('CC Switch 配置 Codex')
     expect(wrapper.get('.markdown-page-content').text()).toContain('https://api.zhouz.online/v1')
+    const downloadLink = wrapper.get('.markdown-page-content a[href="https://zhouz.online/downloads/CC-Switch.exe"]')
+    expect(downloadLink.text()).toBe('CC Switch Releases（点击下载）')
 
     const desktopTocItems = wrapper.findAll('.toc-sidebar .toc-item')
     expect(desktopTocItems.length).toBeGreaterThan(3)

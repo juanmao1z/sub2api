@@ -449,7 +449,9 @@ onUnmounted(() => {
 }
 
 .toc-title {
-  @apply text-sm font-semibold text-gray-700 dark:text-dark-200;
+  @apply font-semibold text-gray-700 dark:text-dark-200;
+  font-size: 18px;
+  line-height: 24px;
 }
 
 .toc-nav {
@@ -457,8 +459,10 @@ onUnmounted(() => {
 }
 
 .toc-item {
-  @apply relative block border-l border-gray-300 px-3 py-2 text-sm leading-5 text-gray-600 transition-colors dark:border-dark-500 dark:text-dark-300;
+  @apply relative block border-l border-gray-300 px-3 py-2 text-gray-600 transition-colors dark:border-dark-500 dark:text-dark-300;
   @apply hover:bg-gray-100 hover:text-gray-900 dark:hover:bg-dark-700 dark:hover:text-white;
+  font-size: 18px;
+  line-height: 24px;
 }
 
 .toc-item.toc-active {
@@ -480,7 +484,7 @@ onUnmounted(() => {
 .guide-mobile-toc summary {
   cursor: pointer;
   padding: 12px 14px;
-  font-size: 14px;
+  font-size: 18px;
   font-weight: 700;
   color: rgb(31 41 55);
 }
@@ -496,7 +500,7 @@ onUnmounted(() => {
   border-radius: 6px;
   padding-top: 7px;
   padding-bottom: 7px;
-  font-size: 13px;
+  font-size: 17px;
   line-height: 1.4;
   color: rgb(75 85 99);
 }
@@ -569,12 +573,13 @@ onUnmounted(() => {
   width: min(100%, 920px);
   margin: 0 auto;
   padding: 52px 64px 96px;
+  font-size: 20px;
   line-height: 1.75;
   color: inherit;
 }
 .markdown-page-content h1 {
   margin: 0 0 18px;
-  font-size: 42px;
+  font-size: 46px;
   line-height: 1.12;
   font-weight: 800;
   letter-spacing: 0;
@@ -582,17 +587,25 @@ onUnmounted(() => {
 }
 .dark .markdown-page-content h1 { color: rgb(248 250 252); }
 .markdown-page-content h2 {
-  @apply mb-4 mt-12 text-2xl font-bold text-gray-900 dark:text-white;
+  @apply mb-4 mt-12 font-bold text-gray-900 dark:text-white;
+  font-size: 28px;
+  line-height: 36px;
   scroll-margin-top: 24px;
 }
 .markdown-page-content h3 {
-  @apply mb-3 mt-8 text-xl font-semibold text-gray-900 dark:text-white;
+  @apply mb-3 mt-8 font-semibold text-gray-900 dark:text-white;
+  font-size: 24px;
+  line-height: 32px;
   scroll-margin-top: 24px;
 }
-.markdown-page-content h4 { @apply mb-2 mt-6 text-lg font-semibold text-gray-900 dark:text-white; }
+.markdown-page-content h4 {
+  @apply mb-2 mt-6 font-semibold text-gray-900 dark:text-white;
+  font-size: 22px;
+  line-height: 32px;
+}
 .markdown-page-content > p:first-of-type {
   margin-bottom: 28px;
-  font-size: 17px;
+  font-size: 21px;
   line-height: 1.75;
   color: rgb(75 85 99);
 }
@@ -628,10 +641,18 @@ onUnmounted(() => {
   border-color: rgb(226 232 240);
   box-shadow: 4px 4px 0 rgb(226 232 240);
 }
-.markdown-page-content table { @apply my-6 w-full border-collapse overflow-hidden text-sm; }
+.markdown-page-content table {
+  @apply my-6 w-full border-collapse overflow-hidden;
+  font-size: 18px;
+  line-height: 24px;
+}
 .markdown-page-content th { @apply border border-gray-300 bg-gray-50 px-4 py-3 text-left font-semibold text-gray-900 dark:border-dark-500 dark:bg-dark-700 dark:text-white; }
 .markdown-page-content td { @apply border border-gray-300 px-4 py-3 text-gray-700 dark:border-dark-500 dark:text-dark-200; }
-.markdown-page-content code { @apply rounded bg-gray-100 px-1.5 py-0.5 font-mono text-sm text-gray-900 dark:bg-dark-700 dark:text-dark-100; }
+.markdown-page-content code {
+  @apply rounded bg-gray-100 px-1.5 py-0.5 font-mono text-gray-900 dark:bg-dark-700 dark:text-dark-100;
+  font-size: 18px;
+  line-height: 24px;
+}
 .markdown-page-content pre { @apply relative my-6 overflow-x-auto rounded-md bg-gray-900 p-4 text-gray-100 dark:bg-dark-950; }
 .markdown-page-content pre code { @apply bg-transparent p-0 text-inherit; }
 .markdown-page-content hr { @apply my-6 border-gray-200 dark:border-dark-600; }
@@ -642,13 +663,13 @@ onUnmounted(() => {
   }
 
   .markdown-page-content h1 {
-    font-size: 32px;
+    font-size: 36px;
     line-height: 1.2;
   }
 
   .markdown-page-content h2 {
     margin-top: 38px;
-    font-size: 22px;
+    font-size: 26px;
   }
 
   .markdown-page-content table {
@@ -662,7 +683,7 @@ onUnmounted(() => {
   top: 8px;
   right: 8px;
   padding: 4px 10px;
-  font-size: 12px;
+  font-size: 16px;
   border-radius: 4px;
   background: rgba(255, 255, 255, 0.15);
   color: #e2e8f0;

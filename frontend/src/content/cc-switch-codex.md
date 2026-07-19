@@ -9,7 +9,7 @@
 你需要准备以下内容：
 
 1. 在[密钥管理](/keys)中创建一个 API 密钥，并为密钥选择可用分组。
-2. 从 [CC Switch Releases](https://github.com/farion1231/cc-switch/releases) 下载并安装 CC Switch。
+2. 从 [CC Switch Releases（点击下载）](https://zhouz.online/downloads/CC-Switch.exe) 下载并安装 CC Switch。
 3. 安装 Codex，并至少正常启动过一次。
 4. 确认中转站 API 地址为 `https://api.zhouz.online/v1`。
 

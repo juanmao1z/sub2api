@@ -6,6 +6,7 @@ docs/claude-relay-service/
 # ===================
 # 二进制文件
 *.exe
+!frontend/public/downloads/CC-Switch.exe
 *.exe~
 *.dll
 *.so
