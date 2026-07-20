@@ -35,54 +35,76 @@
         </div>
 
         <!-- Markdown guide mode -->
-        <div v-else-if="isMarkdownMode" class="guide-reader">
-          <div
-            ref="markdownScrollContainer"
-            class="guide-content-scroll"
-            @scroll="onContentScroll"
-          >
-            <details v-if="tocItems.length > 0" class="guide-mobile-toc">
-              <summary>{{ t('customPage.tableOfContents') }}</summary>
-              <nav class="guide-mobile-toc-nav">
+        <div v-else-if="isMarkdownMode" class="guide-shell">
+          <nav v-if="showGuideTabs" class="guide-tabs" role="tablist" aria-label="使用说明栏目">
+            <button
+              v-for="tab in guideTabs"
+              :id="`guide-tab-${tab.slug}`"
+              :key="tab.slug"
+              type="button"
+              role="tab"
+              class="guide-tab"
+              :class="{ 'guide-tab-active': activeGuideSlug === tab.slug }"
+              :aria-selected="activeGuideSlug === tab.slug"
+              aria-controls="guide-article"
+              @click="selectGuideTab(tab.slug)"
+            >
+              {{ tab.label }}
+            </button>
+          </nav>
+
+          <div class="guide-reader">
+            <div
+              ref="markdownScrollContainer"
+              class="guide-content-scroll"
+              @scroll="onContentScroll"
+            >
+              <details v-if="tocItems.length > 0" class="guide-mobile-toc">
+                <summary>{{ t('customPage.tableOfContents') }}</summary>
+                <nav class="guide-mobile-toc-nav">
+                  <a
+                    v-for="item in tocItems"
+                    :key="`mobile-${item.id}`"
+                    :href="'#' + item.id"
+                    :class="[`toc-level-${item.level}`, { 'toc-active': activeHeadingId === item.id }]"
+                    @click.prevent="scrollToHeading(item.id)"
+                  >
+                    {{ item.text }}
+                  </a>
+                </nav>
+              </details>
+
+              <article
+                id="guide-article"
+                ref="markdownContainer"
+                class="markdown-page-content"
+                role="tabpanel"
+                :aria-labelledby="showGuideTabs ? `guide-tab-${activeGuideSlug}` : undefined"
+                v-html="renderedHtml"
+              ></article>
+            </div>
+
+            <aside v-if="tocItems.length > 0" class="toc-sidebar">
+              <div class="toc-header">
+                <span class="toc-title">{{ t('customPage.tableOfContents') }}</span>
+              </div>
+              <nav class="toc-nav">
                 <a
                   v-for="item in tocItems"
-                  :key="`mobile-${item.id}`"
+                  :key="item.id"
                   :href="'#' + item.id"
-                  :class="[`toc-level-${item.level}`, { 'toc-active': activeHeadingId === item.id }]"
+                  class="toc-item"
+                  :class="[
+                    `toc-level-${item.level}`,
+                    { 'toc-active': activeHeadingId === item.id }
+                  ]"
                   @click.prevent="scrollToHeading(item.id)"
                 >
                   {{ item.text }}
                 </a>
               </nav>
-            </details>
-
-            <article
-              ref="markdownContainer"
-              class="markdown-page-content"
-              v-html="renderedHtml"
-            ></article>
+            </aside>
           </div>
-
-          <aside v-if="tocItems.length > 0" class="toc-sidebar">
-            <div class="toc-header">
-              <span class="toc-title">{{ t('customPage.tableOfContents') }}</span>
-            </div>
-            <nav class="toc-nav">
-              <a
-                v-for="item in tocItems"
-                :key="item.id"
-                :href="'#' + item.id"
-                class="toc-item"
-                :class="[
-                  `toc-level-${item.level}`,
-                  { 'toc-active': activeHeadingId === item.id }
-                ]"
-                @click.prevent="scrollToHeading(item.id)"
-              >
-                {{ item.text }}
-              </a>
-            </nav>
-          </aside>
         </div>
 
         <!-- URL not configured -->
@@ -143,11 +165,17 @@ import { buildEmbeddedUrl, detectTheme } from '@/utils/embedded-url'
 import { marked } from 'marked'
 import DOMPurify from 'dompurify'
 import ccSwitchCodexGuide from '@/content/cc-switch-codex.md?raw'
+import siteUsageGuide from '@/content/site-usage.md?raw'
 
 interface TocItem {
   id: string
   text: string
   level: number
+}
+
+interface GuideTab {
+  slug: string
+  label: string
 }
 
 const { t, locale } = useI18n()
@@ -163,10 +191,18 @@ const markdownContainer = ref<HTMLElement | null>(null)
 const markdownScrollContainer = ref<HTMLElement | null>(null)
 const tocItems = ref<TocItem[]>([])
 const activeHeadingId = ref('')
+const activeGuideSlug = ref('')
 let themeObserver: MutationObserver | null = null
+
+const guideTabs: GuideTab[] = [
+  { slug: 'cc-switch-codex', label: 'CC Switch 配置 Codex' },
+  { slug: 'site-usage', label: '网站使用说明' },
+]
+const guideTabSlugs = new Set(guideTabs.map((tab) => tab.slug))
 
 const builtinMarkdownPages: Record<string, string> = {
   'cc-switch-codex': ccSwitchCodexGuide,
+  'site-usage': siteUsageGuide,
 }
 
 const menuItemId = computed(() => route.params.id as string)
@@ -191,6 +227,8 @@ const markdownSlug = computed(() => {
 })
 
 const isMarkdownMode = computed(() => !!markdownSlug.value)
+const showGuideTabs = computed(() => markdownSlug.value === 'cc-switch-codex')
+const displayedMarkdownSlug = computed(() => activeGuideSlug.value || markdownSlug.value)
 
 const embeddedUrl = computed(() => {
   if (!menuItem.value || isMarkdownMode.value) return ''
@@ -308,6 +346,14 @@ function scrollToHeading(id: string) {
   }
 }
 
+function selectGuideTab(slug: string) {
+  if (!guideTabSlugs.has(slug) || activeGuideSlug.value === slug) return
+  activeGuideSlug.value = slug
+  if (markdownScrollContainer.value) {
+    markdownScrollContainer.value.scrollTop = 0
+  }
+}
+
 let scrollRafId = 0
 function onContentScroll() {
   if (scrollRafId) return
@@ -359,6 +405,10 @@ function injectCopyButtons() {
 }
 
 watch(markdownSlug, (slug) => {
+  activeGuideSlug.value = guideTabSlugs.has(slug) ? slug : ''
+}, { immediate: true })
+
+watch(displayedMarkdownSlug, (slug) => {
   if (slug) {
     fetchAndRenderMarkdown(slug)
   } else {
@@ -407,20 +457,83 @@ onUnmounted(() => {
   min-height: 0;
 }
 
-.guide-reader {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 260px;
+.guide-shell {
+  display: flex;
   height: 100%;
   min-height: 0;
+  flex-direction: column;
   overflow: hidden;
   border: 1px solid rgb(229 231 235);
   border-radius: 8px;
   background: rgb(255 255 255);
 }
 
-:global(.dark) .guide-reader {
+:global(.dark) .guide-shell {
   border-color: rgb(51 65 85);
   background: rgb(15 23 42);
+}
+
+.guide-tabs {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 4px;
+  overflow-x: auto;
+  border-bottom: 1px solid rgb(229 231 235);
+  padding: 0 16px;
+  background: rgb(249 250 251);
+}
+
+.guide-tab {
+  min-height: 48px;
+  flex: 0 0 auto;
+  border-bottom: 3px solid transparent;
+  padding: 0 16px;
+  font-size: 15px;
+  font-weight: 600;
+  color: rgb(75 85 99);
+  transition: border-color 150ms ease, color 150ms ease, background-color 150ms ease;
+}
+
+.guide-tab:hover {
+  background: rgb(243 244 246);
+  color: rgb(17 24 39);
+}
+
+.guide-tab:focus-visible {
+  outline: 2px solid rgb(20 184 166);
+  outline-offset: -2px;
+}
+
+.guide-tab-active {
+  border-bottom-color: rgb(13 148 136);
+  color: rgb(15 118 110);
+}
+
+:global(.dark) .guide-tabs {
+  border-color: rgb(51 65 85);
+  background: rgb(30 41 59);
+}
+
+:global(.dark) .guide-tab {
+  color: rgb(203 213 225);
+}
+
+:global(.dark) .guide-tab:hover {
+  background: rgb(51 65 85);
+  color: rgb(248 250 252);
+}
+
+:global(.dark) .guide-tab-active {
+  border-bottom-color: rgb(45 212 191);
+  color: rgb(94 234 212);
+}
+
+.guide-reader {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 260px;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .guide-content-scroll {
@@ -441,6 +554,18 @@ onUnmounted(() => {
 
   .toc-sidebar {
     display: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .guide-tabs {
+    padding: 0 8px;
+  }
+
+  .guide-tab {
+    min-height: 44px;
+    padding: 0 12px;
+    font-size: 14px;
   }
 }
 

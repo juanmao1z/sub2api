@@ -135,7 +135,7 @@ describe('CustomPageView', () => {
     expect(wrapper.get('.custom-embed-shell').classes()).not.toContain('custom-embed-shell-leaderboard')
   })
 
-  it('renders the built-in CC Switch guide with desktop and mobile contents', async () => {
+  it('switches between the built-in guides and rebuilds their contents', async () => {
     const wrapper = mountCustomPage('cc-switch-guide', [
       menuItem({
         id: 'cc-switch-guide',
@@ -151,11 +151,33 @@ describe('CustomPageView', () => {
     expect(wrapper.get('.markdown-page-content h1').text()).toBe('CC Switch 配置 Codex')
     expect(wrapper.get('.markdown-page-content').text()).toContain('https://api.zhouz.online/v1')
 
-    const desktopTocItems = wrapper.findAll('.toc-sidebar .toc-item')
+    const tabs = wrapper.findAll('[role="tab"]')
+    expect(tabs.map((tab) => tab.text())).toEqual(['CC Switch 配置 Codex', '网站使用说明'])
+    expect(tabs[0].attributes('aria-selected')).toBe('true')
+    expect(tabs[1].attributes('aria-selected')).toBe('false')
+
+    let desktopTocItems = wrapper.findAll('.toc-sidebar .toc-item')
     expect(desktopTocItems.length).toBeGreaterThan(3)
     expect(desktopTocItems.some((item) => item.text() === '开始前的准备')).toBe(true)
     expect(desktopTocItems.some((item) => item.text() === 'CC Switch 配置 Codex')).toBe(false)
 
     expect(wrapper.get('.guide-mobile-toc summary').text()).toBe('customPage.tableOfContents')
+
+    await tabs[1].trigger('click')
+    await flushPromises()
+
+    expect(tabs[0].attributes('aria-selected')).toBe('false')
+    expect(tabs[1].attributes('aria-selected')).toBe('true')
+    expect(wrapper.get('.markdown-page-content h1').text()).toBe('网站使用说明')
+    expect(wrapper.get('.markdown-page-content').text()).toContain('codex-上游正价pro')
+    expect(wrapper.get('.markdown-page-content').text()).toContain('低价稳定的分组')
+    expect(wrapper.get('.markdown-page-content').text()).toContain('Codex Pro 上游正价号池')
+    expect(wrapper.get('.markdown-page-content').text()).not.toContain('当前能力')
+    expect(wrapper.get('.markdown-page-content').text()).toContain('实际费用 = 模型基础费用 × 当前生效倍率')
+
+    desktopTocItems = wrapper.findAll('.toc-sidebar .toc-item')
+    expect(desktopTocItems.some((item) => item.text() === '计费说明')).toBe(true)
+    expect(desktopTocItems.some((item) => item.text() === '分组说明')).toBe(true)
+    expect(desktopTocItems.some((item) => item.text() === '开始前的准备')).toBe(false)
   })
 })
