@@ -15,9 +15,9 @@
 
 ## 项目定位
 
-本项目基于 [Wei-Shaw/sub2api](https://github.com/Wei-Shaw/sub2api) 开发，当前定制基线为官方 `v0.1.163`。官方项目负责通用的账号池、API Key、计费、并发控制、负载均衡、请求转发、管理后台以及 PostgreSQL/Redis 基础能力；本仓库在此基础上增加 zhouz.online 的品牌、公开状态页、外部充值入口、排行榜接入和生产部署流程。
+本项目基于 [Wei-Shaw/sub2api](https://github.com/Wei-Shaw/sub2api) 开发，当前定制基线为官方 `v0.1.164`。官方项目负责通用的账号池、API Key、计费、并发控制、负载均衡、请求转发、管理后台以及 PostgreSQL/Redis 基础能力；本仓库在此基础上增加 zhouz.online 的品牌、公开状态页、外部充值入口、排行榜接入和生产部署流程。
 
-本 README 重点记录相对于官方 `v0.1.163` 的增量。官方通用功能、配置项和基础安装说明请以[官方仓库](https://github.com/Wei-Shaw/sub2api)为准。本次官方升级新增分组级 OpenAI 推理力度上限与精确映射、Grok `/responses/compact` 兼容和 Redis ACL 用户名配置；优化调度器快照发布与无可用账号诊断，并修复优雅关停超时导致缓冲用量/计费记录丢失、Grok 与 OpenAI/Codex 转发兼容、SSE 解析、计费口径、调度监控以及多处移动端布局问题。
+本 README 重点记录相对于官方 `v0.1.164` 的增量。官方通用功能、配置项和基础安装说明请以[官方仓库](https://github.com/Wei-Shaw/sub2api)为准。本次官方升级新增聚合分组、Ollama Cloud 用量同步和支付宝移动端深链；优化 OpenAI 账号测试、Codex 批量导入和限流时间显示，并修复 OpenAI OAuth 输入规范化与流式代理隔离、Grok 402 冷却、简易模式图片能力、渠道定价匹配、CC Switch Grok 密钥归类及 Ollama 凭证审计问题。
 
 ## 相对官方的主要差异
 
