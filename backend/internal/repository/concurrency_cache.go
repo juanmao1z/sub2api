@@ -52,8 +52,9 @@ const (
 	userActiveIndexKey    = "concurrency:user:active_index"    // ZSET member=userID, score=expireAtUnixSeconds
 
 	// 后台清理只按批处理索引候选，避免单次任务占用 Redis 太久。
-	activeIndexCleanupBatchSize  = 1000
-	activeIndexPipelineChunkSize = 500
+	activeIndexCleanupBatchSize      = 1000
+	activeIndexPipelineChunkSize     = 500
+	totalAccountConcurrencyBatchSize = activeIndexPipelineChunkSize / 2
 
 	// 一次性迁移 marker：活跃索引机制上线前遗留的等待计数键无法被索引发现，
 	// 且有流量时 TTL 会被不断刷新，必须清扫一次。marker 存在即代表已完成。
@@ -732,8 +733,8 @@ func totalAccountConcurrencyFromSnapshot(
 	}
 
 	total := 0
-	for start := 0; start < len(members); start += activeIndexPipelineChunkSize {
-		end := start + activeIndexPipelineChunkSize
+	for start := 0; start < len(members); start += totalAccountConcurrencyBatchSize {
+		end := start + totalAccountConcurrencyBatchSize
 		if end > len(members) {
 			end = len(members)
 		}
