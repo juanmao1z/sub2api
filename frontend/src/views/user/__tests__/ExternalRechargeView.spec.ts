@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from 'vitest'
 import ExternalRechargeView from '../ExternalRechargeView.vue'
 
 const messages: Record<string, string> = {
-  'recharge.title': '点击充值-右上角新窗口',
+  'recharge.title': '发卡网充值',
   'recharge.openInNewWindow': '新窗口打开',
   'recharge.iframeTitle': '充值中心'
 }
@@ -36,7 +36,7 @@ describe('ExternalRechargeView', () => {
 
     expect(wrapper.get('[data-testid="app-layout"]').exists()).toBe(true)
     expect(wrapper.find('h1').exists()).toBe(false)
-    expect(wrapper.text()).not.toContain('点击充值-右上角新窗口')
+    expect(wrapper.text()).not.toContain('发卡网充值')
 
     const frameShell = wrapper.get('[data-testid="recharge-frame-shell"]')
     expect(frameShell.classes()).toContain('rounded-2xl')

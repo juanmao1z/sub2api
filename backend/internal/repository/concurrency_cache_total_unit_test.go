@@ -11,8 +11,8 @@ import (
 )
 
 func TestTotalAccountConcurrencyFromSnapshot_IgnoresIndexMutationBetweenChunks(t *testing.T) {
-	liveIndex := make([]string, 0, activeIndexPipelineChunkSize+1)
-	for accountID := 1; accountID <= activeIndexPipelineChunkSize+1; accountID++ {
+	liveIndex := make([]string, 0, totalAccountConcurrencyBatchSize+1)
+	for accountID := 1; accountID <= totalAccountConcurrencyBatchSize+1; accountID++ {
 		liveIndex = append(liveIndex, strconv.Itoa(accountID))
 	}
 
@@ -41,9 +41,9 @@ func TestTotalAccountConcurrencyFromSnapshot_IgnoresIndexMutationBetweenChunks(t
 	)
 
 	require.NoError(t, err)
-	require.Equal(t, activeIndexPipelineChunkSize+1, total)
+	require.Equal(t, totalAccountConcurrencyBatchSize+1, total)
 	require.Equal(t, 1, snapshotReads)
 	require.Equal(t, 2, batchCalls)
-	require.Len(t, processedBatches[0], activeIndexPipelineChunkSize)
-	require.Equal(t, []int64{activeIndexPipelineChunkSize + 1}, processedBatches[1])
+	require.Len(t, processedBatches[0], totalAccountConcurrencyBatchSize)
+	require.Equal(t, []int64{totalAccountConcurrencyBatchSize + 1}, processedBatches[1])
 }
