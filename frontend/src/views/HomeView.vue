@@ -229,7 +229,7 @@
           </header>
           <div class="min-h-0 flex-1 overflow-auto p-3">
             <img
-              src="/community-placeholder.jpg?v=20260715-222714"
+              src="/community-placeholder.jpg?v=20260731-img3842"
               :alt="t('home.community.imageAlt')"
               class="mx-auto h-auto max-h-[calc(100vh-6.5rem)] w-full rounded-md object-contain"
             />
