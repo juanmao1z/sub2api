@@ -33,14 +33,13 @@ describe('HomeView default content', () => {
   })
 
   it('keeps polling disabled until settings resolve to the default home', () => {
-    expect(source).toContain(
-      'computed(() => appStore.publicSettingsLoaded && !homeContent.value)',
-    )
+    expect(source).toContain('&& !hasHomeContent.value')
+    expect(source).toContain('&& !compactHomeEnabled.value')
     expect(source).toContain('useHomepageStatus(showDefaultHome, 60_000)')
   })
 
   it('keeps custom URL and HTML home modes intact', () => {
-    expect(source).toContain('v-if="homeContent"')
+    expect(source).toContain('v-if="hasHomeContent"')
     expect(source).toContain('v-if="isHomeContentUrl"')
     expect(source).toContain(':src="homeContent.trim()"')
     expect(source).toContain('v-else v-html="homeContent"')
