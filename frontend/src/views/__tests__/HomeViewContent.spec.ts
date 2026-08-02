@@ -23,7 +23,7 @@ describe('HomeView default content', () => {
     expect(source).toContain('aria-haspopup="dialog"')
     expect(source).toContain('@click.self="closeCommunity"')
     expect(source).toContain('font-[720]')
-    expect(source).not.toContain('siteSubtitle')
+    expect(source).toContain('const siteSubtitle = computed(')
     expect(source).not.toContain('RealtimeConcurrencyStatus')
     expect(source).not.toContain('useRealtimeConcurrency')
     expect(source).not.toContain('terminal-window')
