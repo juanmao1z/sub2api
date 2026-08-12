@@ -15,9 +15,9 @@
 
 ## 项目定位
 
-本项目基于 [Wei-Shaw/sub2api](https://github.com/Wei-Shaw/sub2api) 开发，当前定制基线为官方 `v0.1.173`。官方项目负责通用的账号池、API Key、计费、并发控制、负载均衡、请求转发、管理后台以及 PostgreSQL/Redis 基础能力；本仓库在此基础上增加 zhouz.online 的品牌、公开状态页、外部充值入口、排行榜接入和生产部署流程。
+本项目基于 [Wei-Shaw/sub2api](https://github.com/Wei-Shaw/sub2api) 开发，当前定制基线为官方 `v0.1.175`。官方项目负责通用的账号池、API Key、计费、并发控制、负载均衡、请求转发、管理后台以及 PostgreSQL/Redis 基础能力；本仓库在此基础上增加 zhouz.online 的品牌、公开状态页、外部充值入口、排行榜接入和生产部署流程。
 
-本 README 重点记录相对于官方 `v0.1.173` 的增量。官方通用功能、配置项和基础安装说明请以[官方仓库](https://github.com/Wei-Shaw/sub2api)为准。本次官方升级包含渠道监控 v2、Grok 音频与搜索能力、注册邮箱域名额度策略、Gemini 图片计费修复，以及多项调度、计费和稳定性改进。
+本 README 重点记录相对于官方 `v0.1.175` 的增量。官方通用功能、配置项和基础安装说明请以[官方仓库](https://github.com/Wei-Shaw/sub2api)为准。本次官方升级包含 Codex 设备指纹收敛、备份归档与 S3 支持、响应模型计费、OpenAI Responses/流式兼容性修复，以及多项安全审计和管理后台改进。
 
 ## 相对官方的主要差异
 
@@ -30,7 +30,7 @@
 | 外部充值 | 登录后 `/recharge` 页面、内嵌支付页、新窗口打开入口、支付域名 CSP 放行 | `frontend/src/views/user/ExternalRechargeView.vue` |
 | 自定义菜单 | 公开菜单可见性规范化、用户/管理员菜单隔离、移除账号菜单中的官方 GitHub 入口、内嵌页面兼容 | `backend/internal/service/setting_public.go`、`AppHeader.vue`、`CustomPageView.vue` |
 | 排行榜接入 | 首页快捷入口和 `usage-leaderboard` 自定义页面适配 | `frontend/src/views/HomeView.vue`、`CustomPageView.vue` |
-| 生产构建 | GitHub Actions 完成前后端与 Docker 镜像构建并发布到 GHCR，服务器只拉取和运行镜像 | `.github/workflows/release.yml` |
+| 生产构建 | 本机完成前端、Linux amd64 后端与 Docker 镜像构建，服务器只加载和运行镜像 | `Dockerfile.prebuilt-binary` |
 | 升级发布 | 上游合并检查、定制项保护、单应用容器切换、健康检查和回滚记录 | `docs/custom-upgrade-workflow.md` |
 
 ## 1. 品牌化公开首页
