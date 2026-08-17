@@ -15,9 +15,9 @@
 
 ## 项目定位
 
-本项目基于 [Wei-Shaw/sub2api](https://github.com/Wei-Shaw/sub2api) 开发，当前定制基线为官方 `v0.1.176`。官方项目负责通用的账号池、API Key、计费、并发控制、负载均衡、请求转发、管理后台以及 PostgreSQL/Redis 基础能力；本仓库在此基础上增加 zhouz.online 的品牌、公开状态页、外部充值入口、排行榜接入和生产部署流程。
+本项目基于 [Wei-Shaw/sub2api](https://github.com/Wei-Shaw/sub2api) 开发，当前定制基线为官方 `v0.1.177`。官方项目负责通用的账号池、API Key、计费、并发控制、负载均衡、请求转发、管理后台以及 PostgreSQL/Redis 基础能力；本仓库在此基础上增加 zhouz.online 的品牌、公开状态页、外部充值入口、排行榜接入和生产部署流程。
 
-本 README 重点记录相对于官方 `v0.1.176` 的增量。官方通用功能、配置项和基础安装说明请以[官方仓库](https://github.com/Wei-Shaw/sub2api)为准。本次官方升级包含 Grok 4.6 与 JWT 订阅档位支持、`/x_search` 搜索计费、分组逐模型与长上下文阶梯定价、账号用量档位刷新、OpenAI Responses 探测修复，以及定时备份 leader lock 和频道缓存失效修复。
+本 README 重点记录相对于官方 `v0.1.177` 的增量。官方通用功能、配置项和基础安装说明请以[官方仓库](https://github.com/Wei-Shaw/sub2api)为准。本次官方升级包含分组用量按日汇总、Codex remote compaction v2 与 turn-state 回传、指纹收敛改为显式启用、Grok 长上下文和媒体模型计费修复，以及账号页自动刷新偏好修复。
 
 ## 相对官方的主要差异
 
