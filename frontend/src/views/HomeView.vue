@@ -40,6 +40,15 @@
           >
             <Icon name="book" size="md" />
           </a>
+          <router-link
+            v-if="showModelPlazaEntry"
+            to="/model-plaza"
+            class="flex h-10 shrink-0 items-center gap-1.5 rounded-lg px-2.5 text-sm font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:text-dark-400 dark:hover:bg-dark-800 dark:hover:text-white"
+            :title="t('nav.modelPlaza')"
+          >
+            <Icon name="grid" size="md" />
+            <span class="hidden sm:inline">{{ t('nav.modelPlaza') }}</span>
+          </router-link>
           <button
             class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100 dark:text-dark-400 dark:hover:bg-dark-800"
             :title="isDark ? t('home.switchToLight') : t('home.switchToDark')"
@@ -110,6 +119,31 @@
           </router-link>
           <span class="mx-2 h-4 w-px bg-[#dce5e1] dark:bg-[#33413d]"></span>
           <LocaleSwitcher />
+
+          <!-- Doc Link -->
+          <a
+            v-if="docUrl"
+            :href="docUrl"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:text-dark-400 dark:hover:bg-dark-800 dark:hover:text-white"
+            :title="t('home.viewDocs')"
+          >
+            <Icon name="book" size="md" />
+          </a>
+
+          <!-- Model Plaza Link -->
+          <router-link
+            v-if="showModelPlazaEntry"
+            to="/model-plaza"
+            class="inline-flex items-center gap-1.5 rounded-lg p-2 text-sm text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:text-dark-400 dark:hover:bg-dark-800 dark:hover:text-white"
+            :title="t('nav.modelPlaza')"
+          >
+            <Icon name="grid" size="md" />
+            <span class="hidden sm:inline">{{ t('nav.modelPlaza') }}</span>
+          </router-link>
+
+          <!-- Theme Toggle -->
           <button
             type="button"
             class="home-icon-button"
@@ -323,6 +357,7 @@ import {
   formatSuccessRate,
 } from '@/utils/homepageStatus'
 import { sanitizeUrl } from '@/utils/url'
+import { FeatureFlags, isFeatureFlagEnabled } from '@/utils/featureFlags'
 
 const { t, locale } = useI18n()
 const authStore = useAuthStore()
@@ -341,6 +376,7 @@ const showDefaultHome = computed(
     && !compactHomeEnabled.value,
 )
 const { status: homepageStatus } = useHomepageStatus(showDefaultHome, 60_000)
+const modelPlazaEnabled = computed(() => isFeatureFlagEnabled(FeatureFlags.modelPlaza))
 
 const isHomeContentUrl = computed(() => {
   const content = homeContent.value.trim()
@@ -348,7 +384,21 @@ const isHomeContentUrl = computed(() => {
 })
 
 const isAuthenticated = computed(() => authStore.isAuthenticated)
-const dashboardPath = computed(() => authStore.isAdmin ? '/admin/dashboard' : '/dashboard')
+const modelPlazaRequiresAuth = computed(
+  () => appStore.cachedPublicSettings?.model_plaza_require_auth === true,
+)
+const showModelPlazaEntry = computed(
+  () => modelPlazaEnabled.value && (isAuthenticated.value || !modelPlazaRequiresAuth.value),
+)
+const isAdmin = computed(() => authStore.isAdmin)
+const dashboardPath = computed(() => isAdmin.value ? '/admin/dashboard' : '/dashboard')
+const userInitial = computed(() => {
+  const user = authStore.user
+  if (!user || !user.email) return ''
+  return user.email.charAt(0).toUpperCase()
+})
+
+// Current year for footer
 const currentYear = computed(() => new Date().getFullYear())
 const redeemUrl = 'https://pay.ldxp.cn/shop/1WGCPCG0'
 const leaderboardUrl = 'https://api.zhouz.online/custom/usage-leaderboard'
