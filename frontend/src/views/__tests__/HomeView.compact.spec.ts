@@ -28,6 +28,7 @@ vi.mock('@/stores', () => ({
 
 vi.mock('@/composables/useHomepageStatus', () => ({
   useHomepageStatus: () => ({ status: ref(null) }),
+}))
 vi.mock('@/stores/app', () => ({
   useAppStore: () => appStore,
 }))
