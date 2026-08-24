@@ -166,6 +166,8 @@ import { marked } from 'marked'
 import DOMPurify from 'dompurify'
 import ccSwitchCodexGuide from '@/content/cc-switch-codex.md?raw'
 import siteUsageGuide from '@/content/site-usage.md?raw'
+import sessionRecoveryGuide from '@/content/session-recovery.md?raw'
+import apiErrorsGuide from '@/content/api-errors.md?raw'
 
 interface TocItem {
   id: string
@@ -197,12 +199,16 @@ let themeObserver: MutationObserver | null = null
 const guideTabs: GuideTab[] = [
   { slug: 'cc-switch-codex', label: 'CC Switch 配置 Codex' },
   { slug: 'site-usage', label: '网站使用说明' },
+  { slug: 'session-recovery', label: '会话与配置恢复' },
+  { slug: 'api-errors', label: 'API 错误与网络排查' },
 ]
 const guideTabSlugs = new Set(guideTabs.map((tab) => tab.slug))
 
 const builtinMarkdownPages: Record<string, string> = {
   'cc-switch-codex': ccSwitchCodexGuide,
   'site-usage': siteUsageGuide,
+  'session-recovery': sessionRecoveryGuide,
+  'api-errors': apiErrorsGuide,
 }
 
 const menuItemId = computed(() => route.params.id as string)

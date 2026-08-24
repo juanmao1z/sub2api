@@ -15,7 +15,7 @@ describe('HomeView default content', () => {
     expect(source).toContain(
       "const leaderboardUrl = 'https://api.zhouz.online/custom/usage-leaderboard'",
     )
-    expect(source).toContain("src=\"/community-placeholder.jpg?v=20260731-img3842\"")
+    expect(source).toContain("src=\"/community-placeholder.jpg?v=20260823-community-qr-2\"")
     expect(source).toContain('max-h-[calc(100vh-6.5rem)]')
     expect(source).toContain('object-contain')
     expect(source).not.toContain('aspect-square w-full rounded-md object-cover')
