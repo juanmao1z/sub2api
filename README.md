@@ -15,9 +15,9 @@
 
 ## 项目定位
 
-本项目基于 [Wei-Shaw/sub2api](https://github.com/Wei-Shaw/sub2api) 开发，当前定制基线为官方 `v0.1.180`。官方项目负责通用的账号池、API Key、计费、并发控制、负载均衡、请求转发、管理后台以及 PostgreSQL/Redis 基础能力；本仓库在此基础上增加 zhouz.online 的品牌、公开状态页、外部充值入口、排行榜接入和生产部署流程。
+本项目基于 [Wei-Shaw/sub2api](https://github.com/Wei-Shaw/sub2api) 开发，当前定制基线为官方 `v0.1.182`。官方项目负责通用的账号池、API Key、计费、并发控制、负载均衡、请求转发、管理后台以及 PostgreSQL/Redis 基础能力；本仓库在此基础上增加 zhouz.online 的品牌、公开状态页、外部充值入口、排行榜接入和生产部署流程。
 
-本 README 重点记录相对于官方 `v0.1.180` 的增量。官方通用功能、配置项和基础安装说明请以[官方仓库](https://github.com/Wei-Shaw/sub2api)为准。本次官方升级包含插件系统、插件运行时和多项 OpenAI/Anthropic/Grok/WS 兼容性修复。
+本 README 重点记录相对于官方 `v0.1.182` 的增量。官方通用功能、配置项和基础安装说明请以[官方仓库](https://github.com/Wei-Shaw/sub2api)为准。本次官方升级包含支付成功后余额刷新、OpenAI Responses/WebSocket 兼容性、限流与复合路由处理改进。
 
 ## 相对官方的主要差异
 
