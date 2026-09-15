@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { mount, RouterLinkStub } from '@vue/test-utils'
+import { ref } from 'vue'
 
 import HomeView from '../HomeView.vue'
 
@@ -25,6 +26,9 @@ vi.mock('@/stores', () => ({
   useAuthStore: () => authStore,
 }))
 
+vi.mock('@/composables/useHomepageStatus', () => ({
+  useHomepageStatus: () => ({ status: ref(null) }),
+}))
 vi.mock('@/stores/app', () => ({
   useAppStore: () => appStore,
 }))
@@ -33,7 +37,10 @@ vi.mock('vue-i18n', async (importOriginal) => {
   const actual = await importOriginal<typeof import('vue-i18n')>()
   return {
     ...actual,
-    useI18n: () => ({ t: (key: string) => key }),
+    useI18n: () => ({
+      t: (key: string) => key,
+      locale: ref('en'),
+    }),
   }
 })
 
@@ -108,7 +115,7 @@ describe('HomeView compact mode', () => {
     const wrapper = mountHome(settings)
 
     expect(wrapper.find('[data-testid="compact-home"]').exists()).toBe(false)
-    expect(wrapper.find('.terminal-container').exists()).toBe(true)
+    expect(wrapper.find('[aria-label="Primary"]').exists()).toBe(true)
   })
 
   it('links unauthenticated visitors to login', () => {

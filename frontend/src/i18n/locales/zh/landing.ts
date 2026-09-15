@@ -14,6 +14,33 @@ export default {
     login: '登录',
     getStarted: '立即开始',
     goToDashboard: '进入控制台',
+    navigation: {
+      home: '首页',
+      dashboard: '控制台',
+      redeem: '兑换码',
+      leaderboard: '排行榜',
+      community: '社群',
+      openMenu: '打开导航菜单',
+      closeMenu: '关闭导航菜单'
+    },
+    community: {
+      title: '社群',
+      imageAlt: '社群图片',
+      close: '关闭社群图片'
+    },
+    status: {
+      stable: '本站已稳定运行',
+      since: '自 {date} UTC+8 起',
+      activeUsers: '近 1 小时活跃用户',
+      successRate: '今日成功率',
+      totalTokens: '累计处理 Token',
+      years: '年',
+      months: '月',
+      days: '天',
+      hours: '小时',
+      minutes: '分',
+      seconds: '秒'
+    },
     // 新增：面向用户的价值主张
     heroSubtitle: '一个密钥，畅用多个 AI 模型',
     heroDescription: '无需管理多个订阅账号，一站式接入 Claude、GPT、Gemini 等主流 AI 服务',
@@ -56,6 +83,10 @@ export default {
       multiAccountDesc: '智能调度多个上游账号，自动切换和负载均衡，告别频繁报错。',
       balanceQuota: '用多少付多少',
       balanceQuotaDesc: '按实际使用量计费，支持设置配额上限，团队用量一目了然。'
+    },
+    realtimeConcurrency: {
+      title: '实时 API 并发',
+      refreshHint: '每 5 秒更新'
     },
     // 优势对比
     comparison: {

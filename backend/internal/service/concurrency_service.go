@@ -55,6 +55,10 @@ type ConcurrencyCache interface {
 	CleanupStaleProcessSlots(ctx context.Context, activeRequestPrefix string) error
 }
 
+type TotalAccountConcurrencyCache interface {
+	GetTotalAccountConcurrency(ctx context.Context) (int, error)
+}
+
 type APIKeyConcurrencyCache interface {
 	TrackAPIKeySlot(ctx context.Context, apiKeyID int64, requestID string) error
 	ReleaseAPIKeySlot(ctx context.Context, apiKeyID int64, requestID string) error
@@ -250,6 +254,26 @@ func NewConcurrencyService(cache ConcurrencyCache) *ConcurrencyService {
 	}
 	svc.SetAccountLoadBatchCacheTTL(defaultAccountLoadBatchCacheTTL)
 	return svc
+}
+
+func (s *ConcurrencyService) GetTotalAccountConcurrency(ctx context.Context) (int, error) {
+	if s == nil || s.cache == nil {
+		return 0, errors.New("concurrency cache is unavailable")
+	}
+	cache, ok := s.cache.(TotalAccountConcurrencyCache)
+	if !ok {
+		return 0, errors.New("total account concurrency is unsupported")
+	}
+	redisCtx, cancel := context.WithTimeout(ctx, 3*time.Second)
+	defer cancel()
+	current, err := cache.GetTotalAccountConcurrency(redisCtx)
+	if err != nil {
+		return 0, err
+	}
+	if current < 0 {
+		return 0, errors.New("total account concurrency cannot be negative")
+	}
+	return current, nil
 }
 
 // AcquireOpenAIWSIngressLease atomically reserves one live ingress connection

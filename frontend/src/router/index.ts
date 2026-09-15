@@ -302,6 +302,17 @@ const routes: RouteRecordRaw[] = [
     }
   },
   {
+    path: '/recharge',
+    name: 'ExternalRecharge',
+    component: () => import('@/views/user/ExternalRechargeView.vue'),
+    meta: {
+      requiresAuth: true,
+      requiresAdmin: false,
+      title: 'Recharge',
+      titleKey: 'recharge.title'
+    }
+  },
+  {
     path: '/purchase',
     name: 'PurchaseSubscription',
     component: () => import('@/views/user/PaymentView.vue'),
@@ -325,6 +336,12 @@ const routes: RouteRecordRaw[] = [
       titleKey: 'nav.myOrders',
       requiresPayment: true
     }
+  },
+  {
+    path: '/tickets',
+    name: 'SupportTickets',
+    component: () => import('@/views/user/SupportTicketsView.vue'),
+    meta: { requiresAuth: true, requiresAdmin: false, title: 'Support Tickets', titleKey: 'support.title' }
   },
   {
     path: '/payment/qrcode',
@@ -713,6 +730,12 @@ const routes: RouteRecordRaw[] = [
       titleKey: 'nav.paymentPlans',
       requiresPayment: true
     }
+  },
+  {
+    path: '/admin/tickets',
+    name: 'AdminSupportTickets',
+    component: () => import('@/views/admin/SupportTicketsView.vue'),
+    meta: { requiresAuth: true, requiresAdmin: true, title: 'Support Tickets', titleKey: 'support.adminTitle' }
   },
 
   // ==================== 404 Not Found ====================

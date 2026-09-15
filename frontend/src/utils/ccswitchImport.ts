@@ -20,11 +20,22 @@ export interface CcSwitchImportDeeplinkInput {
   usageScript: string
 }
 
-function withV1Endpoint(baseUrl: string): string {
-  const normalizedBaseUrl = baseUrl.replace(/\/+$/, '')
-  return normalizedBaseUrl.endsWith('/v1') ? normalizedBaseUrl : `${normalizedBaseUrl}/v1`
+/**
+ * @brief Removes a trailing `/v1` path from a CCS base URL.
+ * @param baseUrl The configured API base URL.
+ * @return The URL without trailing slashes or a trailing `/v1` segment.
+ */
+function withoutV1Suffix(baseUrl: string): string {
+  return baseUrl.replace(/\/+$/, '').replace(/\/v1$/i, '')
 }
 
+/**
+ * @brief Resolves the CCS provider configuration for a platform.
+ * @param platform The API group platform.
+ * @param clientType The CCS client receiving the import.
+ * @param baseUrl The API base URL to expose to CCS.
+ * @return The provider app, endpoint, and optional model configuration.
+ */
 export function resolveCcSwitchImportConfig(
   platform: GroupPlatform | undefined | null,
   clientType: CcSwitchClientType,
@@ -50,7 +61,7 @@ export function resolveCcSwitchImportConfig(
     case 'grok':
       return {
         app: 'grokbuild',
-        endpoint: withV1Endpoint(baseUrl),
+        endpoint: withoutV1Suffix(baseUrl),
         model: GROK_CC_SWITCH_MODEL
       }
     default:
@@ -61,13 +72,20 @@ export function resolveCcSwitchImportConfig(
   }
 }
 
+/**
+ * @brief Builds a CCS provider import deeplink.
+ * @param input Provider details and the API base URL to import.
+ * @return A `ccswitch://` deeplink containing the provider configuration.
+ */
 export function buildCcSwitchImportDeeplink(input: CcSwitchImportDeeplinkInput): string {
-  const config = resolveCcSwitchImportConfig(input.platform, input.clientType, input.baseUrl)
+  const platform = input.platform || 'anthropic'
+  const baseUrl = platform === 'grok' ? withoutV1Suffix(input.baseUrl) : input.baseUrl
+  const config = resolveCcSwitchImportConfig(platform, input.clientType, baseUrl)
   const entries: [string, string][] = [
     ['resource', 'provider'],
     ['app', config.app],
     ['name', input.providerName],
-    ['homepage', input.baseUrl],
+    ['homepage', baseUrl],
     ['endpoint', config.endpoint],
     ['apiKey', input.apiKey],
     ['configFormat', 'json'],

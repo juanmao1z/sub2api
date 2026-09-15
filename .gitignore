@@ -93,6 +93,8 @@ temp/
 # ===================
 dist/
 build/
+build-local/
+deploy-artifacts/
 release/
 
 # 后端嵌入的前端构建产物
@@ -151,6 +153,7 @@ docs/screenshots/*
 frontend/coverage/
 aicodex
 output/
+.worktrees/
 .codegraph/
 
 # Vitest / Vite cache at repo root

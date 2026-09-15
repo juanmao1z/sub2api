@@ -80,3 +80,24 @@ describe('AppSidebar subscription feature flag', () => {
     expect(componentSource).toMatch(/path: '\/purchase'[^\n]*label: purchaseNavLabel\.value/)
   })
 })
+
+describe('AppSidebar header navigation', () => {
+  it('routes both the logo and site name to the public home page', () => {
+    expect(componentSource).toContain("const homePath = '/home'")
+    expect(componentSource).not.toContain("isAdmin.value ? '/admin/dashboard' : '/dashboard'")
+  })
+})
+
+describe('AppSidebar recharge nav item', () => {
+  it('contains the custom recharge route and label key', () => {
+    expect(componentSource).toContain("path: '/recharge'")
+    expect(componentSource).toContain("label: t('nav.recharge')")
+  })
+})
+
+describe('AppSidebar custom menu visibility', () => {
+  it('treats legacy blank visibility custom menu items as user-visible', () => {
+    expect(componentSource).toContain("item.visibility !== 'admin'")
+    expect(componentSource).not.toContain("item.visibility === 'user'")
+  })
+})

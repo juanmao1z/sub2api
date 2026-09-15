@@ -1,0 +1,25 @@
+# Rebuild the application layer from a previously verified custom runtime image.
+# This avoids registry access while keeping the production server build-free.
+ARG RUNTIME_BASE_IMAGE=sub2api-custom:rollback
+FROM ${RUNTIME_BASE_IMAGE}
+
+USER root
+WORKDIR /app
+
+COPY --chown=sub2api:sub2api build-local/sub2api /app/sub2api
+COPY --chown=sub2api:sub2api backend/resources /app/resources
+COPY --chown=root:root deploy/docker-entrypoint.sh /app/docker-entrypoint.sh
+
+RUN chmod +x /app/sub2api /app/docker-entrypoint.sh && \
+    chown -R sub2api:sub2api /app/resources
+
+USER sub2api
+
+EXPOSE 8080
+VOLUME ["/app/data"]
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+    CMD wget -q -T 5 -O /dev/null http://localhost:8080/health || exit 1
+
+ENTRYPOINT ["/app/docker-entrypoint.sh"]
+CMD ["/app/sub2api"]

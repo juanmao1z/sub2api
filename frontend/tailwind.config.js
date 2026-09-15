@@ -50,6 +50,8 @@ export default {
       },
       fontFamily: {
         sans: [
+          'Public Sans Variable',
+          'Public Sans',
           'system-ui',
           '-apple-system',
           'BlinkMacSystemFont',

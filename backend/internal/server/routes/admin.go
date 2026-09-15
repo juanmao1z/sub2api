@@ -31,6 +31,17 @@ func RegisterAdminRoutes(
 	admin.Use(gin.HandlerFunc(auditLog))
 	admin.Use(middleware.AdminComplianceGuard(settingService))
 	{
+		// 客服工单（退款 / 建议）
+		if h.Admin.SupportTicket != nil {
+			tickets := admin.Group("/support/tickets")
+			{
+				tickets.GET("", h.Admin.SupportTicket.List)
+				tickets.GET("/:id", h.Admin.SupportTicket.Get)
+				tickets.POST("/:id/messages", h.Admin.SupportTicket.AddMessage)
+				tickets.PATCH("/:id/status", h.Admin.SupportTicket.SetStatus)
+			}
+		}
+
 		// 部署与运营合规确认
 		registerAdminComplianceRoutes(admin, h)
 

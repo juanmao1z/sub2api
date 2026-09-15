@@ -72,6 +72,17 @@ func RegisterUserRoutes(
 			}
 		}
 
+		if h.SupportTicket != nil {
+			tickets := authenticated.Group("/support/tickets")
+			{
+				tickets.GET("", h.SupportTicket.List)
+				tickets.POST("", h.SupportTicket.Create)
+				tickets.GET("/:id", h.SupportTicket.Get)
+				tickets.POST("/:id/messages", h.SupportTicket.AddMessage)
+				tickets.POST("/:id/close", h.SupportTicket.Close)
+			}
+		}
+
 		// API Key管理
 		keys := authenticated.Group("/keys")
 		{

@@ -52,8 +52,9 @@ const (
 	userActiveIndexKey    = "concurrency:user:active_index"    // ZSET member=userID, score=expireAtUnixSeconds
 
 	// 后台清理只按批处理索引候选，避免单次任务占用 Redis 太久。
-	activeIndexCleanupBatchSize  = 1000
-	activeIndexPipelineChunkSize = 500
+	activeIndexCleanupBatchSize      = 1000
+	activeIndexPipelineChunkSize     = 500
+	totalAccountConcurrencyBatchSize = activeIndexPipelineChunkSize / 2
 
 	// 一次性迁移 marker：活跃索引机制上线前遗留的等待计数键无法被索引发现，
 	// 且有流量时 TTL 会被不断刷新，必须清扫一次。marker 存在即代表已完成。
@@ -701,6 +702,59 @@ func (c *concurrencyCache) GetAccountConcurrencyBatch(ctx context.Context, accou
 		result[cmd.accountID] = int(cmd.zcardCmd.Val() + cmd.liveCmd.Val())
 	}
 	return result, nil
+}
+
+func (c *concurrencyCache) GetTotalAccountConcurrency(ctx context.Context) (int, error) {
+	now, err := c.redisUnixSeconds(ctx)
+	if err != nil {
+		return 0, err
+	}
+
+	return totalAccountConcurrencyFromSnapshot(
+		ctx,
+		func(ctx context.Context) ([]string, error) {
+			return c.rdb.ZRangeByScore(ctx, accountActiveIndexKey, &redis.ZRangeBy{
+				Min: "(" + strconv.FormatInt(now, 10),
+				Max: "+inf",
+			}).Result()
+		},
+		c.GetAccountConcurrencyBatch,
+	)
+}
+
+func totalAccountConcurrencyFromSnapshot(
+	ctx context.Context,
+	readActiveMembers func(context.Context) ([]string, error),
+	readBatch func(context.Context, []int64) (map[int64]int, error),
+) (int, error) {
+	members, err := readActiveMembers(ctx)
+	if err != nil {
+		return 0, fmt.Errorf("read active account index: %w", err)
+	}
+
+	total := 0
+	for start := 0; start < len(members); start += totalAccountConcurrencyBatchSize {
+		end := start + totalAccountConcurrencyBatchSize
+		if end > len(members) {
+			end = len(members)
+		}
+
+		accountIDs := make([]int64, 0, end-start)
+		for _, member := range members[start:end] {
+			accountID, parseErr := strconv.ParseInt(member, 10, 64)
+			if parseErr == nil && accountID > 0 {
+				accountIDs = append(accountIDs, accountID)
+			}
+		}
+		counts, batchErr := readBatch(ctx, accountIDs)
+		if batchErr != nil {
+			return 0, batchErr
+		}
+		for _, count := range counts {
+			total += count
+		}
+	}
+	return total, nil
 }
 
 // User slot operations

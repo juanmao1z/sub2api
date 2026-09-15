@@ -14,6 +14,7 @@ import (
 
 	"github.com/Wei-Shaw/sub2api/internal/config"
 	infraerrors "github.com/Wei-Shaw/sub2api/internal/pkg/errors"
+	"golang.org/x/sync/singleflight"
 )
 
 var ErrOpsDisabled = infraerrors.NotFound("OPS_DISABLED", "Ops monitoring is disabled")
@@ -54,6 +55,15 @@ type OpsService struct {
 	getAccountAvailability func(ctx context.Context, platformFilter string, groupIDFilter *int64) (*OpsAccountAvailability, error)
 
 	concurrencyService          *ConcurrencyService
+	publicConcurrencyMu         sync.Mutex
+	publicConcurrencyCache      cachedPublicConcurrency
+	publicConcurrencyCacheTTL   time.Duration
+	publicConcurrencyGroup      singleflight.Group
+	publicHomepageRepo          PublicHomepageStatusRepository
+	publicHomepageMu            sync.Mutex
+	publicHomepageCache         cachedPublicHomepageStatus
+	publicHomepageCacheTTL      time.Duration
+	publicHomepageGroup         singleflight.Group
 	gatewayService              *GatewayService
 	openAIGatewayService        *OpenAIGatewayService
 	geminiCompatService         *GeminiMessagesCompatService
@@ -132,11 +142,16 @@ func NewOpsService(
 		userRepo:    userRepo,
 
 		concurrencyService:        concurrencyService,
+		publicConcurrencyCacheTTL: defaultPublicConcurrencyCacheTTL,
+		publicHomepageCacheTTL:    defaultPublicHomepageCacheTTL,
 		gatewayService:            gatewayService,
 		openAIGatewayService:      openAIGatewayService,
 		geminiCompatService:       geminiCompatService,
 		antigravityGatewayService: antigravityGatewayService,
 		systemLogSink:             systemLogSink,
+	}
+	if repo, ok := opsRepo.(PublicHomepageStatusRepository); ok {
+		svc.publicHomepageRepo = repo
 	}
 	svc.initRuntimeSettings(context.Background())
 	svc.applyRuntimeLogConfigOnStartup(context.Background())
