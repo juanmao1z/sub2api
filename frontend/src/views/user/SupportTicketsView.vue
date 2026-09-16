@@ -5,7 +5,7 @@
       <div v-if="loading" class="card p-6 text-center text-gray-500">{{ t('common.loading') }}</div>
       <div v-else-if="tickets.length === 0" class="card p-6 text-center text-gray-500">{{ t('support.empty') }}</div>
       <div v-for="ticket in tickets" :key="ticket.id" class="card cursor-pointer p-4" @click="openTicket(ticket.id)">
-        <div class="flex items-center justify-between"><div><span class="mr-2 rounded bg-gray-100 px-2 py-1 text-xs dark:bg-dark-700">{{ ticket.type === 'REFUND' ? t('support.refund') : t('support.suggestion') }}</span><span class="font-medium">{{ ticket.subject }}</span></div><span class="text-xs text-gray-500">{{ ticket.status }}</span></div>
+        <div class="flex items-center justify-between"><div><span class="mr-2 rounded bg-gray-100 px-2 py-1 text-xs dark:bg-dark-700">{{ ticket.type === 'REFUND' ? t('support.refund') : t('support.suggestion') }}</span><span class="font-medium">{{ ticket.subject }}</span></div><span class="mr-2 rounded px-2 py-1 text-xs" :class="ticket.status === 'OPEN' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' : ticket.status === 'CLOSED' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300' : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300'">{{ ticket.status }}</span></div>
         <p class="mt-2 line-clamp-2 text-sm text-gray-500">{{ ticket.description }}</p>
       </div>
     </div>
