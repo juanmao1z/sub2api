@@ -201,6 +201,7 @@ export default {
     docs: '文档',
     myOrders: '我的订单',
     orderManagement: '订单管理',
+    supportTickets: '工单',
     paymentDashboard: '支付概览',
     paymentConfig: '支付配置',
     paymentPlans: '订阅套餐',
@@ -213,6 +214,10 @@ export default {
     contentModeration: '内容审核',
     promptAudit: '提示词审计',
     auditLogs: '操作日志',
+  },
+
+  support: {
+    title: '我的工单', adminTitle: '工单管理', newTicket: '新建工单', empty: '暂无工单', type: '类型', refund: '退款记录', suggestion: '建议', subject: '标题', description: '描述', orderId: '订单号', reply: '回复', replyPlaceholder: '请输入回复内容', close: '关闭工单', errors: { INVALID_TYPE: '工单类型无效', ORDER_REQUIRED: '退款记录需要关联订单' }
   },
 
   recharge: {

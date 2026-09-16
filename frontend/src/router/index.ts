@@ -337,6 +337,12 @@ const routes: RouteRecordRaw[] = [
     }
   },
   {
+    path: '/tickets',
+    name: 'SupportTickets',
+    component: () => import('@/views/user/SupportTicketsView.vue'),
+    meta: { requiresAuth: true, requiresAdmin: false, title: 'Support Tickets', titleKey: 'support.title' }
+  },
+  {
     path: '/payment/qrcode',
     name: 'PaymentQRCode',
     component: () => import('@/views/user/PaymentQRCodeView.vue'),
@@ -711,6 +717,12 @@ const routes: RouteRecordRaw[] = [
       titleKey: 'nav.orderManagement',
       requiresPayment: true
     }
+  },
+  {
+    path: '/admin/tickets',
+    name: 'AdminSupportTickets',
+    component: () => import('@/views/admin/SupportTicketsView.vue'),
+    meta: { requiresAuth: true, requiresAdmin: true, title: 'Support Tickets', titleKey: 'support.adminTitle' }
   },
   {
     path: '/admin/orders/plans',

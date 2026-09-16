@@ -201,6 +201,7 @@ export default {
     docs: 'Docs',
     myOrders: 'My Orders',
     orderManagement: 'Orders',
+    supportTickets: 'Support Tickets',
     paymentDashboard: 'Payment Dashboard',
     paymentConfig: 'Payment Config',
     paymentPlans: 'Plans',
@@ -213,6 +214,10 @@ export default {
     contentModeration: 'Content Moderation',
     promptAudit: 'Prompt Audit',
     auditLogs: 'Audit Logs',
+  },
+
+  support: {
+    title: 'My Support Tickets', adminTitle: 'Support Tickets', newTicket: 'New Ticket', empty: 'No tickets yet', type: 'Type', refund: 'Refund Record', suggestion: 'Suggestion', subject: 'Subject', description: 'Description', orderId: 'Order ID', reply: 'Reply', replyPlaceholder: 'Write a reply', close: 'Close Ticket', errors: { INVALID_TYPE: 'Invalid ticket type', ORDER_REQUIRED: 'A refund record requires an order' }
   },
 
   recharge: {
