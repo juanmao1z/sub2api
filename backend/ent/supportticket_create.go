@@ -60,6 +60,20 @@ func (_c *SupportTicketCreate) SetDescription(v string) *SupportTicketCreate {
 	return _c
 }
 
+// SetContact sets the "contact" field.
+func (_c *SupportTicketCreate) SetContact(v string) *SupportTicketCreate {
+	_c.mutation.SetContact(v)
+	return _c
+}
+
+// SetNillableContact sets the "contact" field if the given value is not nil.
+func (_c *SupportTicketCreate) SetNillableContact(v *string) *SupportTicketCreate {
+	if v != nil {
+		_c.SetContact(*v)
+	}
+	return _c
+}
+
 // SetOrderID sets the "order_id" field.
 func (_c *SupportTicketCreate) SetOrderID(v int64) *SupportTicketCreate {
 	_c.mutation.SetOrderID(v)
@@ -236,6 +250,10 @@ func (_c *SupportTicketCreate) createSpec() (*SupportTicket, *sqlgraph.CreateSpe
 		_spec.SetField(supportticket.FieldDescription, field.TypeString, value)
 		_node.Description = value
 	}
+	if value, ok := _c.mutation.Contact(); ok {
+		_spec.SetField(supportticket.FieldContact, field.TypeString, value)
+		_node.Contact = &value
+	}
 	if value, ok := _c.mutation.OrderID(); ok {
 		_spec.SetField(supportticket.FieldOrderID, field.TypeInt64, value)
 		_node.OrderID = &value
@@ -363,6 +381,24 @@ func (u *SupportTicketUpsert) SetDescription(v string) *SupportTicketUpsert {
 // UpdateDescription sets the "description" field to the value that was provided on create.
 func (u *SupportTicketUpsert) UpdateDescription() *SupportTicketUpsert {
 	u.SetExcluded(supportticket.FieldDescription)
+	return u
+}
+
+// SetContact sets the "contact" field.
+func (u *SupportTicketUpsert) SetContact(v string) *SupportTicketUpsert {
+	u.Set(supportticket.FieldContact, v)
+	return u
+}
+
+// UpdateContact sets the "contact" field to the value that was provided on create.
+func (u *SupportTicketUpsert) UpdateContact() *SupportTicketUpsert {
+	u.SetExcluded(supportticket.FieldContact)
+	return u
+}
+
+// ClearContact clears the value of the "contact" field.
+func (u *SupportTicketUpsert) ClearContact() *SupportTicketUpsert {
+	u.SetNull(supportticket.FieldContact)
 	return u
 }
 
@@ -521,6 +557,27 @@ func (u *SupportTicketUpsertOne) SetDescription(v string) *SupportTicketUpsertOn
 func (u *SupportTicketUpsertOne) UpdateDescription() *SupportTicketUpsertOne {
 	return u.Update(func(s *SupportTicketUpsert) {
 		s.UpdateDescription()
+	})
+}
+
+// SetContact sets the "contact" field.
+func (u *SupportTicketUpsertOne) SetContact(v string) *SupportTicketUpsertOne {
+	return u.Update(func(s *SupportTicketUpsert) {
+		s.SetContact(v)
+	})
+}
+
+// UpdateContact sets the "contact" field to the value that was provided on create.
+func (u *SupportTicketUpsertOne) UpdateContact() *SupportTicketUpsertOne {
+	return u.Update(func(s *SupportTicketUpsert) {
+		s.UpdateContact()
+	})
+}
+
+// ClearContact clears the value of the "contact" field.
+func (u *SupportTicketUpsertOne) ClearContact() *SupportTicketUpsertOne {
+	return u.Update(func(s *SupportTicketUpsert) {
+		s.ClearContact()
 	})
 }
 
@@ -851,6 +908,27 @@ func (u *SupportTicketUpsertBulk) SetDescription(v string) *SupportTicketUpsertB
 func (u *SupportTicketUpsertBulk) UpdateDescription() *SupportTicketUpsertBulk {
 	return u.Update(func(s *SupportTicketUpsert) {
 		s.UpdateDescription()
+	})
+}
+
+// SetContact sets the "contact" field.
+func (u *SupportTicketUpsertBulk) SetContact(v string) *SupportTicketUpsertBulk {
+	return u.Update(func(s *SupportTicketUpsert) {
+		s.SetContact(v)
+	})
+}
+
+// UpdateContact sets the "contact" field to the value that was provided on create.
+func (u *SupportTicketUpsertBulk) UpdateContact() *SupportTicketUpsertBulk {
+	return u.Update(func(s *SupportTicketUpsert) {
+		s.UpdateContact()
+	})
+}
+
+// ClearContact clears the value of the "contact" field.
+func (u *SupportTicketUpsertBulk) ClearContact() *SupportTicketUpsertBulk {
+	return u.Update(func(s *SupportTicketUpsert) {
+		s.ClearContact()
 	})
 }
 

@@ -105,6 +105,26 @@ func (_u *SupportTicketUpdate) SetNillableDescription(v *string) *SupportTicketU
 	return _u
 }
 
+// SetContact sets the "contact" field.
+func (_u *SupportTicketUpdate) SetContact(v string) *SupportTicketUpdate {
+	_u.mutation.SetContact(v)
+	return _u
+}
+
+// SetNillableContact sets the "contact" field if the given value is not nil.
+func (_u *SupportTicketUpdate) SetNillableContact(v *string) *SupportTicketUpdate {
+	if v != nil {
+		_u.SetContact(*v)
+	}
+	return _u
+}
+
+// ClearContact clears the value of the "contact" field.
+func (_u *SupportTicketUpdate) ClearContact() *SupportTicketUpdate {
+	_u.mutation.ClearContact()
+	return _u
+}
+
 // SetOrderID sets the "order_id" field.
 func (_u *SupportTicketUpdate) SetOrderID(v int64) *SupportTicketUpdate {
 	_u.mutation.ResetOrderID()
@@ -229,6 +249,12 @@ func (_u *SupportTicketUpdate) sqlSave(ctx context.Context) (_node int, err erro
 	if value, ok := _u.mutation.Description(); ok {
 		_spec.SetField(supportticket.FieldDescription, field.TypeString, value)
 	}
+	if value, ok := _u.mutation.Contact(); ok {
+		_spec.SetField(supportticket.FieldContact, field.TypeString, value)
+	}
+	if _u.mutation.ContactCleared() {
+		_spec.ClearField(supportticket.FieldContact, field.TypeString)
+	}
 	if value, ok := _u.mutation.OrderID(); ok {
 		_spec.SetField(supportticket.FieldOrderID, field.TypeInt64, value)
 	}
@@ -335,6 +361,26 @@ func (_u *SupportTicketUpdateOne) SetNillableDescription(v *string) *SupportTick
 	if v != nil {
 		_u.SetDescription(*v)
 	}
+	return _u
+}
+
+// SetContact sets the "contact" field.
+func (_u *SupportTicketUpdateOne) SetContact(v string) *SupportTicketUpdateOne {
+	_u.mutation.SetContact(v)
+	return _u
+}
+
+// SetNillableContact sets the "contact" field if the given value is not nil.
+func (_u *SupportTicketUpdateOne) SetNillableContact(v *string) *SupportTicketUpdateOne {
+	if v != nil {
+		_u.SetContact(*v)
+	}
+	return _u
+}
+
+// ClearContact clears the value of the "contact" field.
+func (_u *SupportTicketUpdateOne) ClearContact() *SupportTicketUpdateOne {
+	_u.mutation.ClearContact()
 	return _u
 }
 
@@ -491,6 +537,12 @@ func (_u *SupportTicketUpdateOne) sqlSave(ctx context.Context) (_node *SupportTi
 	}
 	if value, ok := _u.mutation.Description(); ok {
 		_spec.SetField(supportticket.FieldDescription, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.Contact(); ok {
+		_spec.SetField(supportticket.FieldContact, field.TypeString, value)
+	}
+	if _u.mutation.ContactCleared() {
+		_spec.ClearField(supportticket.FieldContact, field.TypeString)
 	}
 	if value, ok := _u.mutation.OrderID(); ok {
 		_spec.SetField(supportticket.FieldOrderID, field.TypeInt64, value)

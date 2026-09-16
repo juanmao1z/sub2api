@@ -42083,6 +42083,7 @@ type SupportTicketMutation struct {
 	status        *string
 	subject       *string
 	description   *string
+	contact       *string
 	order_id      *int64
 	addorder_id   *int64
 	created_at    *time.Time
@@ -42391,6 +42392,55 @@ func (m *SupportTicketMutation) ResetDescription() {
 	m.description = nil
 }
 
+// SetContact sets the "contact" field.
+func (m *SupportTicketMutation) SetContact(s string) {
+	m.contact = &s
+}
+
+// Contact returns the value of the "contact" field in the mutation.
+func (m *SupportTicketMutation) Contact() (r string, exists bool) {
+	v := m.contact
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldContact returns the old "contact" field's value of the SupportTicket entity.
+// If the SupportTicket object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *SupportTicketMutation) OldContact(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldContact is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldContact requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldContact: %w", err)
+	}
+	return oldValue.Contact, nil
+}
+
+// ClearContact clears the value of the "contact" field.
+func (m *SupportTicketMutation) ClearContact() {
+	m.contact = nil
+	m.clearedFields[supportticket.FieldContact] = struct{}{}
+}
+
+// ContactCleared returns if the "contact" field was cleared in this mutation.
+func (m *SupportTicketMutation) ContactCleared() bool {
+	_, ok := m.clearedFields[supportticket.FieldContact]
+	return ok
+}
+
+// ResetContact resets all changes to the "contact" field.
+func (m *SupportTicketMutation) ResetContact() {
+	m.contact = nil
+	delete(m.clearedFields, supportticket.FieldContact)
+}
+
 // SetOrderID sets the "order_id" field.
 func (m *SupportTicketMutation) SetOrderID(i int64) {
 	m.order_id = &i
@@ -42567,7 +42617,7 @@ func (m *SupportTicketMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *SupportTicketMutation) Fields() []string {
-	fields := make([]string, 0, 8)
+	fields := make([]string, 0, 9)
 	if m.user_id != nil {
 		fields = append(fields, supportticket.FieldUserID)
 	}
@@ -42582,6 +42632,9 @@ func (m *SupportTicketMutation) Fields() []string {
 	}
 	if m.description != nil {
 		fields = append(fields, supportticket.FieldDescription)
+	}
+	if m.contact != nil {
+		fields = append(fields, supportticket.FieldContact)
 	}
 	if m.order_id != nil {
 		fields = append(fields, supportticket.FieldOrderID)
@@ -42610,6 +42663,8 @@ func (m *SupportTicketMutation) Field(name string) (ent.Value, bool) {
 		return m.Subject()
 	case supportticket.FieldDescription:
 		return m.Description()
+	case supportticket.FieldContact:
+		return m.Contact()
 	case supportticket.FieldOrderID:
 		return m.OrderID()
 	case supportticket.FieldCreatedAt:
@@ -42635,6 +42690,8 @@ func (m *SupportTicketMutation) OldField(ctx context.Context, name string) (ent.
 		return m.OldSubject(ctx)
 	case supportticket.FieldDescription:
 		return m.OldDescription(ctx)
+	case supportticket.FieldContact:
+		return m.OldContact(ctx)
 	case supportticket.FieldOrderID:
 		return m.OldOrderID(ctx)
 	case supportticket.FieldCreatedAt:
@@ -42684,6 +42741,13 @@ func (m *SupportTicketMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetDescription(v)
+		return nil
+	case supportticket.FieldContact:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetContact(v)
 		return nil
 	case supportticket.FieldOrderID:
 		v, ok := value.(int64)
@@ -42763,6 +42827,9 @@ func (m *SupportTicketMutation) AddField(name string, value ent.Value) error {
 // mutation.
 func (m *SupportTicketMutation) ClearedFields() []string {
 	var fields []string
+	if m.FieldCleared(supportticket.FieldContact) {
+		fields = append(fields, supportticket.FieldContact)
+	}
 	if m.FieldCleared(supportticket.FieldOrderID) {
 		fields = append(fields, supportticket.FieldOrderID)
 	}
@@ -42780,6 +42847,9 @@ func (m *SupportTicketMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *SupportTicketMutation) ClearField(name string) error {
 	switch name {
+	case supportticket.FieldContact:
+		m.ClearContact()
+		return nil
 	case supportticket.FieldOrderID:
 		m.ClearOrderID()
 		return nil
@@ -42805,6 +42875,9 @@ func (m *SupportTicketMutation) ResetField(name string) error {
 		return nil
 	case supportticket.FieldDescription:
 		m.ResetDescription()
+		return nil
+	case supportticket.FieldContact:
+		m.ResetContact()
 		return nil
 	case supportticket.FieldOrderID:
 		m.ResetOrderID()

@@ -1579,6 +1579,7 @@ var (
 		{Name: "status", Type: field.TypeString, Size: 20, Default: "OPEN"},
 		{Name: "subject", Type: field.TypeString, Size: 200},
 		{Name: "description", Type: field.TypeString, SchemaType: map[string]string{"postgres": "text"}},
+		{Name: "contact", Type: field.TypeString, Nullable: true, SchemaType: map[string]string{"postgres": "text"}},
 		{Name: "order_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "created_at", Type: field.TypeTime, SchemaType: map[string]string{"postgres": "timestamptz"}},
 		{Name: "updated_at", Type: field.TypeTime, SchemaType: map[string]string{"postgres": "timestamptz"}},
@@ -1607,12 +1608,12 @@ var (
 			{
 				Name:    "supportticket_order_id",
 				Unique:  false,
-				Columns: []*schema.Column{SupportTicketsColumns[6]},
+				Columns: []*schema.Column{SupportTicketsColumns[7]},
 			},
 			{
 				Name:    "supportticket_created_at",
 				Unique:  false,
-				Columns: []*schema.Column{SupportTicketsColumns[7]},
+				Columns: []*schema.Column{SupportTicketsColumns[8]},
 			},
 		},
 	}

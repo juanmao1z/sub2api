@@ -33,7 +33,7 @@ type adminMessageRequest struct {
 
 // List lists all tickets.
 func (h *SupportTicketHandler) List(c *gin.Context) {
-	v, e := h.svc.List(c, 0, true)
+	v, e := h.svc.AdminList(c)
 	if e != nil {
 		response.ErrorFrom(c, e)
 		return
@@ -47,13 +47,13 @@ func (h *SupportTicketHandler) Get(c *gin.Context) {
 	if !ok {
 		return
 	}
-	t, e := h.svc.Get(c, id, 0, true)
+	t, e := h.svc.AdminGet(c, id)
 	if e != nil {
 		response.ErrorFrom(c, e)
 		return
 	}
 	m, _ := h.svc.Messages(c, id)
-	response.Success(c, gin.H{"ticket": t, "messages": m})
+	response.Success(c, gin.H{"ticket": t.Ticket, "user": t.User, "messages": m})
 }
 
 // AddMessage appends an administrator reply.

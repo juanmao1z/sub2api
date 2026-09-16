@@ -224,7 +224,7 @@ export default {
   },
 
   support: {
-    title: 'My Support Tickets', adminTitle: 'Support Tickets', newTicket: 'New Ticket', empty: 'No tickets yet', type: 'Type', refund: 'Refund Record', suggestion: 'Suggestion', subject: 'Subject', description: 'Description', orderId: 'Order ID', reply: 'Reply', replyPlaceholder: 'Write a reply', close: 'Close Ticket', errors: { INVALID_TYPE: 'Invalid ticket type', ORDER_REQUIRED: 'A refund record requires an order' }
+    title: 'My Support Tickets', adminTitle: 'Support Tickets', newTicket: 'New Ticket', empty: 'No tickets yet', type: 'Type', refund: 'Refund Record', suggestion: 'Suggestion', subject: 'Subject', description: 'Description', orderId: 'Order ID', contact: 'Contact information', contactPlaceholder: 'Email, phone, or other contact method', user: 'User', reply: 'Reply', replyPlaceholder: 'Write a reply', close: 'Close Ticket', errors: { INVALID_TYPE: 'Invalid ticket type', ORDER_REQUIRED: 'A refund record requires an order', CONTACT_REQUIRED: 'Refund tickets require contact information' }
   },
 
   // Auth

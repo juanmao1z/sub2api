@@ -1911,11 +1911,11 @@ func init() {
 	// supportticket.SubjectValidator is a validator for the "subject" field. It is called by the builders before save.
 	supportticket.SubjectValidator = supportticketDescSubject.Validators[0].(func(string) error)
 	// supportticketDescCreatedAt is the schema descriptor for created_at field.
-	supportticketDescCreatedAt := supportticketFields[6].Descriptor()
+	supportticketDescCreatedAt := supportticketFields[7].Descriptor()
 	// supportticket.DefaultCreatedAt holds the default value on creation for the created_at field.
 	supportticket.DefaultCreatedAt = supportticketDescCreatedAt.Default.(func() time.Time)
 	// supportticketDescUpdatedAt is the schema descriptor for updated_at field.
-	supportticketDescUpdatedAt := supportticketFields[7].Descriptor()
+	supportticketDescUpdatedAt := supportticketFields[8].Descriptor()
 	// supportticket.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	supportticket.DefaultUpdatedAt = supportticketDescUpdatedAt.Default.(func() time.Time)
 	// supportticket.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.

@@ -79,6 +79,11 @@ func Description(v string) predicate.SupportTicket {
 	return predicate.SupportTicket(sql.FieldEQ(FieldDescription, v))
 }
 
+// Contact applies equality check predicate on the "contact" field. It's identical to ContactEQ.
+func Contact(v string) predicate.SupportTicket {
+	return predicate.SupportTicket(sql.FieldEQ(FieldContact, v))
+}
+
 // OrderID applies equality check predicate on the "order_id" field. It's identical to OrderIDEQ.
 func OrderID(v int64) predicate.SupportTicket {
 	return predicate.SupportTicket(sql.FieldEQ(FieldOrderID, v))
@@ -392,6 +397,81 @@ func DescriptionEqualFold(v string) predicate.SupportTicket {
 // DescriptionContainsFold applies the ContainsFold predicate on the "description" field.
 func DescriptionContainsFold(v string) predicate.SupportTicket {
 	return predicate.SupportTicket(sql.FieldContainsFold(FieldDescription, v))
+}
+
+// ContactEQ applies the EQ predicate on the "contact" field.
+func ContactEQ(v string) predicate.SupportTicket {
+	return predicate.SupportTicket(sql.FieldEQ(FieldContact, v))
+}
+
+// ContactNEQ applies the NEQ predicate on the "contact" field.
+func ContactNEQ(v string) predicate.SupportTicket {
+	return predicate.SupportTicket(sql.FieldNEQ(FieldContact, v))
+}
+
+// ContactIn applies the In predicate on the "contact" field.
+func ContactIn(vs ...string) predicate.SupportTicket {
+	return predicate.SupportTicket(sql.FieldIn(FieldContact, vs...))
+}
+
+// ContactNotIn applies the NotIn predicate on the "contact" field.
+func ContactNotIn(vs ...string) predicate.SupportTicket {
+	return predicate.SupportTicket(sql.FieldNotIn(FieldContact, vs...))
+}
+
+// ContactGT applies the GT predicate on the "contact" field.
+func ContactGT(v string) predicate.SupportTicket {
+	return predicate.SupportTicket(sql.FieldGT(FieldContact, v))
+}
+
+// ContactGTE applies the GTE predicate on the "contact" field.
+func ContactGTE(v string) predicate.SupportTicket {
+	return predicate.SupportTicket(sql.FieldGTE(FieldContact, v))
+}
+
+// ContactLT applies the LT predicate on the "contact" field.
+func ContactLT(v string) predicate.SupportTicket {
+	return predicate.SupportTicket(sql.FieldLT(FieldContact, v))
+}
+
+// ContactLTE applies the LTE predicate on the "contact" field.
+func ContactLTE(v string) predicate.SupportTicket {
+	return predicate.SupportTicket(sql.FieldLTE(FieldContact, v))
+}
+
+// ContactContains applies the Contains predicate on the "contact" field.
+func ContactContains(v string) predicate.SupportTicket {
+	return predicate.SupportTicket(sql.FieldContains(FieldContact, v))
+}
+
+// ContactHasPrefix applies the HasPrefix predicate on the "contact" field.
+func ContactHasPrefix(v string) predicate.SupportTicket {
+	return predicate.SupportTicket(sql.FieldHasPrefix(FieldContact, v))
+}
+
+// ContactHasSuffix applies the HasSuffix predicate on the "contact" field.
+func ContactHasSuffix(v string) predicate.SupportTicket {
+	return predicate.SupportTicket(sql.FieldHasSuffix(FieldContact, v))
+}
+
+// ContactIsNil applies the IsNil predicate on the "contact" field.
+func ContactIsNil() predicate.SupportTicket {
+	return predicate.SupportTicket(sql.FieldIsNull(FieldContact))
+}
+
+// ContactNotNil applies the NotNil predicate on the "contact" field.
+func ContactNotNil() predicate.SupportTicket {
+	return predicate.SupportTicket(sql.FieldNotNull(FieldContact))
+}
+
+// ContactEqualFold applies the EqualFold predicate on the "contact" field.
+func ContactEqualFold(v string) predicate.SupportTicket {
+	return predicate.SupportTicket(sql.FieldEqualFold(FieldContact, v))
+}
+
+// ContactContainsFold applies the ContainsFold predicate on the "contact" field.
+func ContactContainsFold(v string) predicate.SupportTicket {
+	return predicate.SupportTicket(sql.FieldContainsFold(FieldContact, v))
 }
 
 // OrderIDEQ applies the EQ predicate on the "order_id" field.

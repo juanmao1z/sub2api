@@ -10,6 +10,7 @@ export interface SupportTicket {
   status: SupportTicketStatus
   subject: string
   description: string
+  contact?: string | null
   order_id?: number | null
   created_at: string
   updated_at: string
@@ -29,11 +30,16 @@ export interface SupportTicketDetail {
   messages: SupportTicketMessage[]
 }
 
+export interface SupportTicketAdminView {
+  ticket: SupportTicket
+  user: { id: number; username: string; email: string }
+}
+
 export const supportTicketsAPI = {
   list() {
     return apiClient.get<SupportTicket[]>('/support/tickets')
   },
-  create(data: { type: SupportTicketType; subject: string; description: string; order_id?: number }) {
+  create(data: { type: SupportTicketType; subject: string; description: string; contact?: string; order_id?: number }) {
     return apiClient.post<SupportTicket>('/support/tickets', data)
   },
   get(id: number) {
@@ -46,10 +52,10 @@ export const supportTicketsAPI = {
     return apiClient.post<SupportTicket>(`/support/tickets/${id}/close`)
   },
   adminList() {
-    return apiClient.get<SupportTicket[]>('/admin/support/tickets')
+	return apiClient.get<SupportTicketAdminView[]>('/admin/support/tickets')
   },
   adminGet(id: number) {
-    return apiClient.get<SupportTicketDetail>(`/admin/support/tickets/${id}`)
+	return apiClient.get<SupportTicketAdminView & { messages: SupportTicketMessage[] }>(`/admin/support/tickets/${id}`)
   },
   adminAddMessage(id: number, body: string) {
     return apiClient.post<SupportTicketMessage>(`/admin/support/tickets/${id}/messages`, { body })

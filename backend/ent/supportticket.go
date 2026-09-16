@@ -27,6 +27,8 @@ type SupportTicket struct {
 	Subject string `json:"subject,omitempty"`
 	// Description holds the value of the "description" field.
 	Description string `json:"description,omitempty"`
+	// Contact holds the value of the "contact" field.
+	Contact *string `json:"contact,omitempty"`
 	// OrderID holds the value of the "order_id" field.
 	OrderID *int64 `json:"order_id,omitempty"`
 	// CreatedAt holds the value of the "created_at" field.
@@ -43,7 +45,7 @@ func (*SupportTicket) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case supportticket.FieldID, supportticket.FieldUserID, supportticket.FieldOrderID:
 			values[i] = new(sql.NullInt64)
-		case supportticket.FieldType, supportticket.FieldStatus, supportticket.FieldSubject, supportticket.FieldDescription:
+		case supportticket.FieldType, supportticket.FieldStatus, supportticket.FieldSubject, supportticket.FieldDescription, supportticket.FieldContact:
 			values[i] = new(sql.NullString)
 		case supportticket.FieldCreatedAt, supportticket.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -97,6 +99,13 @@ func (_m *SupportTicket) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field description", values[i])
 			} else if value.Valid {
 				_m.Description = value.String
+			}
+		case supportticket.FieldContact:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field contact", values[i])
+			} else if value.Valid {
+				_m.Contact = new(string)
+				*_m.Contact = value.String
 			}
 		case supportticket.FieldOrderID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
@@ -167,6 +176,11 @@ func (_m *SupportTicket) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("description=")
 	builder.WriteString(_m.Description)
+	builder.WriteString(", ")
+	if v := _m.Contact; v != nil {
+		builder.WriteString("contact=")
+		builder.WriteString(*v)
+	}
 	builder.WriteString(", ")
 	if v := _m.OrderID; v != nil {
 		builder.WriteString("order_id=")

@@ -25,6 +25,7 @@ func (SupportTicket) Fields() []ent.Field {
 		field.String("status").MaxLen(20).Default("OPEN"),
 		field.String("subject").MaxLen(200),
 		field.String("description").SchemaType(map[string]string{dialect.Postgres: "text"}),
+		field.String("contact").SchemaType(map[string]string{dialect.Postgres: "text"}).Optional().Nillable(),
 		field.Int64("order_id").Optional().Nillable(),
 		field.Time("created_at").Immutable().Default(time.Now).SchemaType(map[string]string{dialect.Postgres: "timestamptz"}),
 		field.Time("updated_at").Default(time.Now).UpdateDefault(time.Now).SchemaType(map[string]string{dialect.Postgres: "timestamptz"}),

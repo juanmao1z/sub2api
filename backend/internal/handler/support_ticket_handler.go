@@ -20,6 +20,7 @@ type supportTicketCreateRequest struct {
 	Type        string `json:"type"`
 	Subject     string `json:"subject"`
 	Description string `json:"description"`
+	Contact     string `json:"contact"`
 	OrderID     *int64 `json:"order_id"`
 }
 type supportTicketMessageRequest struct {
@@ -68,7 +69,7 @@ func (h *SupportTicketHandler) Create(c *gin.Context) {
 		response.BadRequest(c, err.Error())
 		return
 	}
-	v, err := h.svc.Create(c, uid, req.Type, req.Subject, req.Description, req.OrderID)
+	v, err := h.svc.Create(c, uid, req.Type, req.Subject, req.Description, req.Contact, req.OrderID)
 	if err != nil {
 		response.ErrorFrom(c, err)
 		return

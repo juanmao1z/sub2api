@@ -23,6 +23,8 @@ const (
 	FieldSubject = "subject"
 	// FieldDescription holds the string denoting the description field in the database.
 	FieldDescription = "description"
+	// FieldContact holds the string denoting the contact field in the database.
+	FieldContact = "contact"
 	// FieldOrderID holds the string denoting the order_id field in the database.
 	FieldOrderID = "order_id"
 	// FieldCreatedAt holds the string denoting the created_at field in the database.
@@ -41,6 +43,7 @@ var Columns = []string{
 	FieldStatus,
 	FieldSubject,
 	FieldDescription,
+	FieldContact,
 	FieldOrderID,
 	FieldCreatedAt,
 	FieldUpdatedAt,
@@ -104,6 +107,11 @@ func BySubject(opts ...sql.OrderTermOption) OrderOption {
 // ByDescription orders the results by the description field.
 func ByDescription(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldDescription, opts...).ToFunc()
+}
+
+// ByContact orders the results by the contact field.
+func ByContact(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldContact, opts...).ToFunc()
 }
 
 // ByOrderID orders the results by the order_id field.
