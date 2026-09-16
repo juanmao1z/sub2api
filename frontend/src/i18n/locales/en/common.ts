@@ -196,8 +196,9 @@ export default {
     logout: 'Logout',
     github: 'GitHub',
     mySubscriptions: 'My Subscriptions',
-    recharge: 'Recharge',
     buySubscription: 'Recharge / Subscription',
+    recharge: 'Recharge',
+    subscribe: 'Subscription',
     docs: 'Docs',
     myOrders: 'My Orders',
     orderManagement: 'Orders',
@@ -216,14 +217,14 @@ export default {
     auditLogs: 'Audit Logs',
   },
 
-  support: {
-    title: 'My Support Tickets', adminTitle: 'Support Tickets', newTicket: 'New Ticket', empty: 'No tickets yet', type: 'Type', refund: 'Refund Record', suggestion: 'Suggestion', subject: 'Subject', description: 'Description', orderId: 'Order ID', reply: 'Reply', replyPlaceholder: 'Write a reply', close: 'Close Ticket', errors: { INVALID_TYPE: 'Invalid ticket type', ORDER_REQUIRED: 'A refund record requires an order' }
-  },
-
   recharge: {
     title: 'Recharge - Open in new window',
     openInNewWindow: 'Open in new window',
     iframeTitle: 'Recharge Center'
+  },
+
+  support: {
+    title: 'My Support Tickets', adminTitle: 'Support Tickets', newTicket: 'New Ticket', empty: 'No tickets yet', type: 'Type', refund: 'Refund Record', suggestion: 'Suggestion', subject: 'Subject', description: 'Description', orderId: 'Order ID', reply: 'Reply', replyPlaceholder: 'Write a reply', close: 'Close Ticket', errors: { INVALID_TYPE: 'Invalid ticket type', ORDER_REQUIRED: 'A refund record requires an order' }
   },
 
   // Auth

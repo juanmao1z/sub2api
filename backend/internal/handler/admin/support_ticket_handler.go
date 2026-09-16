@@ -2,6 +2,7 @@ package admin
 
 import (
 	"github.com/Wei-Shaw/sub2api/internal/pkg/response"
+	"github.com/Wei-Shaw/sub2api/internal/server/middleware"
 	"github.com/Wei-Shaw/sub2api/internal/service"
 	"github.com/gin-gonic/gin"
 	"strconv"
@@ -65,12 +66,17 @@ func (h *SupportTicketHandler) AddMessage(c *gin.Context) {
 		response.ErrorFrom(c, e)
 		return
 	}
+	subject, ok := middleware.GetAuthSubjectFromContext(c)
+	if !ok || subject.UserID <= 0 {
+		response.Unauthorized(c, "Admin user not authenticated")
+		return
+	}
 	var req adminMessageRequest
 	if e := c.ShouldBindJSON(&req); e != nil {
 		response.BadRequest(c, e.Error())
 		return
 	}
-	m, e := h.svc.AddMessage(c, id, 0, "ADMIN", req.Body)
+	m, e := h.svc.AddMessage(c, id, subject.UserID, "ADMIN", req.Body)
 	if e != nil {
 		response.ErrorFrom(c, e)
 		return

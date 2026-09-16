@@ -1,71 +1,168 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { nextTick } from 'vue'
 import CustomPageView from '../CustomPageView.vue'
-import type { CustomMenuItem, PublicSettings, User } from '@/types'
 
-const { routeState, appStoreState, authStoreState, adminSettingsStoreState } = vi.hoisted(() => {
-  const publicSettings: Partial<PublicSettings> = { custom_menu_items: [] }
-  return {
-    routeState: { params: { id: '' } },
-    appStoreState: { publicSettingsLoaded: true, cachedPublicSettings: publicSettings as PublicSettings, fetchPublicSettings: vi.fn() },
-    authStoreState: { isAdmin: false, user: { id: 42 } as User, token: 'auth-token' },
-    adminSettingsStoreState: { customMenuItems: [] as CustomMenuItem[] },
-  }
-})
+const { appStore } = vi.hoisted(() => ({
+  appStore: {
+    publicSettingsLoaded: true,
+    cachedPublicSettings: { custom_menu_items: [{ id: 'docs', url: 'https://example.com/docs' }] },
+  },
+}))
 
-vi.mock('vue-router', () => ({ useRoute: () => routeState }))
-vi.mock('vue-i18n', async () => {
-  const actual = await vi.importActual<typeof import('vue-i18n')>('vue-i18n')
-  return { ...actual, useI18n: () => ({ locale: { value: 'zh' }, t: (key: string) => ({ 'customPage.openInNewTab': '新窗口打开' })[key] ?? key }) }
-})
-vi.mock('@/stores', () => ({ useAppStore: () => appStoreState }))
-vi.mock('@/stores/auth', () => ({ useAuthStore: () => authStoreState }))
-vi.mock('@/stores/adminSettings', () => ({ useAdminSettingsStore: () => adminSettingsStoreState }))
-vi.mock('@/components/layout/AppLayout.vue', () => ({ default: { name: 'AppLayout', template: '<section><slot /></section>' } }))
-vi.mock('@/components/icons/Icon.vue', () => ({ default: { name: 'Icon', template: '<span />' } }))
-vi.mock('@/utils/embedded-url', () => ({ buildEmbeddedUrl: (url: string) => url, detectTheme: () => 'light' }))
+vi.mock('@/components/layout/AppLayout.vue', () => ({ default: { template: '<div><slot /></div>' } }))
+vi.mock('vue-router', () => ({ useRoute: () => ({ params: { id: 'docs' } }) }))
+vi.mock('vue-i18n', () => ({ useI18n: () => ({ t: (key: string) => key, locale: { value: 'en' } }) }))
+vi.mock('@/stores', () => ({ useAppStore: () => appStore }))
+vi.mock('@/stores/auth', () => ({ useAuthStore: () => ({ isAdmin: false, user: { id: 7 }, token: 'test-token' }) }))
+vi.mock('@/stores/adminSettings', () => ({ useAdminSettingsStore: () => ({ customMenuItems: [] }) }))
+vi.mock('@/api/client', () => ({ buildApiUrl: (path: string) => `/api/v1${path}` }))
 
-function menuItem(overrides: Partial<CustomMenuItem>): CustomMenuItem {
-  return { id: 'custom-page', label: '自定义页面', icon_svg: '', url: 'https://api.zhouz.online/leaderboard/', visibility: 'user', sort_order: 1, ...overrides }
+let notifyResize: () => void
+const wrappers: ReturnType<typeof mount>[] = []
+
+function mountPage() {
+  const wrapper = mount(CustomPageView, {
+    global: { stubs: { AppLayout: { template: '<div><slot /></div>' }, Icon: true } },
+  })
+  wrappers.push(wrapper)
+  return wrapper
 }
 
-function mountCustomPage(id: string, items: CustomMenuItem[]) {
-  routeState.params.id = id
-  appStoreState.cachedPublicSettings = { custom_menu_items: items } as PublicSettings
-  return mount(CustomPageView)
+function mountEmbed() {
+  const wrapper = mountPage()
+  const shell = wrapper.get('.custom-embed-shell').element
+  const button = wrapper.get<HTMLAnchorElement>('.custom-open-fab').element
+  const size = { width: 800, height: 600 }
+  let capturedPointer: number | null = null
+  Object.defineProperties(shell, {
+    clientWidth: { get: () => size.width }, clientHeight: { get: () => size.height },
+  })
+  Object.defineProperties(button, {
+    offsetWidth: { value: 100 }, offsetHeight: { value: 32 },
+    offsetLeft: { get: () => Number.parseFloat(button.style.left || '688') },
+    offsetTop: { get: () => Number.parseFloat(button.style.top || '12') },
+    setPointerCapture: { value: vi.fn((id: number) => { capturedPointer = id }) },
+    hasPointerCapture: { value: (id: number) => capturedPointer === id },
+    releasePointerCapture: { value: vi.fn(() => { capturedPointer = null }) },
+  })
+  return { wrapper, button, size }
 }
 
-describe('CustomPageView', () => {
+async function pointer(button: HTMLElement, type: string, x: number, y: number, extra = {}) {
+  const event = new MouseEvent(type, { clientX: x, clientY: y, bubbles: true, cancelable: true, ...extra })
+  Object.defineProperties(event, {
+    pointerId: { value: 1 }, isPrimary: { value: true },
+  })
+  button.dispatchEvent(event)
+  await nextTick()
+}
+
+function click(button: HTMLElement, detail = 1) {
+  const event = new MouseEvent('click', { bubbles: true, cancelable: true, detail })
+  button.dispatchEvent(event)
+  return event
+}
+
+describe('custom page open button', () => {
   beforeEach(() => {
-    appStoreState.fetchPublicSettings.mockClear()
-    authStoreState.isAdmin = false
-    authStoreState.user = { id: 42 } as User
-    authStoreState.token = 'auth-token'
-    adminSettingsStoreState.customMenuItems = []
+    appStore.cachedPublicSettings.custom_menu_items = [{ id: 'docs', url: 'https://example.com/docs' }]
+    vi.stubGlobal('ResizeObserver', class {
+      constructor(callback: () => void) { notifyResize = callback }
+      observe() {}
+      disconnect() {}
+    })
   })
 
-  it('hides the new-window shortcut on the embedded usage leaderboard page', () => {
-    const wrapper = mountCustomPage('usage-leaderboard', [menuItem({ id: 'usage-leaderboard', label: '使用排行榜' })])
+  afterEach(() => {
+    wrappers.splice(0).forEach(wrapper => wrapper.unmount())
+    vi.unstubAllGlobals()
+  })
+
+  it.each([undefined, false, true])('honors the per-menu hide button setting %s while keeping the iframe', (hidden) => {
+    Object.assign(appStore.cachedPublicSettings.custom_menu_items[0], { hide_open_button: hidden })
+    const wrapper = mountPage()
+    expect(wrapper.find('.custom-open-fab').exists()).toBe(hidden !== true)
+    expect(wrapper.get('iframe').attributes('src')).toContain('https://example.com/docs')
+  })
+
+  it('preserves the embedded URL, secure link attributes, and normal clicks with small pointer movements', async () => {
+    const { wrapper, button } = mountEmbed()
+    expect(button.href).toBe(wrapper.get('iframe').attributes('src'))
+    expect(button.href).toContain('user_id=7')
+    expect(button.href).toContain('token=test-token')
+    expect(button.target).toBe('_blank')
+    expect(button.rel).toBe('noopener noreferrer')
+    await pointer(button, 'pointerdown', 700, 24)
+    await pointer(button, 'pointermove', 702, 25)
+    await pointer(button, 'pointerup', 702, 25)
+    expect(button.style.left).toBe('')
+    expect(click(button).defaultPrevented).toBe(false)
+    expect(click(button, 0).defaultPrevented).toBe(false)
+  })
+
+  it('captures the pointer across iframe content and suppresses only the click following a drag', async () => {
+    const { button } = mountEmbed()
+    await pointer(button, 'pointerdown', 700, 24)
+    expect(button.setPointerCapture).toHaveBeenCalledWith(1)
+    await pointer(button, 'pointermove', 200, 124)
+    expect(button.style.left).toBe('188px')
+    expect(button.style.top).toBe('112px')
+    await pointer(button, 'pointerup', 200, 124)
+    expect(button.releasePointerCapture).toHaveBeenCalledWith(1)
+    expect(click(button).defaultPrevented).toBe(true)
+    expect(click(button).defaultPrevented).toBe(false)
+    await pointer(button, 'pointerdown', 200, 124)
+    await pointer(button, 'pointermove', 220, 124)
+    await pointer(button, 'pointerup', 220, 124)
+    expect(click(button, 0).defaultPrevented).toBe(false)
+  })
+
+  it('keeps the button inside each boundary and reachable when the container shrinks', async () => {
+    const { button, size } = mountEmbed()
+    await pointer(button, 'pointerdown', 700, 24)
+    await pointer(button, 'pointermove', -1000, -1000)
+    expect([button.style.left, button.style.top]).toEqual(['0px', '0px'])
+    await pointer(button, 'pointermove', 2000, 2000)
+    expect([button.style.left, button.style.top]).toEqual(['700px', '568px'])
+    await pointer(button, 'pointerup', 2000, 2000)
+    size.width = 300
+    size.height = 200
+    notifyResize()
+    await nextTick()
+    expect([button.style.left, button.style.top]).toEqual(['200px', '168px'])
+  })
+
+  it('stops moving on cancellation or lost pointer capture and permits the next normal click', async () => {
+    const { button } = mountEmbed()
+    for (const endEvent of ['pointercancel', 'lostpointercapture']) {
+      await pointer(button, 'pointerdown', 700, 24)
+      await pointer(button, 'pointermove', 500, 124)
+      await pointer(button, endEvent, 500, 124)
+      const position = button.style.cssText
+      await pointer(button, 'pointermove', 400, 224)
+      expect(button.style.cssText).toBe(position)
+      await pointer(button, 'pointerdown', 500, 124)
+      await pointer(button, 'pointerup', 500, 124)
+      expect(click(button).defaultPrevented).toBe(false)
+    }
+  })
+
+  it('leaves secondary mouse button gestures alone', async () => {
+    const { button } = mountEmbed()
+    await pointer(button, 'pointerdown', 700, 24, { button: 2 })
+    await pointer(button, 'pointermove', 500, 124)
+    expect(button.setPointerCapture).not.toHaveBeenCalled()
+    expect(button.style.left).toBe('')
+  })
+
+  it('keeps Markdown pages separate from the embedded-page controls', async () => {
+    appStore.cachedPublicSettings.custom_menu_items = [{ id: 'docs', url: 'md:guide' }]
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, text: async () => '# Guide' }))
+    const wrapper = mountPage()
+    await flushPromises()
     expect(wrapper.find('.custom-open-fab').exists()).toBe(false)
-    expect(wrapper.get('iframe').attributes('src')).toBe('https://api.zhouz.online/leaderboard/')
-    expect(wrapper.get('.custom-embed-shell').classes()).toContain('custom-embed-shell-leaderboard')
-  })
-
-  it('keeps the new-window shortcut for other custom iframe pages', () => {
-    const wrapper = mountCustomPage('docs', [menuItem({ id: 'docs', label: '文档', url: 'https://docs.example.com/' })])
-    expect(wrapper.get('.custom-open-fab').text()).toContain('新窗口打开')
-    expect(wrapper.get('.custom-open-fab').attributes('href')).toBe('https://docs.example.com/')
-  })
-
-  it('switches between built-in guides', async () => {
-    const wrapper = mountCustomPage('cc-switch-guide', [menuItem({ id: 'cc-switch-guide', label: '使用说明', url: 'md:cc-switch-codex' })])
-    await flushPromises()
     expect(wrapper.find('iframe').exists()).toBe(false)
-    expect(wrapper.get('.markdown-page-content h1').text()).toBe('CC Switch 配置 Codex')
-    const tabs = wrapper.findAll('[role="tab"]')
-    expect(tabs).toHaveLength(4)
-    await tabs[1].trigger('click')
-    await flushPromises()
-    expect(wrapper.get('.markdown-page-content h1').text()).toBe('网站使用说明')
+    expect(wrapper.get('.markdown-page-content h1').text()).toBe('Guide')
   })
 })
