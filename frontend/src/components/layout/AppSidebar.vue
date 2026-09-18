@@ -1,6 +1,6 @@
 <template>
   <aside
-    class="sidebar"
+    class="sidebar signal-sidebar"
     :class="[
       sidebarCollapsed ? 'w-[72px]' : 'w-64',
       { '-translate-x-full lg:translate-x-0': !mobileOpen }

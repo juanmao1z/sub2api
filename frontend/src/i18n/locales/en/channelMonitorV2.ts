@@ -1,6 +1,9 @@
 /** Channel Monitor V2 (user + admin passive monitor UI) */
 export default {
   channelMonitorV2: {
+    cardHistory: 'History ({count} points)',
+    cardPast: 'Past',
+    cardNow: 'Now',
     title: 'Channel Monitor',
     updating: 'Updating data',
     updatedTo: 'Updated to {time}',

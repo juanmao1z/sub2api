@@ -1,6 +1,7 @@
 <template>
   <AppLayout>
-    <div class="space-y-4">
+    <div class="signal-orders space-y-4">
+      <header class="signal-workspace-heading"><div class="signal-workspace-title"><p class="signal-workspace-index">05 / ORDERS</p><h1>{{ t('nav.myOrders') }} <span class="signal-count">{{ pagination.total }}</span></h1></div><button class="btn btn-primary" @click="router.push('/purchase')">{{ t('payment.result.backToRecharge') }}</button></header>
       <!-- Filters -->
       <div class="card p-4">
         <div class="flex flex-wrap items-center gap-3">
@@ -9,7 +10,6 @@
             <button @click="fetchOrders" :disabled="loading" class="btn btn-secondary" :title="t('common.refresh')">
               <Icon name="refresh" size="md" :class="loading ? 'animate-spin' : ''" />
             </button>
-            <button class="btn btn-primary" @click="router.push('/purchase')">{{ t('payment.result.backToRecharge') }}</button>
           </div>
         </div>
       </div>

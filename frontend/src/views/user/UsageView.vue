@@ -1,10 +1,11 @@
 <template>
   <AppLayout>
-    <div class="space-y-6">
-      <UsageStatsCards :stats="usageStats" :show-account-cost="false" :strike-standard-cost="true" />
+    <div class="signal-usage space-y-6">
+      <header class="signal-workspace-heading"><div class="signal-workspace-title"><p class="signal-workspace-index">03 / USAGE</p><h1>{{ t('usage.title') }}</h1></div><span class="signal-period">{{ startDate }} / {{ endDate }}</span></header>
+      <UsageStatsCards class="signal-usage-metrics" :stats="usageStats" :show-account-cost="false" :strike-standard-cost="true" />
 
       <div class="space-y-4">
-        <div class="card p-4">
+        <div class="signal-range-bar">
           <div class="flex flex-wrap items-center gap-4">
             <div class="flex items-center gap-2">
               <span class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ t('admin.dashboard.timeRange') }}:</span>
@@ -23,7 +24,7 @@
           </div>
         </div>
 
-        <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <div class="signal-usage-chart-grid grid grid-cols-1 gap-6 lg:grid-cols-2">
           <ModelDistributionChart
             v-model:metric="modelDistributionMetric"
             :model-stats="requestedModelStats"
@@ -47,7 +48,7 @@
           />
         </div>
 
-        <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <div class="signal-usage-chart-grid grid grid-cols-1 gap-6 lg:grid-cols-2">
           <EndpointDistributionChart
             v-model:source="endpointDistributionSource"
             v-model:metric="endpointDistributionMetric"
@@ -66,7 +67,7 @@
         </div>
       </div>
 
-      <div class="card p-6">
+      <div class="signal-log-filters">
         <div class="flex flex-wrap items-end justify-between gap-4">
           <div v-if="activeTab === 'errors'" class="flex flex-1 flex-wrap items-end gap-4">
             <div class="w-full sm:w-auto sm:min-w-[220px]">

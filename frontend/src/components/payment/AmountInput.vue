@@ -1,5 +1,5 @@
 <template>
-  <div class="space-y-4">
+  <div class="payment-amount-input space-y-4">
     <!-- Quick Amount Buttons -->
     <div>
       <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -10,6 +10,8 @@
           v-for="amt in filteredAmounts"
           :key="amt"
           type="button"
+          class="payment-amount-input__option"
+          :aria-pressed="modelValue === amt"
           :class="[
             'rounded-lg border-2 px-4 py-3 text-center font-medium transition-colors',
             modelValue === amt
@@ -30,10 +32,11 @@
       </label>
       <div class="relative">
         <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-dark-500">
-          $
+          {{ currency }}
         </span>
         <input
           type="text"
+          :aria-label="t('payment.customAmount')"
           inputmode="decimal"
           :value="customText"
           :placeholder="placeholderText"
@@ -50,12 +53,15 @@ import { ref, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 const props = withDefaults(defineProps<{
+  /** @brief Currency label supplied by the currently selected payment provider. */
+  currency?: string
   amounts?: number[]
   modelValue: number | null
   min?: number
   max?: number
 }>(), {
   amounts: () => [10, 20, 50, 100, 200, 500, 1000, 2000, 5000],
+  currency: 'USD',
   min: 0,
   max: 0,
 })

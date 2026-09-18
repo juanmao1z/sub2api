@@ -16,15 +16,15 @@
   <div
     v-else-if="compactHomeEnabled"
     data-testid="compact-home"
-    class="flex min-h-screen flex-col bg-gray-50 text-gray-900 dark:bg-dark-950 dark:text-white"
+    class="flex min-h-screen flex-col bg-white text-[#192322] dark:bg-[#111315] dark:text-[#edf2ef]"
   >
-    <header class="border-b border-gray-200 px-4 py-4 sm:px-6 dark:border-dark-800">
+    <header class="border-b border-[#dfe3e5] px-4 py-4 sm:px-6 dark:border-[#303538]">
       <nav class="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 sm:gap-4">
         <div class="flex min-w-0 flex-1 items-center gap-3">
           <img
             :src="siteLogo || '/logo.svg'"
             alt="Logo"
-            class="h-9 w-9 shrink-0 rounded-lg object-contain"
+            class="h-9 w-9 shrink-0 rounded-none object-contain"
           />
           <span class="min-w-0 truncate text-base font-semibold">{{ siteName }}</span>
         </div>
@@ -35,7 +35,7 @@
             :href="docUrl"
             target="_blank"
             rel="noopener noreferrer"
-            class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100 dark:text-dark-400 dark:hover:bg-dark-800"
+            class="flex h-10 w-10 shrink-0 items-center justify-center rounded-none text-[#62706e] hover:bg-[#edf1ef] dark:text-[#a0aca6] dark:hover:bg-[#252c29]"
             :title="t('home.viewDocs')"
           >
             <Icon name="book" size="md" />
@@ -43,14 +43,14 @@
           <router-link
             v-if="showModelPlazaEntry"
             to="/model-plaza"
-            class="flex h-10 shrink-0 items-center gap-1.5 rounded-lg px-2.5 text-sm font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:text-dark-400 dark:hover:bg-dark-800 dark:hover:text-white"
+            class="flex h-10 shrink-0 items-center gap-1.5 rounded-none px-2.5 text-sm font-medium text-[#62706e] hover:bg-[#edf1ef] hover:text-[#087f6a] dark:text-[#a0aca6] dark:hover:bg-[#252c29] dark:hover:text-[#edf2ef]"
             :title="t('nav.modelPlaza')"
           >
             <Icon name="grid" size="md" />
             <span class="hidden sm:inline">{{ t('nav.modelPlaza') }}</span>
           </router-link>
           <button
-            class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100 dark:text-dark-400 dark:hover:bg-dark-800"
+            class="flex h-10 w-10 shrink-0 items-center justify-center rounded-none text-[#62706e] hover:bg-[#edf1ef] dark:text-[#a0aca6] dark:hover:bg-[#252c29]"
             :title="isDark ? t('home.switchToLight') : t('home.switchToDark')"
             @click="toggleTheme"
           >
@@ -59,7 +59,7 @@
           </button>
           <router-link
             :to="isAuthenticated ? dashboardPath : '/login'"
-            class="inline-flex min-h-10 shrink-0 items-center justify-center rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200"
+            class="inline-flex min-h-10 shrink-0 items-center justify-center rounded-none bg-[#087f6a] px-4 py-2 text-sm font-medium text-white hover:bg-[#066853] dark:bg-[#6ce4bd] dark:text-[#111315] dark:hover:bg-[#93efd0]"
           >
             {{ isAuthenticated ? t('home.dashboard') : t('home.login') }}
           </router-link>
@@ -72,20 +72,20 @@
         <img
           :src="siteLogo || '/logo.svg'"
           alt="Logo"
-          class="mx-auto mb-6 h-20 w-20 rounded-2xl object-contain"
+          class="mx-auto mb-6 h-20 w-20 rounded-none object-contain"
         />
         <h1 class="[overflow-wrap:anywhere] text-3xl font-bold md:text-4xl">{{ siteName }}</h1>
-        <p class="mt-4 whitespace-pre-wrap [overflow-wrap:anywhere] text-base text-gray-600 dark:text-dark-300">{{ siteSubtitle }}</p>
+        <p class="mt-4 whitespace-pre-wrap [overflow-wrap:anywhere] text-base text-[#62706e] dark:text-[#a0aca6]">{{ siteSubtitle }}</p>
         <router-link
           :to="isAuthenticated ? dashboardPath : '/login'"
-          class="mt-8 inline-flex min-h-10 items-center justify-center rounded-lg bg-primary-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-primary-700"
+          class="mt-8 inline-flex min-h-10 items-center justify-center rounded-none bg-[#087f6a] px-5 py-2.5 text-sm font-medium text-white hover:bg-[#066853] dark:bg-[#6ce4bd] dark:text-[#111315] dark:hover:bg-[#93efd0]"
         >
           {{ isAuthenticated ? t('home.goToDashboard') : t('home.login') }}
         </router-link>
       </div>
     </main>
 
-    <footer class="min-w-0 border-t border-gray-200 px-4 py-5 text-center text-sm text-gray-500 [overflow-wrap:anywhere] sm:px-6 dark:border-dark-800 dark:text-dark-400">
+    <footer class="min-w-0 border-t border-[#dfe3e5] px-4 py-5 text-center text-sm text-[#62706e] [overflow-wrap:anywhere] sm:px-6 dark:border-[#303538] dark:text-[#a0aca6]">
       &copy; {{ currentYear }} {{ siteName }}
     </footer>
   </div>
@@ -93,7 +93,7 @@
   <!-- Default Home Page -->
   <div
     v-else
-    class="flex min-h-screen min-h-[100dvh] flex-col overflow-x-hidden bg-[#f7faf8] text-[#102523] transition-colors dark:bg-[#101514] dark:text-[#edf5f2]"
+    class="flex min-h-screen min-h-[100dvh] flex-col overflow-x-hidden bg-[#f5f6f7] text-[#192322] transition-colors dark:bg-[#111315] dark:text-[#edf2ef]"
   >
     <header class="relative z-30 shrink-0 px-4 py-4 sm:px-6 lg:px-8">
       <nav class="mx-auto flex h-10 max-w-6xl items-center justify-between" aria-label="Primary">
@@ -105,7 +105,7 @@
               class="h-full w-full object-contain"
             />
           </span>
-          <span class="truncate text-sm font-semibold text-[#102523] dark:text-white">
+          <span class="truncate text-sm font-semibold text-[#192322] dark:text-[#edf2ef]">
             {{ siteName }}
           </span>
         </router-link>
@@ -117,7 +117,7 @@
           <router-link :to="isAuthenticated ? dashboardPath : '/login'" class="home-nav-link">
             {{ t('home.navigation.dashboard') }}
           </router-link>
-          <span class="mx-2 h-4 w-px bg-[#dce5e1] dark:bg-[#33413d]"></span>
+          <span class="mx-2 h-4 w-px bg-[#dfe3e5] dark:bg-[#303538]"></span>
           <LocaleSwitcher />
 
           <!-- Doc Link -->
@@ -126,7 +126,7 @@
             :href="docUrl"
             target="_blank"
             rel="noopener noreferrer"
-            class="rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:text-dark-400 dark:hover:bg-dark-800 dark:hover:text-white"
+            class="rounded-none p-2 text-[#62706e] transition-colors hover:bg-[#edf1ef] hover:text-[#087f6a] dark:text-[#a0aca6] dark:hover:bg-[#252c29] dark:hover:text-[#edf2ef]"
             :title="t('home.viewDocs')"
           >
             <Icon name="book" size="md" />
@@ -136,7 +136,7 @@
           <router-link
             v-if="showModelPlazaEntry"
             to="/model-plaza"
-            class="inline-flex items-center gap-1.5 rounded-lg p-2 text-sm text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:text-dark-400 dark:hover:bg-dark-800 dark:hover:text-white"
+            class="inline-flex items-center gap-1.5 rounded-none p-2 text-sm text-[#62706e] transition-colors hover:bg-[#edf1ef] hover:text-[#087f6a] dark:text-[#a0aca6] dark:hover:bg-[#252c29] dark:hover:text-[#edf2ef]"
             :title="t('nav.modelPlaza')"
           >
             <Icon name="grid" size="md" />
@@ -156,14 +156,14 @@
           <router-link
             v-if="isAuthenticated"
             :to="dashboardPath"
-            class="ml-2 inline-flex h-8 items-center rounded-full bg-[#102523] px-4 text-xs font-semibold text-white transition-colors hover:bg-[#24413d] dark:bg-white dark:text-[#102523] dark:hover:bg-[#dce7e3]"
+            class="ml-2 inline-flex h-8 items-center rounded-none bg-[#087f6a] px-4 text-xs font-semibold text-white transition-colors hover:bg-[#066853] dark:bg-[#6ce4bd] dark:text-[#111315] dark:hover:bg-[#93efd0]"
           >
             {{ t('home.dashboard') }}
           </router-link>
           <router-link
             v-else
             to="/login"
-            class="ml-2 inline-flex h-8 items-center rounded-full bg-[#102523] px-4 text-xs font-semibold text-white transition-colors hover:bg-[#24413d] dark:bg-white dark:text-[#102523] dark:hover:bg-[#dce7e3]"
+            class="ml-2 inline-flex h-8 items-center rounded-none bg-[#087f6a] px-4 text-xs font-semibold text-white transition-colors hover:bg-[#066853] dark:bg-[#6ce4bd] dark:text-[#111315] dark:hover:bg-[#93efd0]"
           >
             {{ t('home.login') }}
           </router-link>
@@ -196,7 +196,7 @@
       <nav
         v-if="mobileMenuOpen"
         id="home-mobile-menu"
-        class="absolute left-4 right-4 top-full overflow-hidden rounded-lg border border-[#dce5e1] bg-white p-2 shadow-lg dark:border-[#33413d] dark:bg-[#17201e] md:hidden"
+        class="absolute left-4 right-4 top-full overflow-hidden rounded-none border border-[#dfe3e5] bg-white p-2 shadow-lg dark:border-[#303538] dark:bg-[#191c1f] md:hidden"
         aria-label="Mobile"
       >
         <router-link to="/home" class="home-mobile-link" @click="closeMobileMenu">
@@ -211,7 +211,7 @@
         </router-link>
         <router-link
           :to="isAuthenticated ? dashboardPath : '/login'"
-          class="mt-1 flex h-9 items-center justify-center rounded-md bg-[#102523] px-4 text-sm font-semibold text-white dark:bg-white dark:text-[#102523]"
+          class="mt-1 flex h-9 items-center justify-center rounded-none bg-[#087f6a] px-4 text-sm font-semibold text-white dark:bg-[#6ce4bd] dark:text-[#111315]"
           @click="closeMobileMenu"
         >
           {{ isAuthenticated ? t('home.dashboard') : t('home.login') }}
@@ -222,11 +222,11 @@
     <main class="flex min-h-0 flex-1 flex-col items-center justify-center px-4 pb-8 pt-4 sm:px-6 sm:pb-12 lg:px-8">
       <div class="flex w-full max-w-6xl flex-col items-center text-center">
         <section class="min-h-[5.5rem]" aria-labelledby="uptime-heading">
-          <p id="uptime-heading" class="text-xs font-semibold text-[#5f7a75] dark:text-[#8da59f]">
+          <p id="uptime-heading" class="text-xs font-semibold text-[#62706e] dark:text-[#a0aca6]">
             {{ t('home.status.stable') }}
           </p>
           <div
-            class="mt-1 flex flex-wrap items-baseline justify-center gap-x-2 gap-y-0.5 font-mono text-base font-semibold text-[#102523] dark:text-[#edf5f2] sm:text-xl"
+            class="mt-1 flex flex-wrap items-baseline justify-center gap-x-2 gap-y-0.5 font-mono text-base font-semibold text-[#192322] dark:text-[#edf2ef] sm:text-xl"
             aria-live="polite"
           >
             <span><strong>{{ uptime?.years ?? '--' }}</strong> {{ t('home.status.years') }}</span>
@@ -236,12 +236,12 @@
             <span><strong>{{ uptime?.minutes ?? '--' }}</strong> {{ t('home.status.minutes') }}</span>
             <span><strong>{{ uptime?.seconds ?? '--' }}</strong> {{ t('home.status.seconds') }}</span>
           </div>
-          <p class="mt-1 text-[11px] font-medium text-[#78908b] dark:text-[#718781]">
+          <p class="mt-1 text-[11px] font-medium text-[#62706e] dark:text-[#a0aca6]">
             {{ homepageStatus?.started_at ? t('home.status.since', { date: startedAtDisplay }) : '--' }}
           </p>
         </section>
 
-        <h1 class="brand-title mt-5 max-w-full text-4xl font-[720] leading-none text-[#092321] dark:text-white sm:text-7xl md:text-8xl lg:text-[8rem]">
+        <h1 class="brand-title mt-5 max-w-full text-4xl font-[720] leading-none text-[#192322] dark:text-[#edf2ef] sm:text-7xl md:text-8xl lg:text-[8rem]">
           {{ siteName }}
         </h1>
 
@@ -270,31 +270,31 @@
         </nav>
 
         <section
-          class="mt-12 grid w-full max-w-3xl grid-cols-3 divide-x divide-[#dce5e1] dark:divide-[#33413d] sm:mt-16"
+          class="mt-12 grid w-full max-w-3xl grid-cols-3 divide-x divide-[#dfe3e5] dark:divide-[#303538] sm:mt-16"
           aria-label="Service statistics"
           aria-live="polite"
         >
           <div class="min-w-0 px-2 sm:px-6">
-            <p class="min-h-8 text-[10px] font-semibold leading-4 text-[#67817c] dark:text-[#89a09a] sm:min-h-0 sm:text-xs">
+            <p class="min-h-8 text-[10px] font-semibold leading-4 text-[#62706e] dark:text-[#a0aca6] sm:min-h-0 sm:text-xs">
               {{ t('home.status.activeUsers') }}
             </p>
-            <p class="status-number mt-1 text-xl font-semibold text-[#102523] dark:text-white sm:text-2xl">
+            <p class="status-number mt-1 text-xl font-semibold text-[#192322] dark:text-[#edf2ef] sm:text-2xl">
               {{ activeUsersDisplay }}
             </p>
           </div>
           <div class="min-w-0 px-2 sm:px-6">
-            <p class="min-h-8 text-[10px] font-semibold leading-4 text-[#67817c] dark:text-[#89a09a] sm:min-h-0 sm:text-xs">
+            <p class="min-h-8 text-[10px] font-semibold leading-4 text-[#62706e] dark:text-[#a0aca6] sm:min-h-0 sm:text-xs">
               {{ t('home.status.successRate') }}
             </p>
-            <p class="status-number mt-1 text-xl font-semibold text-[#102523] dark:text-white sm:text-2xl">
+            <p class="status-number mt-1 text-xl font-semibold text-[#192322] dark:text-[#edf2ef] sm:text-2xl">
               {{ successRateDisplay }}
             </p>
           </div>
           <div class="min-w-0 px-2 sm:px-6">
-            <p class="min-h-8 text-[10px] font-semibold leading-4 text-[#67817c] dark:text-[#89a09a] sm:min-h-0 sm:text-xs">
+            <p class="min-h-8 text-[10px] font-semibold leading-4 text-[#62706e] dark:text-[#a0aca6] sm:min-h-0 sm:text-xs">
               {{ t('home.status.totalTokens') }}
             </p>
-            <p class="status-number mt-1 text-xl font-semibold text-[#102523] dark:text-white sm:text-2xl">
+            <p class="status-number mt-1 text-xl font-semibold text-[#192322] dark:text-[#edf2ef] sm:text-2xl">
               {{ totalTokensDisplay }}
             </p>
           </div>
@@ -307,17 +307,17 @@
     <Transition name="community-modal">
       <div
         v-if="communityOpen"
-        class="fixed inset-0 z-[150] flex items-center justify-center bg-[#07110f]/70 p-4 backdrop-blur-sm"
+        class="fixed inset-0 z-[150] flex items-center justify-center bg-[#111315]/70 p-4 backdrop-blur-sm"
         @click.self="closeCommunity"
       >
         <section
           role="dialog"
           aria-modal="true"
           aria-labelledby="community-dialog-title"
-          class="flex max-h-[calc(100vh-2rem)] w-full max-w-md flex-col overflow-hidden rounded-lg border border-[#dce5e1] bg-white shadow-2xl dark:border-[#33413d] dark:bg-[#17201e]"
+          class="flex max-h-[calc(100vh-2rem)] w-full max-w-md flex-col overflow-hidden rounded-none border border-[#dfe3e5] bg-white shadow-2xl dark:border-[#303538] dark:bg-[#191c1f]"
         >
-          <header class="flex h-12 items-center justify-between border-b border-[#e4ebe8] px-4 dark:border-[#33413d]">
-            <h2 id="community-dialog-title" class="text-sm font-semibold text-[#102523] dark:text-white">
+          <header class="flex h-12 items-center justify-between border-b border-[#dfe3e5] px-4 dark:border-[#303538]">
+            <h2 id="community-dialog-title" class="text-sm font-semibold text-[#192322] dark:text-[#edf2ef]">
               {{ t('home.community.title') }}
             </h2>
             <button
@@ -334,7 +334,7 @@
             <img
               src="/community-placeholder.jpg?v=20260823-community-qr-2"
               :alt="t('home.community.imageAlt')"
-              class="mx-auto h-auto max-h-[calc(100vh-6.5rem)] w-full rounded-md object-contain"
+              class="mx-auto h-auto max-h-[calc(100vh-6.5rem)] w-full rounded-none object-contain"
             />
           </div>
         </section>
@@ -493,19 +493,19 @@ onUnmounted(() => {
 }
 
 .home-nav-link {
-  @apply rounded-md px-3 py-2 text-xs font-semibold text-[#425c57] transition-colors hover:bg-white hover:text-[#102523] dark:text-[#a9bbb6] dark:hover:bg-[#1d2926] dark:hover:text-white;
+  @apply rounded-none px-3 py-2 text-xs font-semibold text-[#62706e] transition-colors hover:bg-[#edf1ef] hover:text-[#087f6a] dark:text-[#a0aca6] dark:hover:bg-[#252c29] dark:hover:text-[#edf2ef];
 }
 
 .home-icon-button {
-  @apply flex h-9 w-9 items-center justify-center rounded-md text-[#526b66] transition-colors hover:bg-white hover:text-[#102523] dark:text-[#a9bbb6] dark:hover:bg-[#1d2926] dark:hover:text-white;
+  @apply flex h-9 w-9 items-center justify-center rounded-none text-[#62706e] transition-colors hover:bg-[#edf1ef] hover:text-[#087f6a] dark:text-[#a0aca6] dark:hover:bg-[#252c29] dark:hover:text-[#edf2ef];
 }
 
 .home-mobile-link {
-  @apply flex min-h-10 items-center rounded-md px-3 text-sm font-semibold text-[#425c57] hover:bg-[#f1f5f3] dark:text-[#b7c8c3] dark:hover:bg-[#22302d];
+  @apply flex min-h-10 items-center rounded-none px-3 text-sm font-semibold text-[#62706e] hover:bg-[#edf1ef] dark:text-[#a0aca6] dark:hover:bg-[#252c29];
 }
 
 .home-quick-link {
-  @apply rounded-sm text-[#183c37] underline-offset-4 transition-colors hover:text-[#0f766e] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0f766e] focus-visible:ring-offset-4 dark:text-[#c9d8d4] dark:hover:text-[#5eead4] dark:focus-visible:ring-[#5eead4] dark:focus-visible:ring-offset-[#101514];
+  @apply rounded-none text-[#303538] underline-offset-4 transition-colors hover:text-[#087f6a] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#087f6a] focus-visible:ring-offset-4 dark:text-[#a0aca6] dark:hover:text-[#edf2ef] dark:focus-visible:ring-[#6ce4bd] dark:focus-visible:ring-offset-[#111315];
 }
 
 .community-modal-enter-active,

@@ -1,8 +1,8 @@
 <template>
   <AppLayout>
-    <TablePageLayout>
+    <TablePageLayout class="signal-keys">
       <template #filters>
-        <div class="flex flex-col gap-3">
+        <div class="signal-key-filters flex flex-col gap-3">
           <div class="flex flex-wrap items-center gap-3">
             <SearchInput
               v-model="filterSearch"
@@ -48,7 +48,9 @@
       </template>
 
       <template #actions>
-        <div class="flex justify-end gap-3">
+        <div class="signal-workspace-heading">
+          <div class="signal-workspace-title"><p class="signal-workspace-index">02 / ACCESS</p><h1>{{ t('keys.title') }}</h1></div>
+          <div class="signal-workspace-actions">
           <button
             @click="loadApiKeys"
             :disabled="loading"
@@ -93,6 +95,7 @@
             <Icon name="plus" size="md" class="mr-2" />
             {{ t('keys.createKey') }}
           </button>
+        </div>
         </div>
       </template>
 
@@ -1198,6 +1201,7 @@
 </template>
 
 <script setup lang="ts">
+import { useRoute } from 'vue-router'
 	import { ref, reactive, computed, watch, onMounted, onUnmounted, type ComponentPublicInstance } from 'vue'
 	import { useI18n } from 'vue-i18n'
 	import { useAppStore } from '@/stores/app'
@@ -1394,7 +1398,9 @@ const filterSearch = ref('')
 const filterStatus = ref('')
 const filterGroupId = ref<string | number>('')
 
-const showCreateModal = ref(false)
+/** @brief Open the existing create form when arriving from the dashboard shortcut. */
+const route = useRoute()
+const showCreateModal = ref(route.query.create === '1')
 const showEditModal = ref(false)
 const showDeleteDialog = ref(false)
 const showResetQuotaDialog = ref(false)

@@ -1,21 +1,20 @@
 <template>
-  <div class="min-h-screen bg-gray-50 dark:bg-dark-950">
-    <!-- Background Decoration -->
-    <div class="pointer-events-none fixed inset-0 bg-mesh-gradient"></div>
+  <div class="app-shell min-h-screen bg-gray-50 dark:bg-dark-950"
+    :class="{ 'console-signal': useConsoleTheme, 'signal-nav-collapsed': sidebarCollapsed }">
 
     <!-- Sidebar -->
     <AppSidebar />
 
     <!-- Main Content Area -->
     <div
-      class="relative min-h-screen transition-all duration-300"
+      class="signal-frame relative min-h-screen transition-all duration-300"
       :class="[sidebarCollapsed ? 'lg:ml-[72px]' : 'lg:ml-64']"
     >
       <!-- Header -->
       <AppHeader />
 
       <!-- Main Content -->
-      <main class="p-4 md:p-6 lg:p-8">
+      <main class="app-main signal-main p-4 md:p-6 lg:p-8">
         <slot />
       </main>
     </div>
@@ -24,6 +23,9 @@
 
 <script setup lang="ts">
 import '@/styles/onboarding.css'
+import '@/styles/console-theme.css'
+import '@/styles/console-pages.css'
+import { useRoute } from 'vue-router'
 import { computed, onMounted } from 'vue'
 import { useAppStore } from '@/stores'
 import { useAuthStore } from '@/stores/auth'
@@ -32,6 +34,9 @@ import { useOnboardingStore } from '@/stores/onboarding'
 import AppSidebar from './AppSidebar.vue'
 import AppHeader from './AppHeader.vue'
 
+/** @brief Scope the console presentation to customer account routes. */
+const route = useRoute()
+const useConsoleTheme = computed(() => !route.path.startsWith('/admin') && route.path !== '/model-plaza')
 const appStore = useAppStore()
 const authStore = useAuthStore()
 const sidebarCollapsed = computed(() => appStore.sidebarCollapsed)

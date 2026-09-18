@@ -1,0 +1,135 @@
+/** @file Page-specific console layout rules; business data and feature availability stay in Vue components. */
+.console-signal .signal-monitor > .card { border-radius: 8px !important; border: 1px solid var(--signal-line) !important; box-shadow: none; backdrop-filter: none; }
+.console-signal .signal-monitor > section.sticky { position: static; }
+.console-signal .signal-monitor .tabs { background: transparent; border-radius: 0; }
+.console-signal .signal-monitor .tab { border-radius: 0; font-size: 12px; }
+.console-signal .signal-monitor .tab-active { background: var(--signal-surface); color: var(--signal-accent); box-shadow: inset 0 -2px var(--signal-accent); }
+.console-signal .channel-card-groups { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 28px 16px; }
+.console-signal .channel-card-platform { min-width: 0; }
+.console-signal .channel-card-platform--multiple { grid-column: 1 / -1; }
+.console-signal .channel-card-platform:not(.channel-card-platform--multiple) .channel-card-grid { grid-template-columns: minmax(0, 1fr); }
+.console-signal .channel-card-platform > header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; color: var(--signal-muted); font-size: 12px; }
+.console-signal .channel-card-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.console-signal .channel-health-card { min-width: 0; padding: 18px; background: var(--signal-surface); border: 1px solid var(--signal-line); border-radius: 8px; box-shadow: var(--signal-shadow); }
+.console-signal .channel-health-card > header { display: flex; align-items: center; gap: 12px; min-height: 64px; padding-bottom: 16px; border-bottom: 1px solid var(--signal-line); }
+.console-signal .channel-health-card h3 { margin-bottom: 6px; font-size: 16px; font-weight: 600; overflow-wrap: anywhere; }
+.console-signal .channel-platform-mark { display: grid; place-items: center; flex: 0 0 38px; height: 38px; border-radius: 6px; background: var(--signal-accent-soft); color: var(--signal-accent); font-weight: 600; }
+.console-signal .channel-health-card dl { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; padding: 28px 4px; }
+.console-signal .channel-health-card dt { color: var(--signal-muted); font-size: 9px; text-transform: uppercase; }
+.console-signal .channel-health-card dd { margin-top: 10px; font: 600 18px ui-monospace, monospace; }
+.console-signal .channel-history-heading { display: flex; justify-content: space-between; color: var(--signal-muted); font-size: 9px; text-transform: uppercase; }
+.console-signal .channel-history { display: flex; align-items: flex-end; height: 26px; gap: 3px; margin: 8px 0 4px; }
+.console-signal .channel-history > div { flex: 1; min-width: 0; background: #b4bac3; }
+.console-signal .channel-history > .health-healthy { background: #099e7a; }
+.console-signal .channel-history > .health-warning { background: #edc84c; }
+.console-signal .channel-history > .health-critical { background: #e06464; }
+.console-signal .channel-health-card dd.health-healthy { color: #128365; }
+.console-signal .channel-health-card dd.health-warning { color: var(--signal-amber); }
+.console-signal .channel-health-card dd.health-critical { color: #d34040; }
+.console-signal .channel-throughput { margin-top: 12px; color: var(--signal-muted); font-size: 11px; }
+@media (max-width: 1199px) { .console-signal .channel-card-grid, .console-signal .channel-card-groups { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 639px) { .console-signal .channel-card-grid, .console-signal .channel-card-groups { grid-template-columns: minmax(0, 1fr); } }
+.console-signal .signal-account-heading { border-bottom: 1px solid var(--signal-line); padding: 6px 0 22px; }
+.console-signal .signal-account-heading > p { margin-bottom: 12px; color: var(--signal-muted); font-size: 10px; }
+.console-signal .signal-account-heading > span { display: block; margin-top: 10px; color: var(--signal-muted); font-size: 13px; }
+.console-signal .signal-redeem { max-width: 768px; }
+.console-signal .signal-account-page > .card,
+.console-signal .signal-account-page > .space-y-6 > .card { border: 0; border-top: 1px solid var(--signal-line); border-radius: 0; background: transparent; box-shadow: none; }
+.console-signal .signal-account-page > .card { padding-inline: 0; }
+.console-signal .signal-account-page > .card > .p-6 { padding-inline: 0; }
+.console-signal .signal-profile [data-testid='profile-overview-hero'] { border: 0; background: transparent; box-shadow: none; }
+.console-signal .signal-profile [data-testid='profile-overview-hero'] > div { padding: 4px 0 24px; }
+.console-signal .signal-profile [data-testid='profile-overview-hero'] .h-20 { width: 48px; height: 48px; border-radius: 6px; background: var(--signal-accent-soft); color: var(--signal-accent); box-shadow: none; }
+.console-signal .signal-profile [data-testid^='profile-overview-metric-'] { border: 1px solid var(--signal-line); border-radius: 0; box-shadow: none; background: var(--signal-surface); }
+.console-signal .signal-profile [data-testid='profile-overview-hero'] .grid { gap: 0; }
+.console-signal .signal-profile [class*='tracking-'] { letter-spacing: 0; }
+.console-signal .signal-orders .signal-workspace-heading { border-bottom: 1px solid var(--signal-line); padding-bottom: 16px; }
+.console-signal .signal-orders .card.p-4 { padding: 10px 12px; }
+.console-signal .signal-keys.table-page-layout { height: calc(100dvh - 104px); }
+.console-signal .signal-keys .signal-workspace-heading { padding-bottom: 20px; }
+.console-signal .signal-usage .signal-workspace-heading { padding-bottom: 20px; }
+.console-signal .header-location { min-width: 0; }
+.console-signal .signal-breadcrumb-home { max-width: 160px; }
+.console-signal .header-actions > .btn-icon { width: 36px; height: 36px; padding: 8px; }
+.console-search-results { display: grid; gap: 4px; margin-top: 14px; max-height: 360px; overflow-y: auto; }
+.console-search-result { display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 10px 12px; border-radius: 6px; font-size: 14px; }
+.console-search-result span { flex: 1; }
+.console-search-result:hover { background: var(--signal-hover); }
+.console-signal .signal-masthead { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.console-signal .signal-masthead h1 { font-size: 20px; font-weight: 600; }
+.console-signal .signal-overview-refresh { font-size: 12px; }
+.console-signal .signal-dashboard .signal-label { color: var(--signal-muted); }
+.console-signal .signal-dashboard .signal-metric-foot a { color: var(--signal-accent); }
+.console-signal .signal-dashboard .signal-model-card { padding: 16px; border: 1px solid var(--signal-line); border-radius: 8px; background: var(--signal-surface); }
+.console-signal .signal-model-period { margin: 8px 0 14px; font-size: 9px; color: var(--signal-muted); }
+.console-signal .signal-model-summary { display: flex; align-items: center; gap: 12px; }
+.console-signal .signal-model-ring { flex: 0 0 68px; width: 68px; height: 68px; }
+.console-signal .signal-model-legend { flex: 1; display: grid; gap: 8px; min-width: 0; font-size: 9px; }
+.console-signal .signal-model-legend li { display: flex; align-items: center; gap: 5px; }
+.console-signal .signal-model-legend i { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+.console-signal .signal-model-legend span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+.console-signal .signal-model-legend strong { color: var(--signal-muted); font-weight: 400; }
+.console-signal .signal-dashboard details { border-top: 1px solid var(--signal-line); }
+.console-signal .signal-dashboard summary { display: flex; align-items: center; gap: 10px; padding: 18px 0; cursor: pointer; font-size: 13px; list-style: none; }
+.console-signal .signal-dashboard summary::after { content: '⌄'; margin-left: auto; color: var(--signal-muted); }
+.console-signal .signal-dashboard details[open] > summary::after { transform: rotate(180deg); }
+.console-signal .signal-dashboard details > .card { background: transparent; border: 0; border-radius: 0; }
+.console-signal .signal-dashboard details > .dashboard-stat-card { padding: 0 0 20px; }
+.console-signal .signal-dashboard details > .dashboard-stat-card > div:first-child { display: none; }
+.console-signal .signal-dashboard .signal-chart-toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin: 24px 0 14px; }
+.console-signal .signal-dashboard .signal-trend { padding: 20px 0; border: 0; border-top: 1px solid var(--signal-line); border-radius: 0; background: transparent; }
+.console-signal .signal-dashboard .signal-trend .h-48 { height: 260px; }
+.console-signal .signal-trend-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 20px; }
+.console-signal .signal-trend-heading h3 { font-size: 14px; font-weight: 600; }
+.console-signal .signal-trend-heading .tab { font-size: 12px; padding: 6px 12px; }
+.console-signal .signal-token-details { padding: 0; border: 0; border-radius: 0; background: transparent; }
+.console-signal .signal-token-details > h3 { display: none; }
+.console-signal .signal-payment { max-width: 1024px; }
+.console-signal .signal-payment-heading { display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--signal-line); padding-bottom: 18px; }
+.console-signal .signal-payment-heading p { color: var(--signal-muted); font-size: 10px; margin-bottom: 5px; }
+.console-signal .signal-payment-heading h1 { font-size: 26px; font-weight: 600; }
+.console-signal .signal-payment-tabs { display: flex; gap: 24px; padding: 0; border-bottom: 1px solid var(--signal-line); border-radius: 0; background: transparent; }
+.console-signal .signal-payment-tabs button { flex: 0 1 auto; padding: 12px 2px; border-radius: 0; background: transparent; box-shadow: none; color: var(--signal-muted); }
+.console-signal .signal-payment-tabs button[aria-selected='true'] { border-bottom: 2px solid var(--signal-accent); color: var(--signal-text); }
+.console-signal .signal-checkout { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 40px; align-items: start; }
+.console-signal .signal-checkout-fields { min-width: 0; }
+.console-signal .signal-checkout-section { padding: 0 0 24px; }
+.console-signal .signal-checkout-section + .signal-checkout-section { padding-top: 24px; border-top: 1px solid var(--signal-line); }
+.console-signal .signal-checkout-section > h2 { margin-bottom: 20px; font-size: 14px; font-weight: 600; }
+.console-signal .signal-checkout-section > h2 span { margin-right: 12px; color: var(--signal-muted); font-size: 12px; font-weight: 400; }
+.console-signal .signal-checkout-summary { position: sticky; top: 80px; border: 1px solid var(--signal-line); border-radius: 8px; background: var(--signal-surface); overflow: hidden; }
+.console-signal .signal-checkout-summary__header { display: flex; align-items: center; justify-content: space-between; padding: 18px; border-bottom: 1px solid var(--signal-line); font-size: 11px; color: var(--signal-muted); }
+.console-signal .signal-checkout-summary__header p { text-align: right; }
+.console-signal .signal-checkout-summary__header strong { display: block; color: var(--signal-accent); font-size: 16px; }
+.console-signal .signal-checkout-total { padding: 22px 18px; background: var(--signal-bg); border-bottom: 1px solid var(--signal-line); }
+.console-signal .signal-checkout-total p { font-size: 12px; color: var(--signal-muted); }
+.console-signal .signal-checkout-total strong { display: block; margin-top: 10px; font-size: 28px; color: var(--signal-accent); font-weight: 600; }
+.console-signal .signal-checkout-breakdown { padding: 18px; }
+.console-signal .signal-checkout-breakdown dl > div { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 12px; font-size: 13px; }
+.console-signal .signal-checkout-breakdown dt { color: var(--signal-muted); }
+.console-signal .payment-amount-input { display: flex; flex-direction: column; gap: 20px; }
+.console-signal .payment-amount-input > div { margin: 0; }
+.console-signal .payment-amount-input > div:last-child { order: -1; }
+.console-signal .payment-amount-input > div:last-child > label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+.console-signal .payment-amount-input .input { height: 64px; padding-left: 70px; font-size: 24px; }
+.console-signal .payment-amount-input .relative > span { left: 16px; font-size: 12px; }
+.console-signal .payment-amount-input button { padding: 11px; border-width: 1px; font-size: 16px; font-weight: 500; }
+.console-signal .payment-method-selector > label { display: none; }
+.console-signal .payment-method-selector [data-testid='payment-method-grid'] { grid-template-columns: 1fr; gap: 8px; }
+.console-signal .payment-method-selector button { height: 66px; padding: 14px 18px; }
+.console-signal .payment-method-selector button > span { justify-content: flex-start; }
+.console-signal .payment-method-selector img { width: 24px; height: 24px; }
+.console-signal .payment-method-selector button::after { content: ''; position: absolute; right: 18px; width: 14px; height: 14px; border: 1px solid var(--signal-control-line); border-radius: 50%; }
+.console-signal .payment-method-selector button[aria-pressed='true']::after { border: 4px solid var(--signal-accent); }
+@media (max-width: 1023px) {
+  .console-signal .signal-keys.table-page-layout { height: auto; }
+  .console-signal .signal-checkout { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  .console-signal .signal-checkout-summary { position: static; }
+}
+@media (max-width: 639px) {
+  .console-signal .signal-breadcrumb-home, .console-signal .signal-breadcrumb > svg { display: none; }
+  .console-signal .signal-breadcrumb > span { max-width: 125px; }
+  .console-signal .signal-account-heading h1, .console-signal .signal-payment-heading h1 { font-size: 23px; }
+  .console-signal .signal-dashboard .signal-trend .h-48 { height: 210px; }
+  .console-signal .signal-profile [data-testid='profile-overview-hero'] h2 { white-space: normal; overflow-wrap: anywhere; font-size: 20px; }
+}

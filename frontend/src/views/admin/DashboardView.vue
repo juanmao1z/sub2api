@@ -1,6 +1,6 @@
 <template>
   <AppLayout>
-    <div class="space-y-6">
+    <div class="admin-dashboard dashboard-page space-y-6">
       <!-- Loading State -->
       <div v-if="loading" class="flex items-center justify-center py-12">
         <LoadingSpinner />
@@ -8,11 +8,11 @@
 
       <template v-else-if="stats">
         <!-- Row 1: Core Stats -->
-        <div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <div class="grid grid-cols-2 gap-5 lg:grid-cols-4">
           <!-- Total API Keys -->
-          <div class="card p-4">
+          <div class="dashboard-card card p-5">
             <div class="flex items-center gap-3">
-              <div class="rounded-lg bg-blue-100 p-2 dark:bg-blue-900/30">
+              <div class="dashboard-icon rounded-lg bg-blue-100 p-2 dark:bg-blue-900/30">
                 <Icon name="key" size="md" class="text-blue-600 dark:text-blue-400" :stroke-width="2" />
               </div>
               <div>
@@ -30,9 +30,9 @@
           </div>
 
           <!-- Service Accounts -->
-          <div class="card p-4">
+          <div class="dashboard-card card p-5">
             <div class="flex items-center gap-3">
-              <div class="rounded-lg bg-purple-100 p-2 dark:bg-purple-900/30">
+              <div class="dashboard-icon rounded-lg bg-purple-100 p-2 dark:bg-purple-900/30">
                 <Icon name="server" size="md" class="text-purple-600 dark:text-purple-400" :stroke-width="2" />
               </div>
               <div>
@@ -55,9 +55,9 @@
           </div>
 
           <!-- Today Requests -->
-          <div class="card p-4">
+          <div class="dashboard-card card p-5">
             <div class="flex items-center gap-3">
-              <div class="rounded-lg bg-green-100 p-2 dark:bg-green-900/30">
+              <div class="dashboard-icon rounded-lg bg-green-100 p-2 dark:bg-green-900/30">
                 <Icon name="chart" size="md" class="text-green-600 dark:text-green-400" :stroke-width="2" />
               </div>
               <div>
@@ -75,9 +75,9 @@
           </div>
 
           <!-- New Users Today -->
-          <div class="card p-4">
+          <div class="dashboard-card card p-5">
             <div class="flex items-center gap-3">
-              <div class="rounded-lg bg-emerald-100 p-2 dark:bg-emerald-900/30">
+              <div class="dashboard-icon rounded-lg bg-emerald-100 p-2 dark:bg-emerald-900/30">
                 <Icon name="userPlus" size="md" class="text-emerald-600 dark:text-emerald-400" :stroke-width="2" />
               </div>
               <div>
@@ -96,11 +96,11 @@
         </div>
 
         <!-- Row 2: Token Stats -->
-        <div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <div class="grid grid-cols-2 gap-5 lg:grid-cols-4">
           <!-- Today Tokens -->
-          <div class="card p-4">
+          <div class="dashboard-card card p-5">
             <div class="flex items-center gap-3">
-              <div class="rounded-lg bg-amber-100 p-2 dark:bg-amber-900/30">
+              <div class="dashboard-icon rounded-lg bg-amber-100 p-2 dark:bg-amber-900/30">
                 <Icon name="cube" size="md" class="text-amber-600 dark:text-amber-400" :stroke-width="2" />
               </div>
               <div>
@@ -134,9 +134,9 @@
           </div>
 
           <!-- Total Tokens -->
-          <div class="card p-4">
+          <div class="dashboard-card card p-5">
             <div class="flex items-center gap-3">
-              <div class="rounded-lg bg-indigo-100 p-2 dark:bg-indigo-900/30">
+              <div class="dashboard-icon rounded-lg bg-indigo-100 p-2 dark:bg-indigo-900/30">
                 <Icon name="database" size="md" class="text-indigo-600 dark:text-indigo-400" :stroke-width="2" />
               </div>
               <div>
@@ -170,9 +170,9 @@
           </div>
 
           <!-- Performance (RPM/TPM) -->
-          <div class="card p-4">
+          <div class="dashboard-card card p-5">
             <div class="flex items-center gap-3">
-              <div class="rounded-lg bg-violet-100 p-2 dark:bg-violet-900/30">
+              <div class="dashboard-icon rounded-lg bg-violet-100 p-2 dark:bg-violet-900/30">
                 <Icon name="bolt" size="md" class="text-violet-600 dark:text-violet-400" :stroke-width="2" />
               </div>
               <div class="flex-1">
@@ -196,9 +196,9 @@
           </div>
 
           <!-- Avg Response Time -->
-          <div class="card p-4">
+          <div class="dashboard-card card p-5">
             <div class="flex items-center gap-3">
-              <div class="rounded-lg bg-rose-100 p-2 dark:bg-rose-900/30">
+              <div class="dashboard-icon rounded-lg bg-rose-100 p-2 dark:bg-rose-900/30">
                 <Icon name="clock" size="md" class="text-rose-600 dark:text-rose-400" :stroke-width="2" />
               </div>
               <div>
@@ -217,7 +217,7 @@
         </div>
 
         <!-- Quick Actions -->
-        <div class="card p-4">
+        <div class="dashboard-actions">
           <div class="mb-3 flex items-center justify-between">
             <h2 class="text-sm font-semibold text-gray-900 dark:text-white">
               {{ t('admin.dashboard.quickActions') }}
@@ -227,10 +227,10 @@
             <button
               v-if="canUseBatchImage"
               type="button"
-              class="group flex items-center gap-3 rounded-lg bg-gray-50 p-3 text-left transition-colors hover:bg-sky-50 dark:bg-dark-800/50 dark:hover:bg-sky-900/20"
+              class="dashboard-action group flex items-center gap-3 rounded-lg bg-gray-50 p-3 text-left transition-colors hover:bg-sky-50 dark:bg-dark-800/50 dark:hover:bg-sky-900/20"
               @click="router.push('/batch-image')"
             >
-              <span class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-sky-100 text-sky-600 dark:bg-sky-900/30 dark:text-sky-400">
+              <span class="dashboard-action-icon flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-sky-100 text-sky-600 dark:bg-sky-900/30 dark:text-sky-400">
                 <Icon name="sparkles" size="md" :stroke-width="2" />
               </span>
               <span class="min-w-0 flex-1">
@@ -245,10 +245,10 @@
             </button>
             <button
               type="button"
-              class="group flex items-center gap-3 rounded-lg bg-gray-50 p-3 text-left transition-colors hover:bg-emerald-50 dark:bg-dark-800/50 dark:hover:bg-emerald-900/20"
+              class="dashboard-action group flex items-center gap-3 rounded-lg bg-gray-50 p-3 text-left transition-colors hover:bg-emerald-50 dark:bg-dark-800/50 dark:hover:bg-emerald-900/20"
               @click="router.push('/admin/groups')"
             >
-              <span class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400">
+              <span class="dashboard-action-icon flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400">
                 <Icon name="grid" size="md" :stroke-width="2" />
               </span>
               <span class="min-w-0 flex-1">
@@ -267,9 +267,9 @@
         <!-- Charts Section -->
         <div class="space-y-6">
           <!-- Date Range Filter -->
-          <div class="card p-4">
+          <div class="dashboard-toolbar border-y border-gray-200 py-4 dark:border-dark-700">
             <div class="flex flex-wrap items-center gap-4">
-              <div class="flex items-center gap-2">
+              <div class="flex min-w-0 flex-wrap items-center gap-2">
                 <span class="text-sm font-medium text-gray-700 dark:text-gray-300"
                   >{{ t('admin.dashboard.timeRange') }}:</span
                 >
@@ -279,8 +279,15 @@
                   @change="onDateRangeChange"
                 />
               </div>
-              <button @click="loadDashboardStats" :disabled="chartsLoading" class="btn btn-secondary">
-                {{ t('common.refresh') }}
+              <button
+                type="button"
+                @click="loadDashboardStats"
+                :disabled="chartsLoading"
+                :title="t('common.refresh')"
+                :aria-label="t('common.refresh')"
+                class="btn btn-secondary h-10 w-10 flex-shrink-0 !rounded-lg !p-0"
+              >
+                <Icon name="refresh" size="sm" :class="{ 'animate-spin': chartsLoading }" />
               </button>
               <div class="ml-auto flex items-center gap-2">
                 <span class="text-sm font-medium text-gray-700 dark:text-gray-300"
@@ -298,7 +305,7 @@
           </div>
 
           <!-- Charts Grid -->
-          <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <div class="grid grid-cols-1 gap-5 lg:grid-cols-2">
             <ModelDistributionChart
               :model-stats="modelStats"
               :enable-ranking-view="true"
@@ -317,7 +324,7 @@
           </div>
 
           <!-- User Usage Trend (Full Width) -->
-          <div class="card p-4">
+          <div class="dashboard-card card p-5">
             <h3 class="mb-4 text-sm font-semibold text-gray-900 dark:text-white">
               {{ t('admin.dashboard.recentUsage') }} (Top 12)
             </h3>
@@ -755,4 +762,94 @@ onMounted(() => {
 </script>
 
 <style scoped>
+.admin-dashboard {
+  min-width: 0;
+}
+
+.dashboard-card,
+.admin-dashboard :deep(.card) {
+  border-color: rgb(226 230 238 / 0.9);
+  border-radius: 8px;
+  box-shadow: none;
+}
+
+.dashboard-card {
+  min-width: 0;
+}
+
+.dashboard-card > .flex {
+  align-items: flex-start;
+}
+
+.dashboard-card > .flex > div:last-child {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.dashboard-card .text-xl {
+  font-size: 26px;
+  line-height: 1.4;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.dashboard-icon {
+  align-items: center;
+  background: #f3f4f6;
+  border-radius: 8px;
+  color: #64748b;
+  display: flex;
+  flex-shrink: 0;
+  justify-content: center;
+}
+
+.dashboard-icon :deep(svg) {
+  color: currentColor;
+}
+
+.dashboard-action {
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  padding: 16px;
+}
+
+.dashboard-action:hover {
+  border-color: rgb(221 225 236 / 0.95);
+}
+
+.dashboard-action-icon {
+  background: #f3f4f6;
+  color: #64748b;
+}
+
+.admin-dashboard:where(.dark * ) .dashboard-card,
+.admin-dashboard:where(.dark * ) :deep(.card) {
+  border-color: rgb(55 65 81 / 0.75);
+  box-shadow: none;
+}
+
+.admin-dashboard:where(.dark * ) .dashboard-action {
+  border-color: #374151;
+  background: rgb(31 41 55 / 0.5);
+}
+
+.admin-dashboard:where(.dark * ) .dashboard-icon,
+.admin-dashboard:where(.dark * ) .dashboard-action-icon {
+  background: #283241;
+  color: #b2bac7;
+}
+
+@media (max-width: 639px) {
+  .dashboard-card {
+    padding: 16px;
+  }
+
+  .dashboard-card > .flex {
+    flex-direction: column;
+  }
+
+  .dashboard-card .text-xl {
+    font-size: 23px;
+  }
+}
 </style>

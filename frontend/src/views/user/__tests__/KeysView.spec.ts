@@ -108,6 +108,14 @@ vi.mock('vue-i18n', async () => {
   }
 })
 
+vi.mock('vue-router', async () => {
+  const actual = await vi.importActual<typeof import('vue-router')>('vue-router')
+  return {
+    ...actual,
+    useRoute: () => ({ query: {} }),
+  }
+})
+
 const createApiKey = (): ApiKey => ({
   id: 1,
   user_id: 1,

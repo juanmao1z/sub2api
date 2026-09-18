@@ -23,19 +23,19 @@
       <Transition name="modal-fade">
         <div
           v-if="isModalOpen"
-          class="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto bg-gradient-to-br from-black/70 via-black/60 to-black/70 p-4 pt-[8vh] backdrop-blur-md"
+          class="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto bg-black/50 p-4 pt-[8vh] backdrop-blur-md"
           @click="closeModal"
         >
           <div
-            class="w-full max-w-[620px] overflow-hidden rounded-3xl bg-white shadow-2xl ring-1 ring-black/5 dark:bg-dark-800 dark:ring-white/10"
+            class="w-full max-w-[620px] overflow-hidden rounded-md border border-gray-200 bg-white shadow-xl ring-1 ring-black/5 dark:bg-dark-800 dark:ring-white/10"
             @click.stop
           >
             <!-- Header with Gradient -->
-            <div class="relative overflow-hidden border-b border-gray-100/80 bg-gradient-to-br from-blue-50/50 to-indigo-50/30 px-6 py-5 dark:border-dark-700/50 dark:from-blue-900/10 dark:to-indigo-900/5">
+            <div class="relative overflow-hidden border-b border-gray-100/80 bg-gray-50 px-6 py-5 dark:border-dark-700/50 dark:from-blue-900/10 dark:to-indigo-900/5">
               <div class="relative z-10 flex items-start justify-between">
                 <div>
                   <div class="flex items-center gap-2">
-                    <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-500/30">
+                    <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-gray-900 text-white shadow-none">
                       <Icon name="bell" size="sm" />
                     </div>
                     <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
@@ -52,7 +52,7 @@
                     v-if="unreadCount > 0"
                     @click="markAllAsRead"
                     :disabled="loading"
-                    class="rounded-lg bg-blue-600 px-4 py-2 text-xs font-medium text-white shadow-lg shadow-blue-500/30 transition-all hover:bg-blue-700 hover:shadow-xl disabled:opacity-50 dark:bg-blue-500 dark:hover:bg-blue-600"
+                    class="rounded-lg bg-blue-600 px-4 py-2 text-xs font-medium text-white shadow-none transition-all hover:bg-gray-700 disabled:opacity-50 dark:bg-blue-500 dark:hover:bg-blue-600"
                   >
                     {{ t('announcements.markAllRead') }}
                   </button>
@@ -66,7 +66,7 @@
                 </div>
               </div>
               <!-- Decorative gradient -->
-              <div class="absolute right-0 top-0 h-full w-48 bg-gradient-to-l from-indigo-100/20 to-transparent dark:from-indigo-900/10"></div>
+              <div class="absolute right-0 top-0 h-full w-48 bg-transparent dark:from-indigo-900/10"></div>
             </div>
 
             <!-- Body -->
@@ -85,7 +85,7 @@
                   v-for="item in announcements"
                   :key="item.id"
                   class="group relative flex items-center gap-4 border-b border-gray-100 px-6 py-4 transition-all hover:bg-gray-50 dark:border-dark-700 dark:hover:bg-dark-700/30"
-                  :class="{ 'bg-blue-50/30 dark:bg-blue-900/5': !item.read_at }"
+                  :class="{ 'bg-gray-50': !item.read_at }"
                   style="min-height: 72px"
                   @click="openDetail(item)"
                 >
@@ -93,7 +93,7 @@
                   <div class="flex h-10 w-10 flex-shrink-0 items-center justify-center">
                     <div
                       v-if="!item.read_at"
-                      class="relative flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-500/30"
+                      class="relative flex h-10 w-10 items-center justify-center rounded-xl bg-gray-900 text-white shadow-none"
                     >
                       <!-- Pulse ring -->
                       <span class="absolute inline-flex h-full w-full animate-ping rounded-xl bg-blue-400 opacity-75"></span>
@@ -152,7 +152,7 @@
                   <!-- Unread indicator bar -->
                   <div
                     v-if="!item.read_at"
-                    class="absolute left-0 top-0 h-full w-1 bg-gradient-to-b from-blue-500 to-indigo-600"
+                    class="absolute left-0 top-0 h-full w-1 bg-gray-300"
                   ></div>
                 </div>
               </div>
@@ -160,7 +160,7 @@
               <!-- Empty State -->
               <div v-else class="flex flex-col items-center justify-center py-16">
                 <div class="relative mb-4">
-                  <div class="flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-gray-100 to-gray-200 dark:from-dark-700 dark:to-dark-600">
+                  <div class="flex h-20 w-20 items-center justify-center rounded-full bg-gray-100 dark:from-dark-700 dark:to-dark-600">
                     <Icon name="inbox" size="xl" class="text-gray-400 dark:text-gray-500" />
                   </div>
                   <div class="absolute -right-1 -top-1 flex h-6 w-6 items-center justify-center rounded-full bg-green-500 text-white">
@@ -183,11 +183,11 @@
       <Transition name="modal-fade">
         <div
           v-if="detailModalOpen && selectedAnnouncement"
-          class="fixed inset-0 z-[110] flex items-start justify-center overflow-y-auto bg-gradient-to-br from-black/70 via-black/60 to-black/70 p-4 pt-[6vh] backdrop-blur-md"
+          class="fixed inset-0 z-[110] flex items-start justify-center overflow-y-auto bg-black/50 p-4 pt-[6vh] backdrop-blur-md"
           @click="closeDetail"
         >
           <div
-            class="w-full max-w-[780px] overflow-hidden rounded-3xl bg-white shadow-2xl ring-1 ring-black/5 dark:bg-dark-800 dark:ring-white/10"
+            class="w-full max-w-[780px] overflow-hidden rounded-md border border-gray-200 bg-white shadow-xl ring-1 ring-black/5 dark:bg-dark-800 dark:ring-white/10"
             @click.stop
           >
             <!-- Header with Decorative Elements -->
@@ -201,7 +201,7 @@
                 <div class="flex-1 min-w-0">
                   <!-- Icon and Category -->
                   <div class="mb-3 flex items-center gap-2">
-                    <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-500/30">
+                    <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-gray-900 text-white shadow-none">
                       <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
@@ -212,7 +212,7 @@
                       </span>
                       <span
                         v-if="!selectedAnnouncement.read_at"
-                        class="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-blue-500 to-indigo-600 px-2.5 py-1 text-xs font-medium text-white shadow-lg shadow-blue-500/30"
+                        class="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-blue-500 to-indigo-600 px-2.5 py-1 text-xs font-medium text-white shadow-none"
                       >
                         <span class="relative flex h-2 w-2">
                           <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-white opacity-75"></span>
@@ -292,7 +292,7 @@
                   <button
                     v-if="!selectedAnnouncement.read_at"
                     @click="markAsReadAndClose(selectedAnnouncement.id)"
-                    class="rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-5 py-2.5 text-sm font-medium text-white shadow-lg shadow-blue-500/30 transition-all hover:shadow-xl hover:scale-105"
+                    class="rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-5 py-2.5 text-sm font-medium text-white shadow-none transition-all hover:bg-gray-700"
                   >
                     <span class="flex items-center gap-2">
                       <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">

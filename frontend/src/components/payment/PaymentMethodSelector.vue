@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="payment-method-selector">
     <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
       {{ t('payment.paymentMethod') }}
     </label>
@@ -11,6 +11,8 @@
         v-for="method in sortedMethods"
         :key="method.type"
         type="button"
+        class="payment-method-selector__option"
+        :aria-pressed="selected === method.type"
         :title="methodLabel(method)"
         :disabled="!method.available"
         :class="[

@@ -1,14 +1,15 @@
 <template>
   <AuthLayout>
-    <div class="space-y-6">
+    <div class="auth-form space-y-8">
       <!-- Title -->
-      <div class="text-center">
-        <h2 class="text-2xl font-bold text-gray-900 dark:text-white">
+      <div class="text-left">
+        <h2 class="auth-form-title text-3xl font-semibold tracking-tight text-gray-900 dark:text-white">
           {{ t('auth.welcomeBack') }}
         </h2>
-        <p class="mt-2 text-sm text-gray-500 dark:text-dark-400">
+        <p class="auth-form-subtitle mt-2 text-sm text-gray-500 dark:text-dark-400">
           {{ t('auth.signInToAccount') }}
         </p>
+
       </div>
       <!-- Login Form -->
       <form @submit.prevent="handleLogin" class="space-y-5">
@@ -29,7 +30,7 @@
               autofocus
               autocomplete="email"
               :disabled="authActionDisabled"
-              class="input pl-11"
+              class="auth-input input pl-11"
               :class="{ 'input-error': errors.email }"
               :placeholder="t('auth.emailPlaceholder')"
             />
@@ -52,7 +53,7 @@
               required
               autocomplete="current-password"
               :disabled="authActionDisabled"
-              class="input pl-11 pr-11"
+              class="auth-input input pl-11 pr-11"
               :class="{ 'input-error': errors.password }"
               :placeholder="t('auth.passwordPlaceholder')"
             />
@@ -101,7 +102,7 @@
         <button
           type="submit"
           :disabled="authActionDisabled || (turnstileEnabled && !turnstileToken)"
-          class="btn btn-primary w-full"
+          class="auth-submit btn btn-primary w-full"
         >
           <svg
             v-if="isLoading"
@@ -139,15 +140,8 @@
           @open="showAgreementModal = true"
         />
 
-        <div v-if="showPasskeyLogin || showOAuthLogin" class="space-y-3 pt-1">
-          <div class="flex items-center gap-3">
-            <div class="h-px flex-1 bg-gray-200 dark:bg-dark-700"></div>
-            <span class="text-xs text-gray-500 dark:text-dark-400">
-              {{ t('auth.oauthOrContinue') }}
-            </span>
-            <div class="h-px flex-1 bg-gray-200 dark:bg-dark-700"></div>
-          </div>
-
+        <div v-if="showPasskeyLogin || showOAuthLogin" class="flex items-center gap-3"><div class="h-px flex-1 bg-gray-200 dark:bg-dark-700" /><span class="text-xs text-gray-500">{{ t('auth.oauthOrContinue') }}</span><div class="h-px flex-1 bg-gray-200 dark:bg-dark-700" /></div>
+        <div v-if="showPasskeyLogin || showOAuthLogin" class="auth-social-stack space-y-3">
           <button
             v-if="showPasskeyLogin"
             type="button"
@@ -158,6 +152,14 @@
             <Icon name="key" size="md" class="mr-2" />
             {{ passkeyLoading ? t('auth.passkeySigningIn') : t('auth.passkeySignIn') }}
           </button>
+
+          <div v-if="showPasskeyLogin && showOAuthLogin" class="flex items-center gap-3">
+            <div class="h-px flex-1 bg-gray-200 dark:bg-dark-700"></div>
+            <span class="text-xs text-gray-500 dark:text-dark-400">
+              {{ t('auth.oauthOrContinue') }}
+            </span>
+            <div class="h-px flex-1 bg-gray-200 dark:bg-dark-700"></div>
+          </div>
 
           <EmailOAuthButtons
             :disabled="authActionDisabled"
@@ -193,20 +195,19 @@
             @start="handleOAuthStart"
           />
         </div>
+
       </form>
     </div>
-
-    <!-- Footer -->
-    <template v-if="!backendModeEnabled && publicSettingsLoaded && registrationEnabled" #footer>
-      <p class="text-gray-500 dark:text-dark-400">
-        {{ t('auth.dontHaveAccount') }}
-        <router-link
-          to="/register"
-          class="font-medium text-primary-600 transition-colors hover:text-primary-500 dark:text-primary-400 dark:hover:text-primary-300"
-        >
-          {{ t('auth.signUp') }}
-        </router-link>
-      </p>
+    <template #footer>
+        <p v-if="!backendModeEnabled && publicSettingsLoaded && registrationEnabled" class="mt-2 text-sm text-gray-500 dark:text-dark-400">
+          {{ t('auth.dontHaveAccount') }}
+          <router-link
+            to="/register"
+            class="font-medium text-gray-900 underline underline-offset-4 transition-colors hover:text-gray-600 dark:text-white dark:hover:text-gray-300"
+          >
+            {{ t('auth.signUp') }}
+          </router-link>
+        </p>
     </template>
   </AuthLayout>
 

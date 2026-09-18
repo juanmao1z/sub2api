@@ -1,5 +1,10 @@
 export default {
   dashboard: {
+    totalUsage: 'Total usage',
+    tokenDetails: 'Token details',
+    overview: 'Usage overview',
+    recentTotal: 'Recent total',
+    recentTokens: 'Recent token total',
     title: 'Dashboard',
     welcomeMessage: "Welcome back! Here's an overview of your account.",
     balance: 'Balance',

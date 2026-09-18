@@ -1,6 +1,9 @@
 /** Channel Monitor V2 (user + admin passive monitor UI) */
 export default {
   channelMonitorV2: {
+    cardHistory: '历史（{count} 个采样点）',
+    cardPast: '过去',
+    cardNow: '现在',
     title: '渠道监控',
     updating: '正在更新数据',
     updatedTo: '更新至 {time}',

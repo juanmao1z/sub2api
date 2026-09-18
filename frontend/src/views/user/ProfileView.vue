@@ -2,8 +2,9 @@
   <AppLayout>
     <div
       data-testid="profile-shell"
-      class="mx-auto max-w-[950px] space-y-6"
+      class="signal-account-page signal-profile mx-auto max-w-[950px] space-y-6"
     >
+      <header class="signal-account-heading"><p>ACCOUNT</p><h1>{{ t('profile.title') }}</h1></header>
       <ProfileInfoCard
         :user="user"
         :linuxdo-enabled="linuxdoOAuthEnabled"

@@ -321,7 +321,10 @@ const isValidUrl = computed(() => {
   return url.startsWith('http://') || url.startsWith('https://')
 })
 
-const showOpenInNewTab = computed(() => menuItemId.value !== 'usage-leaderboard')
+/** @brief Show the external-link control only when the selected menu permits it. */
+const showOpenInNewTab = computed(
+  () => menuItemId.value !== 'usage-leaderboard' && menuItem.value?.hide_open_button !== true,
+)
 
 function generateHeadingId(text: string, index: number): string {
   const base = text

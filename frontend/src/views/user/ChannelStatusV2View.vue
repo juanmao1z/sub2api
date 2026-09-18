@@ -1,6 +1,6 @@
 <template>
   <AppLayout>
-    <div class="space-y-6 pb-12">
+    <div class="signal-monitor space-y-6 pb-12">
       <!-- Ops-style elevated shell: title toolbar + filters (mirrors OpsDashboardHeader) -->
       <section
         class="card sticky top-0 z-20 !rounded-3xl !border-0 p-0 shadow-sm ring-1 ring-gray-900/5 backdrop-blur-sm dark:!bg-dark-800 dark:ring-dark-700 supports-[backdrop-filter]:bg-white/95 dark:supports-[backdrop-filter]:bg-dark-800/95"
@@ -254,10 +254,9 @@
           :coverage="snapshot?.coverage || null"
           :loading="loading && !snapshot"
         />
-        <RelayPulseMatrix
+        <ChannelStatusCards
           v-else-if="matrix"
           :rows="matrixRows"
-          :coverage="matrix.coverage"
           :health-mode="healthMode"
           :show-throughput="showThroughput"
         />
@@ -469,7 +468,7 @@ import FilterMultiSelect from '@/features/channel-monitor-v2/FilterMultiSelect.v
 import MetricCell from '@/features/channel-monitor-v2/MetricCell.vue'
 import MonitorRankBadge from '@/features/channel-monitor-v2/MonitorRankBadge.vue'
 import MonitorTrendChart from '@/features/channel-monitor-v2/MonitorTrendChart.vue'
-import RelayPulseMatrix from '@/features/channel-monitor-v2/RelayPulseMatrix.vue'
+import ChannelStatusCards from '@/components/user/ChannelStatusCards.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useAppStore } from '@/stores/app'
 import { extractApiErrorMessage } from '@/utils/apiError'

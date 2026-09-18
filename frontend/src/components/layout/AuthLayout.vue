@@ -1,51 +1,25 @@
 <template>
-  <div class="relative flex min-h-screen items-center justify-center overflow-hidden p-4">
-    <!-- Background -->
-    <div
-      class="absolute inset-0 bg-gradient-to-br from-gray-50 via-primary-50/30 to-gray-100 dark:from-dark-950 dark:via-dark-900 dark:to-dark-950"
-    ></div>
-
-    <!-- Decorative Elements -->
-    <div class="pointer-events-none absolute inset-0 overflow-hidden">
-      <!-- Gradient Orbs -->
-      <div
-        class="absolute -right-40 -top-40 h-80 w-80 rounded-full bg-primary-400/20 blur-3xl"
-      ></div>
-      <div
-        class="absolute -bottom-40 -left-40 h-80 w-80 rounded-full bg-primary-500/15 blur-3xl"
-      ></div>
-      <div
-        class="absolute left-1/2 top-1/2 h-96 w-96 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary-300/10 blur-3xl"
-      ></div>
-
-      <!-- Grid Pattern -->
-      <div
-        class="absolute inset-0 bg-[linear-gradient(rgba(20,184,166,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(20,184,166,0.03)_1px,transparent_1px)] bg-[size:64px_64px]"
-      ></div>
+  <div class="reference-auth auth-shell relative flex min-h-screen items-center justify-center overflow-y-auto px-6 pb-8 pt-28 sm:px-8 sm:pt-32">
+    <!-- Logo/Brand -->
+    <div class="auth-brand absolute left-6 top-6 sm:left-12 sm:top-10">
+      <template v-if="settingsLoaded">
+        <div class="auth-brand-logo flex h-9 w-9 items-center justify-center overflow-hidden">
+          <img :src="siteLogo || '/logo.png?v=20260715'" alt="Logo" class="h-full w-full object-contain" />
+        </div>
+        <div class="min-w-0">
+          <h1 class="auth-brand-title truncate text-xl font-semibold tracking-tight">
+            {{ siteName }}
+          </h1>
+          <p class="auth-brand-subtitle truncate text-xs text-gray-500 dark:text-dark-400">
+            {{ siteSubtitle }}
+          </p>
+        </div>
+      </template>
     </div>
 
     <!-- Content Container -->
-    <div class="relative z-10 w-full max-w-md">
-      <!-- Logo/Brand -->
-      <div class="mb-8 text-center">
-        <!-- Custom Logo or Default Logo -->
-        <template v-if="settingsLoaded">
-          <div
-            class="mb-4 inline-flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl shadow-lg shadow-primary-500/30"
-          >
-            <img :src="siteLogo || '/logo.png?v=20260715'" alt="Logo" class="h-full w-full object-contain" />
-          </div>
-          <h1 class="text-gradient mb-2 text-3xl font-bold">
-            {{ siteName }}
-          </h1>
-          <p class="text-sm text-gray-500 dark:text-dark-400">
-            {{ siteSubtitle }}
-          </p>
-        </template>
-      </div>
-
-      <!-- Card Container -->
-      <div class="card-glass rounded-2xl p-8 shadow-glass">
+    <div class="auth-content relative z-10 my-auto w-full max-w-[36.5rem]">
+      <div class="auth-card">
         <slot />
       </div>
 
@@ -55,7 +29,7 @@
       </div>
 
       <!-- Copyright -->
-      <div class="mt-8 text-center text-xs text-gray-400 dark:text-dark-500">
+      <div class="mt-7 text-center text-xs text-gray-400 dark:text-dark-500">
         &copy; {{ currentYear }} {{ siteName }}. All rights reserved.
       </div>
     </div>
@@ -64,6 +38,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted } from 'vue'
+import '@/styles/public-pages.css'
 import { useAppStore } from '@/stores'
 import { sanitizeUrl } from '@/utils/url'
 
@@ -80,9 +55,3 @@ onMounted(() => {
   appStore.fetchPublicSettings()
 })
 </script>
-
-<style scoped>
-.text-gradient {
-  @apply bg-gradient-to-r from-primary-600 to-primary-500 bg-clip-text text-transparent;
-}
-</style>

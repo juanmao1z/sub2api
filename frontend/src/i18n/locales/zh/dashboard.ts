@@ -1,5 +1,10 @@
 export default {
   dashboard: {
+    totalUsage: '总用量',
+    tokenDetails: 'Token 明细',
+    overview: '用量概览',
+    recentTotal: '近期累计',
+    recentTokens: '近期 Token 总量',
     title: '仪表盘',
     welcomeMessage: '欢迎回来！这是您账户的概览。',
     balance: '余额',
