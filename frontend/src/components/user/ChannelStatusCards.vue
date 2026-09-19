@@ -13,7 +13,7 @@
           </dl>
           <div class="channel-history-heading"><span>{{ t('channelMonitorV2.cardHistory', { count: row.buckets.length }) }}</span><span>{{ healthLabel }}</span></div>
           <div class="channel-history" :aria-label="t('channelMonitorV2.cardHistory', { count: row.buckets.length })">
-            <div v-for="bucket in row.buckets" :key="bucket.bucket_start" :class="'health-' + bucketState(bucket)" :title="`${bucket.bucket_start} · ${formatMonitorPercent(1 - bucket.metrics.error_rate)}`" :style="{ height: `${bucket.metrics.request_count > 0 ? Math.max(25, (1 - bucket.metrics.error_rate) * 100) : 18}%` }" />
+            <div v-for="bucket in row.buckets" :key="bucket.bucket_start" :class="'health-' + bucketState(bucket)" :title="`${bucket.bucket_start} · ${formatMonitorPercent(1 - bucket.metrics.error_rate)}`" :style="{ height: `${bucketState(bucket) !== 'unknown' ? Math.max(25, (1 - bucket.metrics.error_rate) * 100) : 18}%` }" />
           </div>
           <div class="channel-history-heading"><span>{{ t('channelMonitorV2.cardPast') }}</span><span>{{ t('channelMonitorV2.cardNow') }}</span></div>
           <p v-if="showThroughput" class="channel-throughput">{{ row.metrics.rpm.toFixed(1) }} RPM / {{ Math.round(row.metrics.tpm).toLocaleString() }} TPM</p>
@@ -40,12 +40,11 @@ const platforms = computed(() => {
 })
 const healthLabel = computed(() => t(`channelMonitorV2.healthMode.${props.healthMode}`))
 
-/** @brief Respect the selected health metric, keeping missing samples explicitly unknown.
+/** @brief Use the selected health state because user-facing request counts are redacted to zero.
  * @param bucket Server-provided interval health and metrics.
  * @return Health state used to color a single interval.
  */
 function bucketState(bucket: MonitorMatrixBucket): HealthState {
-  if (bucket.metrics.request_count === 0) return 'unknown'
   if (props.healthMode === 'success') return bucket.health.error_rate
   return bucket.health[props.healthMode] || 'unknown'
 }
