@@ -33,7 +33,7 @@ function deferred<T>() {
 const wrappers: ReturnType<typeof mount>[] = []
 /** @brief Mount the real page with translated labels and stubbed network requests. */
 async function mountPage() {
-  const wrapper = mount(SupportTicketsView, { global: {
+  const wrapper = mount(SupportTicketsView, { attachTo: document.body, global: {
     stubs: { Icon: true },
   } })
   wrappers.push(wrapper)
@@ -62,6 +62,47 @@ beforeEach(() => {
 afterEach(() => { wrappers.splice(0).forEach(wrapper => wrapper.unmount()); vi.unstubAllGlobals() })
 
 describe('user ticket workspace', () => {
+  it('expands only in-progress history by default and lets users toggle archived groups', async () => {
+    const wrapper = await mountPage()
+    expect(wrapper.get('[data-status="OPEN"] .ticket-group-toggle').attributes('aria-expanded')).toBe('true')
+    for (const status of ['RESOLVED', 'CLOSED']) {
+      const group = wrapper.get(`[data-status="${status}"]`)
+      expect(group.get('.ticket-group-toggle').attributes('aria-expanded')).toBe('false')
+      expect(group.get('.ticket-list-item').isVisible()).toBe(false)
+      await group.get('.ticket-group-toggle').trigger('click')
+      expect(group.get('.ticket-list-item').isVisible()).toBe(true)
+      await group.get('.ticket-group-toggle').trigger('click')
+      expect(group.get('.ticket-list-item').isVisible()).toBe(false)
+    }
+    expect(wrapper.get('[data-status="OPEN"] .ticket-list-item').isVisible()).toBe(true)
+  })
+
+  it('reveals search and status-filter matches and restores collapsed history when cleared', async () => {
+    const wrapper = await mountPage()
+    await wrapper.get('.ticket-filter').setValue('CLOSED')
+    expect(wrapper.get('[data-status="CLOSED"] .ticket-list-item').isVisible()).toBe(true)
+    await wrapper.get('.ticket-filter').setValue('ALL')
+    expect(wrapper.get('[data-status="CLOSED"] .ticket-list-item').isVisible()).toBe(false)
+    await wrapper.get('.ticket-search input').setValue('Question 2')
+    expect(wrapper.get('[data-status="RESOLVED"] .ticket-list-item').isVisible()).toBe(true)
+    await wrapper.get('.ticket-search input').setValue('')
+    expect(wrapper.get('[data-status="RESOLVED"] .ticket-list-item').isVisible()).toBe(false)
+  })
+
+  it('moves a closed ticket into collapsed history while retaining its visible conversation', async () => {
+    api.close.mockResolvedValue({ data: ticket(1, 'CLOSED') })
+    const wrapper = await mountPage()
+    await wrapper.get('[data-status="OPEN"] .ticket-list-item').trigger('click')
+    await flushPromises()
+    await wrapper.get('.ticket-panel-heading button').trigger('click')
+    await flushPromises()
+    expect(wrapper.find('[data-status="OPEN"]').exists()).toBe(false)
+    expect(wrapper.get('[data-status="CLOSED"] .ticket-group-count').text()).toBe('2')
+    expect(wrapper.get('[data-status="CLOSED"] .ticket-group-toggle').attributes('aria-expanded')).toBe('false')
+    expect(wrapper.get('.ticket-panel-heading').text()).toContain('Question 1')
+    expect(wrapper.get('.ticket-closed-note').isVisible()).toBe(true)
+  })
+
   it('opens the inline composer from an empty inbox', async () => {
     api.list.mockResolvedValue({ data: [] })
     const wrapper = await mountPage()
@@ -210,7 +251,7 @@ describe('user ticket workspace', () => {
     expect(api.close).toHaveBeenCalledWith(1)
     expect(wrapper.find('.ticket-reply-form').exists()).toBe(false)
     expect(wrapper.get('.ticket-closed-note').text()).toContain('This ticket is closed')
-    expect(wrapper.findAll('.ticket-list-item')[0].text()).toContain('Closed')
+    expect(wrapper.get('[data-status="CLOSED"]').text()).toContain('Question 1')
   })
 
   it('refreshes the selected conversation without clearing the reply draft', async () => {

@@ -40,12 +40,23 @@
               <button class="ticket-button" type="button" @click="load">{{ t('support.retry') }}</button>
             </div>
             <template v-else-if="filteredTickets.length">
-              <button v-for="ticket in filteredTickets" :key="ticket.id" type="button" class="ticket-list-item" :class="{ 'ticket-list-item-active': !showCreate && activeTicketId === ticket.id }" :aria-pressed="!showCreate && activeTicketId === ticket.id" :disabled="busy" @click="openTicket(ticket.id)">
-                <span class="ticket-list-meta"><span>#{{ ticket.id }} · {{ t(ticket.type === 'REFUND' ? 'support.refund' : 'support.suggestion') }}</span><time :datetime="ticket.updated_at">{{ formatDate(ticket.updated_at, true) }}</time></span>
-                <span class="ticket-list-subject">{{ ticket.subject }}</span>
-                <span class="ticket-list-description">{{ ticket.description }}</span>
-                <span class="ticket-status"><span class="ticket-dot" :class="`ticket-dot-${ticket.status.toLowerCase()}`"></span>{{ t(`support.status.${ticket.status}`) }}</span>
-              </button>
+              <section v-for="group in ticketGroups" :key="group.status" class="ticket-group" :data-status="group.status">
+                <h3>
+                  <button :id="`ticket-group-heading-${group.status}`" type="button" class="ticket-group-toggle" :aria-expanded="expandedGroups[group.status]" :aria-controls="`ticket-group-items-${group.status}`" @click="expandedGroups[group.status] = !expandedGroups[group.status]">
+                    <Icon name="chevronRight" size="sm" class="ticket-group-chevron" :class="{ 'ticket-group-chevron-open': expandedGroups[group.status] }" aria-hidden="true" />
+                    <span class="ticket-dot" :class="`ticket-dot-${group.status.toLowerCase()}`"></span>
+                    <span>{{ t(`support.status.${group.status}`) }}</span><span class="ticket-group-count">{{ group.items.length }}</span>
+                  </button>
+                </h3>
+                <div v-show="expandedGroups[group.status]" :id="`ticket-group-items-${group.status}`" role="region" :aria-labelledby="`ticket-group-heading-${group.status}`">
+                  <button v-for="ticket in group.items" :key="ticket.id" type="button" class="ticket-list-item" :class="{ 'ticket-list-item-active': !showCreate && activeTicketId === ticket.id }" :aria-pressed="!showCreate && activeTicketId === ticket.id" :disabled="busy" @click="openTicket(ticket.id)">
+                    <span class="ticket-list-meta"><span>#{{ ticket.id }} · {{ t(ticket.type === 'REFUND' ? 'support.refund' : 'support.suggestion') }}</span><time :datetime="ticket.updated_at">{{ formatDate(ticket.updated_at, true) }}</time></span>
+                    <span class="ticket-list-subject">{{ ticket.subject }}</span>
+                    <span class="ticket-list-description">{{ ticket.description }}</span>
+                    <span class="ticket-status"><span class="ticket-dot" :class="`ticket-dot-${ticket.status.toLowerCase()}`"></span>{{ t(`support.status.${ticket.status}`) }}</span>
+                  </button>
+                </div>
+              </section>
             </template>
             <div v-else class="ticket-list-empty">
               <span class="ticket-empty-icon"><Icon :name="tickets.length ? 'search' : 'chat'" size="lg" /></span>
@@ -119,7 +130,7 @@
 
 <script setup lang="ts">
 /** @brief User ticket workspace with persistent history and an inline composer. */
-import { computed, nextTick, onMounted, reactive, ref } from 'vue'
+import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import Icon from '@/components/icons/Icon.vue'
@@ -146,6 +157,7 @@ const reply = ref('')
 const detailPanel = ref<HTMLElement | null>(null)
 const subjectInput = ref<HTMLInputElement | null>(null)
 const statuses: SupportTicketStatus[] = ['OPEN', 'RESOLVED', 'CLOSED']
+const expandedGroups = reactive<Record<SupportTicketStatus, boolean>>({ OPEN: true, RESOLVED: false, CLOSED: false })
 const ticketTypes: SupportTicketType[] = ['SUGGESTION', 'REFUND']
 const form = reactive<{ type: SupportTicketType; subject: string; description: string; contact: string; order_id?: number | '' }>({ type: 'SUGGESTION', subject: '', description: '', contact: '' })
 let detailRequest = 0
@@ -155,6 +167,18 @@ const canCreate = computed(() => !!form.subject.trim() && !!form.description.tri
 const filteredTickets = computed(() => {
   const search = query.value.trim().toLocaleLowerCase()
   return tickets.value.filter(ticket => (statusFilter.value === 'ALL' || ticket.status === statusFilter.value) && (!search || `${ticket.id} ${ticket.subject} ${ticket.description}`.toLocaleLowerCase().includes(search)))
+})
+
+/** @brief Group filtered history by lifecycle, preserving the server's order inside each group. */
+const ticketGroups = computed(() => statuses
+  .map(status => ({ status, items: filteredTickets.value.filter(ticket => ticket.status === status) }))
+  .filter(group => group.items.length > 0))
+
+// Explicit searches and filters reveal their results; clearing them restores the default groups.
+watch([query, statusFilter], () => {
+  for (const status of statuses) {
+    expandedGroups[status] = !!query.value.trim() || statusFilter.value === status || status === 'OPEN'
+  }
 })
 
 /** @brief Format ticket timestamps using the current interface language. */
@@ -259,6 +283,7 @@ async function createTicket() {
     listError.value = false
     updateHistory(data)
     resetFilters()
+    expandedGroups.OPEN = true
     form.subject = ''; form.description = ''; form.contact = ''; form.order_id = undefined
     appStore.showSuccess(t('support.created'))
   } catch (error) { reportError(error) }
@@ -299,118 +324,4 @@ async function closeTicket() {
 onMounted(load)
 </script>
 
-<style scoped>
-/** @brief Neutral two-pane ticket layout shares the console's light and dark tokens. */
-.ticket-center { color: var(--signal-text); }
-.ticket-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 20px; margin-bottom: 22px; }
-.ticket-toolbar h1 { font-size: 22px; font-weight: 600; letter-spacing: -.025em; }
-.ticket-toolbar p { margin-top: 6px; color: var(--signal-muted); font-size: 13px; }
-.ticket-tools { display: flex; align-items: center; gap: 10px; }
-.ticket-search { display: flex; align-items: center; gap: 9px; width: 230px; padding: 0 12px; border: 1px solid var(--signal-line); border-radius: 8px; background: var(--signal-surface); color: var(--signal-muted); }
-.ticket-search input { width: 100%; min-width: 0; height: 38px; border: 0; outline: none; background: transparent; color: var(--signal-text); font-size: 13px; }
-.ticket-search:focus-within { outline: 2px solid var(--signal-muted); outline-offset: 2px; }
-.ticket-filter { height: 40px; max-width: 170px; padding: 0 30px 0 12px; border: 1px solid var(--signal-line); border-radius: 8px; background-color: var(--signal-surface); color: var(--signal-text); font-size: 13px; }
-.ticket-button, .ticket-icon-button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 38px; flex-shrink: 0; border: 1px solid var(--signal-line); border-radius: 7px; padding: 8px 14px; background: var(--signal-surface); color: var(--signal-text); font-size: 13px; font-weight: 500; line-height: 20px; transition: background-color 160ms, border-color 160ms; }
-.ticket-icon-button { width: 38px; padding: 8px; }
-.ticket-button:hover, .ticket-icon-button:hover { background: var(--signal-raised); border-color: var(--signal-control-line); }
-.ticket-center .ticket-button-primary { border-color: var(--signal-text); background: var(--signal-text); color: var(--signal-surface); }
-.ticket-center .ticket-button-primary:hover { background: var(--signal-accent); border-color: var(--signal-accent); }
-.ticket-center button:disabled { cursor: not-allowed; opacity: .5; }
-.ticket-center :is(button, select, input, textarea):focus-visible { outline: 2px solid var(--signal-muted); outline-offset: 3px; }
-.ticket-workspace { display: grid; grid-template-columns: minmax(290px, 32%) minmax(0, 1fr); gap: 18px; height: calc(100dvh - 195px); min-height: 580px; }
-.ticket-history, .ticket-detail { display: flex; flex-direction: column; min-width: 0; min-height: 0; overflow: hidden; border: 1px solid var(--signal-line); border-radius: 12px; background: var(--signal-surface); }
-.ticket-history-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 20px; }
-.ticket-history-heading h2 { font-size: 14px; font-weight: 600; }
-.ticket-count { padding: 3px 8px; border-radius: 5px; background: var(--signal-raised); color: var(--signal-muted); font-size: 11px; }
-.ticket-status-filters { display: flex; flex-wrap: wrap; gap: 7px; padding: 0 20px 17px; border-bottom: 1px solid var(--signal-line); }
-.ticket-status-filters button { display: inline-flex; align-items: center; gap: 6px; padding: 5px 7px; border: 1px solid transparent; border-radius: 5px; font-size: 11px; color: var(--signal-muted); transition: background-color 160ms; }
-.ticket-status-filters button:hover, .ticket-status-filters button[aria-pressed='true'] { border-color: var(--signal-line); background: var(--signal-raised); color: var(--signal-text); }
-.ticket-dot { width: 6px; height: 6px; flex-shrink: 0; border-radius: 50%; background: #92929a; }
-.ticket-dot-open { background: #6281a1; }
-.ticket-dot-resolved { background: #628b77; }
-.ticket-list { flex: 1; min-height: 0; overflow-y: auto; padding: 8px; scrollbar-width: thin; }
-.ticket-list-item { display: flex; width: 100%; flex-direction: column; gap: 9px; margin-bottom: 5px; padding: 16px; border: 1px solid transparent; border-radius: 8px; text-align: left; transition: background-color 160ms, border-color 160ms; }
-.ticket-list-item:hover { background: var(--signal-bg); }
-.ticket-list-item-active { border-color: var(--signal-line); background: var(--signal-raised); }
-.ticket-list-meta { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px; color: var(--signal-muted); font-size: 11px; }
-.ticket-list-subject { display: -webkit-box; overflow: hidden; -webkit-line-clamp: 2; -webkit-box-orient: vertical; font-size: 14px; font-weight: 600; overflow-wrap: anywhere; }
-.ticket-list-description { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; max-width: 100%; color: var(--signal-muted); font-size: 12px; }
-.ticket-status { display: inline-flex; align-items: center; gap: 6px; color: var(--signal-muted); font-size: 11px; }
-.ticket-list-empty, .ticket-detail-empty { display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 14px; height: 100%; padding: 36px 24px; text-align: center; }
-.ticket-list-empty { min-height: 240px; }
-.ticket-empty-icon { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; border: 1px solid var(--signal-line); border-radius: 12px; background: var(--signal-raised); color: var(--signal-muted); }
-.ticket-empty-icon-large { width: 64px; height: 64px; margin-bottom: 8px; border-radius: 18px; }
-.ticket-list-empty h3 { font-size: 14px; font-weight: 600; }
-.ticket-detail-empty h2 { font-size: 20px; font-weight: 600; letter-spacing: -.02em; }
-.ticket-list-empty p, .ticket-detail-empty p { max-width: 320px; color: var(--signal-muted); font-size: 13px; line-height: 1.9; }
-.ticket-detail-empty .ticket-button { margin-top: 8px; }
-.ticket-panel-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; padding: 26px 30px; border-bottom: 1px solid var(--signal-line); }
-.ticket-panel-heading > div { min-width: 0; }
-.ticket-panel-heading h2 { font-size: 20px; line-height: 1.5; font-weight: 600; letter-spacing: -.025em; overflow-wrap: anywhere; }
-.ticket-panel-heading p { margin-top: 8px; font-size: 12px; line-height: 1.8; color: var(--signal-muted); }
-.ticket-eyebrow { display: block; margin-bottom: 7px; font-size: 11px; color: var(--signal-muted); }
-.ticket-form-scroll { flex: 1; overflow-y: auto; scrollbar-width: thin; }
-.ticket-create-form { max-width: 860px; margin: 0 auto; padding: 28px 30px; }
-.ticket-fields { display: grid; gap: 24px; min-width: 0; }
-.ticket-type-field { min-width: 0; }
-.ticket-type-field legend, .ticket-field > label, .ticket-reply-form > label { display: block; margin-bottom: 10px; font-size: 13px; font-weight: 500; }
-.ticket-type-options { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.ticket-type-option { position: relative; display: flex; align-items: center; gap: 12px; cursor: pointer; padding: 16px; border: 1px solid var(--signal-line); border-radius: 8px; transition: background-color 160ms, border-color 160ms; }
-.ticket-type-option input { position: absolute; width: 1px; height: 1px; opacity: 0; }
-.ticket-type-option:focus-within { outline: 2px solid var(--signal-muted); outline-offset: 3px; }
-.ticket-type-option-active { background: var(--signal-raised); border-color: var(--signal-accent); }
-.ticket-type-option strong { display: block; font-size: 13px; font-weight: 500; }
-.ticket-type-option small { display: block; margin-top: 5px; color: var(--signal-muted); font-size: 11px; line-height: 1.6; }
-.ticket-field input, .ticket-field textarea, .ticket-reply-form textarea { width: 100%; border: 1px solid var(--signal-line); border-radius: 7px; padding: 11px 13px; background: var(--signal-surface); color: var(--signal-text); font-size: 13px; line-height: 1.7; }
-.ticket-center textarea { resize: vertical; min-height: 80px; }
-.ticket-center :is(input, textarea)::placeholder { color: var(--signal-muted); opacity: .8; }
-.ticket-refund-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-.ticket-form-note { display: flex; align-items: center; gap: 7px; color: var(--signal-muted); font-size: 11px; line-height: 1.7; }
-.ticket-form-note svg { flex-shrink: 0; }
-.ticket-form-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 28px; padding-top: 22px; border-top: 1px solid var(--signal-line); }
-.ticket-detail-meta { display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 10px; color: var(--signal-muted); font-size: 11px; }
-.ticket-conversation { flex: 1; min-height: 0; overflow-y: auto; padding: 26px 30px; scrollbar-width: thin; }
-.ticket-order-info { display: flex; flex-wrap: wrap; gap: 10px 20px; margin-bottom: 24px; padding: 12px 16px; border: 1px solid var(--signal-line); border-radius: 7px; color: var(--signal-muted); font-size: 12px; overflow-wrap: anywhere; }
-.ticket-message { margin-bottom: 20px; padding: 18px 20px; border: 1px solid var(--signal-line); border-radius: 9px; }
-.ticket-message-support { background: var(--signal-raised); }
-.ticket-message-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; color: var(--signal-muted); font-size: 11px; }
-.ticket-message-meta strong { color: var(--signal-text); font-weight: 600; font-size: 12px; }
-.ticket-message p { margin-top: 12px; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 13px; line-height: 1.9; }
-.ticket-reply-form { padding: 20px 30px; border-top: 1px solid var(--signal-line); }
-.ticket-reply-form > div { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 12px; }
-.ticket-reply-form > div > span { color: var(--signal-muted); font-size: 11px; }
-.ticket-closed-note { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 20px; border-top: 1px solid var(--signal-line); color: var(--signal-muted); font-size: 12px; }
-@media (max-width: 1200px) {
-  .ticket-toolbar { align-items: flex-start; flex-direction: column; }
-  .ticket-tools { width: 100%; }
-  .ticket-search { flex: 1; }
-  .ticket-workspace { height: calc(100dvh - 245px); grid-template-columns: 300px minmax(0, 1fr); }
-  .ticket-type-option { padding: 12px; }
-}
-@media (max-width: 900px) {
-  .ticket-workspace { height: auto; min-height: 0; grid-template-columns: minmax(0, 1fr); }
-  .ticket-history { max-height: 350px; }
-  .ticket-detail { min-height: 460px; scroll-margin-top: 80px; }
-  .ticket-detail-empty { min-height: 460px; }
-  .ticket-list { max-height: 240px; }
-  .ticket-conversation { max-height: 600px; }
-  .ticket-tools { flex-wrap: wrap; }
-  .ticket-search { min-width: 160px; }
-  .ticket-filter { max-width: none; }
-}
-@media (max-width: 540px) {
-  .ticket-toolbar { gap: 16px; }
-  .ticket-tools { gap: 8px; }
-  .ticket-search { flex-basis: 100%; }
-  .ticket-filter { flex: 1; min-width: 0; }
-  .ticket-panel-heading { padding: 20px; gap: 12px; }
-  .ticket-panel-heading h2 { font-size: 18px; }
-  .ticket-panel-heading .ticket-button { padding-inline: 10px; }
-  .ticket-create-form, .ticket-conversation, .ticket-reply-form { padding: 20px; }
-  .ticket-type-options, .ticket-refund-fields { grid-template-columns: minmax(0, 1fr); }
-  .ticket-reply-form > div { align-items: flex-end; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .ticket-center *, .ticket-center *::before, .ticket-center *::after { transition: none !important; animation: none !important; }
-}
-</style>
+<style scoped src="@/styles/support-tickets.css"></style>

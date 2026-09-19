@@ -224,6 +224,16 @@ export default {
   },
 
   support: {
+    adminDescription: 'Review user requests, reply, and track their progress.',
+    adminSearch: 'Search tickets, users or email',
+    adminEmptyHint: 'Tickets submitted by users will appear here.',
+    adminSelectHint: 'Select a ticket to view its owner and conversation.',
+    manageStatus: 'Ticket status',
+    saveStatus: 'Update status',
+    savingStatus: 'Updating…',
+    statusSaved: 'Ticket status updated',
+    adminClosedHint: 'This ticket is closed. Set it to In progress to continue replying.',
+    adminReplyHint: 'Replying returns the ticket to In progress. You can then mark it resolved.',
     centerTitle: 'Support Center',
     centerDescription: 'Ask a question, track progress, and stay in touch.',
     search: 'Search tickets',

@@ -224,6 +224,16 @@ export default {
   },
 
   support: {
+    adminDescription: '集中查看用户反馈，回复问题并跟进处理进度。',
+    adminSearch: '搜索工单、用户或邮箱',
+    adminEmptyHint: '用户提交的工单会显示在这里。',
+    adminSelectHint: '从左侧选择工单，查看用户信息与沟通记录。',
+    manageStatus: '处理状态',
+    saveStatus: '更新状态',
+    savingStatus: '正在更新…',
+    statusSaved: '工单状态已更新',
+    adminClosedHint: '此工单已关闭。需要继续回复时，请先将状态改为处理中。',
+    adminReplyHint: '回复后工单会回到处理中，可再标记为已处理。',
     centerTitle: '工单中心',
     centerDescription: '提交问题，跟进进展，在这里与我们保持联系。',
     search: '搜索工单',
