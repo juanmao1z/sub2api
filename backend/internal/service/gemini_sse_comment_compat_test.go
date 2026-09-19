@@ -3,7 +3,9 @@ package service
 import (
 	"io"
 	"net/http"
+	"net/http/httptest"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -11,6 +13,36 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/require"
 )
+
+/**
+ * @brief Records a streaming response and signals when the first flush completes.
+ */
+type flushSignalRecorder struct {
+	*httptest.ResponseRecorder
+	flushed chan struct{}
+	once    sync.Once
+}
+
+/**
+ * @brief Creates a response recorder that exposes its first completed flush.
+ * @return Recorder ready for use as an HTTP response writer.
+ */
+func newFlushSignalRecorder() *flushSignalRecorder {
+	return &flushSignalRecorder{
+		ResponseRecorder: httptest.NewRecorder(),
+		flushed:          make(chan struct{}),
+	}
+}
+
+/**
+ * @brief Flushes buffered response data and signals the first completed flush.
+ */
+func (r *flushSignalRecorder) Flush() {
+	r.ResponseRecorder.Flush()
+	r.once.Do(func() {
+		close(r.flushed)
+	})
+}
 
 func TestGeminiClientRejectsSSEComments(t *testing.T) {
 	cases := []struct {
@@ -48,8 +80,13 @@ func TestDownstreamRejectsSSECommentsReadsBothHeaders(t *testing.T) {
 	require.False(t, downstreamRejectsSSEComments(nil))
 }
 
-// runAntigravityGeminiStreamWithIdle 起一条上游流：先发一个 data 事件，然后空闲 idle 时长再关闭，
-// 返回写给下游的全部字节。用来观察空闲期间网关是否发了 ":\n\n" 心跳。
+/**
+ * @brief Runs one Gemini stream and returns all bytes written downstream.
+ * @param t Active test instance.
+ * @param userAgent Downstream client user agent.
+ * @param idle Duration to keep the upstream open after the first downstream flush.
+ * @return Complete downstream response body.
+ */
 func runAntigravityGeminiStreamWithIdle(t *testing.T, userAgent string, idle time.Duration) string {
 	t.Helper()
 	gin.SetMode(gin.TestMode)
@@ -57,7 +94,9 @@ func runAntigravityGeminiStreamWithIdle(t *testing.T, userAgent string, idle tim
 		config.GatewayConfig{MaxLineSize: defaultMaxLineSize, StreamKeepaliveInterval: 1},
 		nil,
 	)
-	c, recorder := newAntigravityCompatContext(http.MethodPost, "/v1beta/models/gemini-3.8-flash:streamGenerateContent", nil)
+	recorder := newFlushSignalRecorder()
+	c, _ := gin.CreateTestContext(recorder)
+	c.Request = httptest.NewRequest(http.MethodPost, "/v1beta/models/gemini-3.8-flash:streamGenerateContent", nil)
 	if userAgent != "" {
 		c.Request.Header.Set("User-Agent", userAgent)
 	}
@@ -73,6 +112,11 @@ func runAntigravityGeminiStreamWithIdle(t *testing.T, userAgent string, idle tim
 		`data: {"response":{"responseId":"resp_1","candidates":[{"content":{"parts":[{"text":"partial"}]}}],"usageMetadata":{"promptTokenCount":8,"candidatesTokenCount":1}}}`+"\n\n",
 	)
 	require.NoError(t, err)
+	select {
+	case <-recorder.flushed:
+	case <-time.After(5 * time.Second):
+		require.FailNow(t, "timed out waiting for the initial downstream flush")
+	}
 	time.Sleep(idle)
 	require.NoError(t, writer.Close())
 	require.NoError(t, <-done)
@@ -81,13 +125,13 @@ func runAntigravityGeminiStreamWithIdle(t *testing.T, userAgent string, idle tim
 }
 
 func TestAntigravityGeminiStreamKeepsCommentKeepaliveForOrdinaryClients(t *testing.T) {
-	out := runAntigravityGeminiStreamWithIdle(t, "curl/8.7.1", 1200*time.Millisecond)
+	out := runAntigravityGeminiStreamWithIdle(t, "curl/8.7.1", 2200*time.Millisecond)
 	require.Contains(t, out, ":\n\n", "ordinary clients should still get the idle keepalive")
 	require.Contains(t, out, `"text":"partial"`)
 }
 
 func TestAntigravityGeminiStreamSkipsCommentKeepaliveForGoGenai(t *testing.T) {
-	out := runAntigravityGeminiStreamWithIdle(t, "google-genai-sdk/1.71.0 gl-go/go1.28-20260721-RC03", 1200*time.Millisecond)
+	out := runAntigravityGeminiStreamWithIdle(t, "google-genai-sdk/1.71.0 gl-go/go1.28-20260721-RC03", 2200*time.Millisecond)
 	require.Contains(t, out, `"text":"partial"`)
 	for _, event := range strings.Split(out, "\n\n") {
 		require.False(t, strings.HasPrefix(event, ":"), "go-genai must never receive an SSE comment event, got %q", event)
