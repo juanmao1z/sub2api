@@ -51,13 +51,14 @@ func TestLeaderboardRewardHandlerAuthorization(t *testing.T) {
 				req := httptest.NewRequest(method, "/rewards", bytes.NewBufferString(`{"date":"2026-09-18","preview_id":"digest","amount":9999,"user_id":99}`))
 				req.Header.Set("Content-Type", "application/json")
 				router.ServeHTTP(rec, req)
-				if role == "" {
+				switch role {
+				case "":
 					require.Equal(t, 401, rec.Code)
 					require.Zero(t, svc.calls)
-				} else if role == "user" {
+				case "user":
 					require.Equal(t, 403, rec.Code)
 					require.Zero(t, svc.calls)
-				} else {
+				default:
 					require.Equal(t, 200, rec.Code)
 					require.Equal(t, 1, svc.calls)
 					require.Equal(t, "private, no-store", rec.Header().Get("Cache-Control"))

@@ -124,7 +124,7 @@ func (s *LeaderboardRewardService) preview(ctx context.Context, tx *sql.Tx, day 
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 	preview := &LeaderboardRewardPreview{Date: day, Timezone: leaderboardRewardTimezone, Rate: "0.10", Winners: []LeaderboardRewardWinner{}}
 	for rows.Next() {
 		var winner LeaderboardRewardWinner
