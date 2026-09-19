@@ -713,9 +713,11 @@ func (c *concurrencyCache) GetTotalAccountConcurrency(ctx context.Context) (int,
 	return totalAccountConcurrencyFromSnapshot(
 		ctx,
 		func(ctx context.Context) ([]string, error) {
-			return c.rdb.ZRangeByScore(ctx, accountActiveIndexKey, &redis.ZRangeBy{
-				Min: "(" + strconv.FormatInt(now, 10),
-				Max: "+inf",
+			return c.rdb.ZRangeArgs(ctx, redis.ZRangeArgs{
+				Key:     accountActiveIndexKey,
+				Start:   "(" + strconv.FormatInt(now, 10),
+				Stop:    "+inf",
+				ByScore: true,
 			}).Result()
 		},
 		c.GetAccountConcurrencyBatch,
