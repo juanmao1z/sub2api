@@ -251,8 +251,8 @@ import { resolveSiteBillingMode } from '@/utils/siteBillingMode'
 
 const router = useRouter()
 const route = useRoute()
-/** @brief Use the compact account header on customer console routes. */
-const useConsoleTheme = computed(() => !route.path.startsWith('/admin') && route.path !== '/model-plaza')
+/** @brief Use the shared console header contract on every authenticated surface. */
+const useConsoleTheme = computed(() => true)
 const { t } = useI18n()
 const appStore = useAppStore()
 const authStore = useAuthStore()

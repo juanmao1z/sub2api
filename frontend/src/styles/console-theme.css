@@ -1,33 +1,33 @@
 /** @file Console surfaces, typography and responsive layouts adapted from the supplied reference. */
 :is(.console-signal,body:has(.console-signal)>.modal-overlay,body:has(.console-signal)>.dialog-overlay,body:has(.console-signal)>.select-dropdown-portal) {
-  --signal-bg: #f5f6f7;
+  --signal-bg: #f7f8fa;
   --signal-surface: white;
-  --signal-line: #dfe3e5;
-  --signal-text: #192322;
-  --signal-muted: #62706e;
-  --signal-accent: #087f6a;
+  --signal-line: #e3e3e6;
+  --signal-text: #232326;
+  --signal-muted: #737379;
+  --signal-accent: #52525b;
   --signal-amber: #a86610;
-  --signal-hover: #edf1ef;
-  --signal-accent-soft: #e5f3ee;
+  --signal-hover: #f0f0f2;
+  --signal-accent-soft: #ececee;
   --signal-on-accent: #ffffff;
-  --signal-control-line: #84948d;
-  --signal-shadow: 0 12px 32px #19232214;
+  --signal-control-line: #bcc3ce;
+  --signal-shadow: 0 4px 14px #2323260d;
   letter-spacing: 0;
   color: var(--signal-text);
 }
 .dark :is(.console-signal,body:has(.console-signal)>.modal-overlay,body:has(.console-signal)>.dialog-overlay,body:has(.console-signal)>.select-dropdown-portal) {
-  --signal-bg: #111315;
+  --signal-bg: #17181b;
   --signal-surface: #191c1f;
-  --signal-line: #303538;
-  --signal-text: #edf2ef;
-  --signal-muted: #a0aca6;
-  --signal-accent: #6ce4bd;
+  --signal-line: #34353a;
+  --signal-text: #f0f0f2;
+  --signal-muted: #a2a2aa;
+  --signal-accent: #d4d4d8;
   --signal-amber: #eeb766;
-  --signal-hover: #252c29;
-  --signal-accent-soft: #203a30;
+  --signal-hover: #2a2b30;
+  --signal-accent-soft: #303137;
   --signal-on-accent: #111315;
-  --signal-control-line: #667c70;
-  --signal-shadow: 0 12px 32px #00000033;
+  --signal-control-line: #5b5d66;
+  --signal-shadow: 0 4px 14px #00000033;
 }
 .console-signal {
   min-height: 100dvh;
@@ -684,17 +684,17 @@ html .console-signal .signal-main :is(.date-picker-trigger,.date-picker-dropdown
   --signal-line: #e3e3e6;
   --signal-text: #232326;
   --signal-muted: #737379;
-  --signal-accent: #3764e8;
+  --signal-accent: #52525b;
   --signal-amber: #a66a19;
   --signal-hover: #ececee;
-  --signal-accent-soft: #e9efff;
+  --signal-accent-soft: #ececee;
   --signal-on-accent: #ffffff;
   --signal-control-line: #bcc3ce;
   --signal-highlight: #ffffff;
   --signal-inset: #f4f4f5;
   --signal-divider: #e9ebf0;
-  --signal-shadow: 0 2px 4px #19223005, 0 8px 20px #19223006;
-  --signal-popover-shadow: 0 4px 12px #1922300c, 0 24px 64px #1922301f;
+  --signal-shadow: 0 2px 4px #23232605, 0 8px 20px #2323260a;
+  --signal-popover-shadow: 0 4px 12px #2323260c, 0 24px 64px #2323261f;
   font-family: Segoe UI Variable,Segoe UI,PingFang SC,Microsoft YaHei,sans-serif;
   -webkit-font-smoothing: antialiased;
 }
@@ -706,11 +706,11 @@ html .console-signal .signal-main :is(.date-picker-trigger,.date-picker-dropdown
   --signal-line: #2b2b2e;
   --signal-text: #f0f0f1;
   --signal-muted: #a1a1a7;
-  --signal-accent: #8bafff;
+  --signal-accent: #d4d4d8;
   --signal-amber: #e3b770;
   --signal-hover: #28282b;
-  --signal-accent-soft: #24304b;
-  --signal-on-accent: #101624;
+  --signal-accent-soft: #303137;
+  --signal-on-accent: #202126;
   --signal-control-line: #4b4b52;
   --signal-highlight: #ffffff0c;
   --signal-inset: #121213;

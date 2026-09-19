@@ -20,10 +20,10 @@
 .console-signal .channel-history-heading { display: flex; justify-content: space-between; color: var(--signal-muted); font-size: 9px; text-transform: uppercase; }
 .console-signal .channel-history { display: flex; align-items: flex-end; height: 26px; gap: 3px; margin: 8px 0 4px; }
 .console-signal .channel-history > div { flex: 1; min-width: 0; background: #b4bac3; }
-.console-signal .channel-history > .health-healthy { background: #099e7a; }
+.console-signal .channel-history > .health-healthy { background: #71717a; }
 .console-signal .channel-history > .health-warning { background: #edc84c; }
 .console-signal .channel-history > .health-critical { background: #e06464; }
-.console-signal .channel-health-card dd.health-healthy { color: #128365; }
+.console-signal .channel-health-card dd.health-healthy { color: #52525b; }
 .console-signal .channel-health-card dd.health-warning { color: var(--signal-amber); }
 .console-signal .channel-health-card dd.health-critical { color: #d34040; }
 .console-signal .channel-throughput { margin-top: 12px; color: var(--signal-muted); font-size: 11px; }
