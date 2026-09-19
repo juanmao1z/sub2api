@@ -230,6 +230,28 @@ func TestSecurityHeaders(t *testing.T) {
 
 		csp := w.Header().Get("Content-Security-Policy")
 		assert.Equal(t, 1, countDirectiveValue(csp, "frame-src", "https://pay.ldxp.cn"))
+		assert.Equal(t, 1, countDirectiveValue(csp, "frame-src", "https://wzyp.cn"))
+	})
+
+	t.Run("legacy_policy_allows_canonical_recharge_and_preserves_restrictions", func(t *testing.T) {
+		cfg := config.CSPConfig{
+			Enabled: true,
+			Policy:  "default-src 'self'; frame-src https://pay.ldxp.cn; frame-ancestors 'none'; form-action 'self'",
+		}
+		w := httptest.NewRecorder()
+		c, _ := gin.CreateTestContext(w)
+		c.Request = httptest.NewRequest(http.MethodGet, "/recharge", nil)
+
+		SecurityHeaders(cfg, nil)(c)
+
+		csp := w.Header().Get("Content-Security-Policy")
+		assert.Equal(t, 1, countDirectiveValue(csp, "frame-src", "https://pay.ldxp.cn"))
+		assert.Equal(t, 1, countDirectiveValue(csp, "frame-src", "https://wzyp.cn"))
+		assert.Equal(t, 0, countDirectiveValue(csp, "frame-src", "*"))
+		assert.Equal(t, 0, countDirectiveValue(csp, "frame-src", "https:"))
+		assert.Equal(t, 1, countDirectiveValue(csp, "frame-ancestors", "'none'"))
+		assert.Equal(t, 1, countDirectiveValue(csp, "form-action", "'self'"))
+		assert.Equal(t, "DENY", w.Header().Get("X-Frame-Options"))
 	})
 
 	t.Run("uses_default_policy_when_whitespace_only", func(t *testing.T) {

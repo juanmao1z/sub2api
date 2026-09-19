@@ -33,10 +33,12 @@
 import { useI18n } from 'vue-i18n'
 import AppLayout from '@/components/layout/AppLayout.vue'
 
-const PAYMENT_URL = 'https://pay.ldxp.cn/shop/1WGCPCG0'
+/** @brief Canonical card shop address used by the embedded view and external link. */
+const PAYMENT_URL = 'https://wzyp.cn/shop/1WGCPCG0'
 
 const { t } = useI18n()
 
+/** @brief Open the card shop with an isolated browser tab. */
 function openInNewWindow() {
   window.open(PAYMENT_URL, '_blank', 'noopener,noreferrer')
 }

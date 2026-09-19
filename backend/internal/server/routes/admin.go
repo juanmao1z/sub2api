@@ -31,6 +31,11 @@ func RegisterAdminRoutes(
 	admin.Use(gin.HandlerFunc(auditLog))
 	admin.Use(middleware.AdminComplianceGuard(settingService))
 	{
+		if h.Admin.LeaderboardReward != nil {
+			admin.GET("/leaderboard/rewards", h.Admin.LeaderboardReward.Preview)
+			admin.POST("/leaderboard/rewards", h.Admin.LeaderboardReward.Pay)
+		}
+
 		// 客服工单（退款 / 建议）
 		if h.Admin.SupportTicket != nil {
 			tickets := admin.Group("/support/tickets")

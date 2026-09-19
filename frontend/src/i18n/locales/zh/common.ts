@@ -202,7 +202,7 @@ export default {
     docs: '文档',
     myOrders: '我的订单',
     orderManagement: '订单管理',
-    supportTickets: '工单',
+    supportTickets: '工单系统',
     paymentDashboard: '支付概览',
     paymentConfig: '支付配置',
     paymentPlans: '订阅套餐',
@@ -234,7 +234,7 @@ export default {
     statusSaved: '工单状态已更新',
     adminClosedHint: '此工单已关闭。需要继续回复时，请先将状态改为处理中。',
     adminReplyHint: '回复后工单会回到处理中，可再标记为已处理。',
-    centerTitle: '工单中心',
+    centerTitle: '工单系统',
     centerDescription: '提交问题，跟进进展，在这里与我们保持联系。',
     search: '搜索工单',
     filterStatus: '按工单状态筛选',
@@ -269,7 +269,7 @@ export default {
     replySent: '回复已发送',
     closed: '工单已关闭',
     status: { OPEN: '处理中', RESOLVED: '已处理', CLOSED: '已关闭' },
-    title: '我的工单', adminTitle: '工单管理', newTicket: '新建工单', empty: '暂无工单', type: '类型', refund: '退款记录', suggestion: '建议', subject: '标题', description: '描述', orderId: '订单号', contact: '联系方式', contactPlaceholder: '邮箱、手机号或其他联系方式', user: '用户', reply: '回复', replyPlaceholder: '请输入回复内容', close: '关闭工单', errors: { INVALID_TYPE: '工单类型无效', ORDER_REQUIRED: '退款记录需要关联订单', CONTACT_REQUIRED: '退款工单需要填写联系方式' }
+    title: '我的工单', adminTitle: '工单系统', newTicket: '新建工单', empty: '暂无工单', type: '类型', refund: '退款记录', suggestion: '建议', subject: '标题', description: '描述', orderId: '订单号', contact: '联系方式', contactPlaceholder: '邮箱、手机号或其他联系方式', user: '用户', reply: '回复', replyPlaceholder: '请输入回复内容', close: '关闭工单', errors: { INVALID_TYPE: '工单类型无效', ORDER_REQUIRED: '退款记录需要关联订单', CONTACT_REQUIRED: '退款工单需要填写联系方式' }
   },
 
   // Auth

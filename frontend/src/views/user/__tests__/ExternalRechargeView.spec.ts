@@ -44,7 +44,7 @@ describe('ExternalRechargeView', () => {
     expect(frameShell.classes()).toContain('min-h-[calc(100vh-7rem)]')
 
     const iframe = wrapper.get('iframe')
-    expect(iframe.attributes('src')).toBe('https://pay.ldxp.cn/shop/1WGCPCG0')
+    expect(iframe.attributes('src')).toBe('https://wzyp.cn/shop/1WGCPCG0')
     expect(iframe.attributes('title')).toBe('充值中心')
     expect(iframe.classes()).toContain('h-[calc(100vh-7rem)]')
     expect(iframe.classes()).toContain('min-h-[820px]')
@@ -62,7 +62,7 @@ describe('ExternalRechargeView', () => {
     await wrapper.get('[data-testid="recharge-open-window"]').trigger('click')
 
     expect(openSpy).toHaveBeenCalledWith(
-      'https://pay.ldxp.cn/shop/1WGCPCG0',
+      'https://wzyp.cn/shop/1WGCPCG0',
       '_blank',
       'noopener,noreferrer'
     )

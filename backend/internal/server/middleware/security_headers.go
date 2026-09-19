@@ -49,6 +49,8 @@ const (
 	AirwallexDemoCheckoutDomain = "https://checkout-demo.airwallex.com"
 	// ExternalRechargeDomain 是自定义充值页嵌入的外部支付页面域名。
 	ExternalRechargeDomain = "https://pay.ldxp.cn"
+	// @brief Canonical card shop origin after the legacy payment domain redirects.
+	ExternalRechargeCanonicalDomain = "https://wzyp.cn"
 )
 
 var requiredCSPDirectiveValues = []struct {
@@ -86,6 +88,7 @@ var requiredCSPDirectiveValues = []struct {
 	{"style-src", AirwallexDemoCheckoutDomain},
 	{"frame-src", AirwallexDemoCheckoutDomain},
 	{"frame-src", ExternalRechargeDomain},
+	{"frame-src", ExternalRechargeCanonicalDomain},
 }
 
 // GenerateNonce generates a cryptographically secure random nonce.

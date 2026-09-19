@@ -341,7 +341,7 @@ const routes: RouteRecordRaw[] = [
     path: '/tickets',
     name: 'SupportTickets',
     component: () => import('@/views/user/SupportTicketsView.vue'),
-    meta: { requiresAuth: true, requiresAdmin: false, title: 'Support Tickets', titleKey: 'support.title' }
+    meta: { requiresAuth: true, requiresAdmin: false, title: 'Ticket System', titleKey: 'nav.supportTickets' }
   },
   {
     path: '/payment/qrcode',
@@ -735,7 +735,7 @@ const routes: RouteRecordRaw[] = [
     path: '/admin/tickets',
     name: 'AdminSupportTickets',
     component: () => import('@/views/admin/SupportTicketsView.vue'),
-    meta: { requiresAuth: true, requiresAdmin: true, title: 'Support Tickets', titleKey: 'support.adminTitle' }
+    meta: { requiresAuth: true, requiresAdmin: true, title: 'Ticket System', titleKey: 'nav.supportTickets' }
   },
 
   // ==================== 404 Not Found ====================
