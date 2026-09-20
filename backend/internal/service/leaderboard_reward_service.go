@@ -9,6 +9,8 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"strconv"
+	"strings"
 	"time"
 
 	infraerrors "github.com/Wei-Shaw/sub2api/internal/pkg/errors"
@@ -30,14 +32,15 @@ type LeaderboardRewardWinner struct {
 
 // @brief Immutable paid receipt or read-only preview; decimal amounts are strings to avoid rounding in transit.
 type LeaderboardRewardPreview struct {
-	Date      string                    `json:"date"`
-	Timezone  string                    `json:"timezone"`
-	Rate      string                    `json:"rate"`
-	PreviewID string                    `json:"preview_id"`
-	Paid      bool                      `json:"paid"`
-	PaidAt    *time.Time                `json:"paid_at,omitempty"`
-	ActorID   int64                     `json:"actor_id,omitempty"`
-	Winners   []LeaderboardRewardWinner `json:"winners"`
+	Date        string                    `json:"date"`
+	Timezone    string                    `json:"timezone"`
+	Rate        string                    `json:"rate"`
+	RatePercent string                    `json:"rate_percent,omitempty"`
+	PreviewID   string                    `json:"preview_id"`
+	Paid        bool                      `json:"paid"`
+	PaidAt      *time.Time                `json:"paid_at,omitempty"`
+	ActorID     int64                     `json:"actor_id,omitempty"`
+	Winners     []LeaderboardRewardWinner `json:"winners"`
 }
 
 // @brief Coordinate daily credits with published rankings and the main application's caches.
@@ -59,7 +62,12 @@ func (s *LeaderboardRewardService) yesterday() string {
 }
 
 // @brief Return the recorded payment or a preview of yesterday's three published winners.
-func (s *LeaderboardRewardService) Preview(ctx context.Context) (*LeaderboardRewardPreview, error) {
+// @param ratePercent Administrator-selected percentage in the inclusive 0.01-100 range.
+func (s *LeaderboardRewardService) Preview(ctx context.Context, ratePercent string) (*LeaderboardRewardPreview, error) {
+	ratePercent, err := normalizeLeaderboardRewardRatePercent(ratePercent)
+	if err != nil {
+		return nil, err
+	}
 	tx, err := s.begin(ctx)
 	if err != nil {
 		return nil, err
@@ -69,7 +77,7 @@ func (s *LeaderboardRewardService) Preview(ctx context.Context) (*LeaderboardRew
 	if receipt, err := rewardReceipt(ctx, tx, day); err != nil || receipt != nil {
 		return receipt, err
 	}
-	return s.preview(ctx, tx, day)
+	return s.preview(ctx, tx, day, ratePercent)
 }
 
 // @brief Lock against other payouts and the leaderboard's aggregate refresh transaction.
@@ -103,7 +111,7 @@ func rewardReceipt(ctx context.Context, tx *sql.Tx, day string) (*LeaderboardRew
 }
 
 // @brief Reject incomplete aggregation or removed raw usage, and hash exactly the displayed settlement.
-func (s *LeaderboardRewardService) preview(ctx context.Context, tx *sql.Tx, day string) (*LeaderboardRewardPreview, error) {
+func (s *LeaderboardRewardService) preview(ctx context.Context, tx *sql.Tx, day, ratePercent string) (*LeaderboardRewardPreview, error) {
 	var available bool
 	if err := tx.QueryRowContext(ctx, `SELECT to_regclass('custom_leaderboard.daily_user_usage') IS NOT NULL AND to_regclass('custom_leaderboard.refresh_runs') IS NOT NULL`).Scan(&available); err != nil {
 		return nil, err
@@ -120,12 +128,16 @@ func (s *LeaderboardRewardService) preview(ctx context.Context, tx *sql.Tx, day 
 	if !fresh {
 		return nil, infraerrors.Conflict("REWARD_NOT_READY", "昨日榜单尚未完成统计，请稍后重试")
 	}
-	rows, err := tx.QueryContext(ctx, leaderboardRewardWinnersSQL, day)
+	rows, err := tx.QueryContext(ctx, leaderboardRewardWinnersSQL, day, ratePercent)
 	if err != nil {
 		return nil, err
 	}
 	defer func() { _ = rows.Close() }()
-	preview := &LeaderboardRewardPreview{Date: day, Timezone: leaderboardRewardTimezone, Rate: "0.10", Winners: []LeaderboardRewardWinner{}}
+	preview := &LeaderboardRewardPreview{
+		Date: day, Timezone: leaderboardRewardTimezone,
+		Rate: leaderboardRewardRateFraction(ratePercent), RatePercent: ratePercent,
+		Winners: []LeaderboardRewardWinner{},
+	}
 	for rows.Next() {
 		var winner LeaderboardRewardWinner
 		var intact bool
@@ -153,11 +165,16 @@ func (s *LeaderboardRewardService) preview(ctx context.Context, tx *sql.Tx, day 
 // @brief Atomically credit a preview once per date. A retry returns the original durable receipt.
 // @param day A YYYY-MM-DD date from Preview; unsettled dates must still be yesterday.
 // @param previewID Digest supplied by Preview; a changed settlement requires a fresh preview.
+// @param ratePercent Percentage included in the preview digest and permanent receipt.
 // @param actorID Authenticated administrator recorded in the permanent receipt.
-func (s *LeaderboardRewardService) Pay(ctx context.Context, day, previewID string, actorID int64) (*LeaderboardRewardPreview, error) {
+func (s *LeaderboardRewardService) Pay(ctx context.Context, day, previewID, ratePercent string, actorID int64) (*LeaderboardRewardPreview, error) {
 	parsed, err := time.Parse("2006-01-02", day)
 	if err != nil || parsed.Format("2006-01-02") != day || actorID <= 0 || len(previewID) != 64 {
 		return nil, infraerrors.BadRequest("INVALID_REWARD_REQUEST", "奖励请求无效，请刷新页面")
+	}
+	ratePercent, err = normalizeLeaderboardRewardRatePercent(ratePercent)
+	if err != nil {
+		return nil, err
 	}
 	tx, err := s.begin(ctx)
 	if err != nil {
@@ -176,7 +193,7 @@ func (s *LeaderboardRewardService) Pay(ctx context.Context, day, previewID strin
 	if day != s.yesterday() {
 		return nil, infraerrors.Conflict("REWARD_DATE_CHANGED", "日期已变化，请刷新昨日奖励")
 	}
-	preview, err := s.preview(ctx, tx, day)
+	preview, err := s.preview(ctx, tx, day, ratePercent)
 	if err != nil {
 		return nil, err
 	}
@@ -202,7 +219,7 @@ func (s *LeaderboardRewardService) Pay(ctx context.Context, day, previewID strin
 		if _, err = tx.ExecContext(ctx, `INSERT INTO redeem_codes(code,type,value,status,used_by,used_at,notes)
    SELECT $1,'admin_balance',$2::numeric,'used',$3,now(),$4 WHERE $2::numeric>0`,
 			fmt.Sprintf("LR%s-%d", parsed.Format("20060102"), winner.UserID), winner.Amount, winner.UserID,
-			fmt.Sprintf("%s 日榜第%d名消费返还10%%（管理员 #%d）", day, winner.Rank, actorID)); err != nil {
+			fmt.Sprintf("%s 日榜第%d名消费返还%s%%（管理员 #%d）", day, winner.Rank, ratePercent, actorID)); err != nil {
 			return nil, err
 		}
 	}
@@ -247,7 +264,7 @@ const leaderboardRewardWinnersSQL = `WITH winners AS (
  WHERE bucket_date=$1::date ORDER BY total_tokens DESC,request_count DESC,user_id ASC LIMIT 3
 )
 SELECT w.user_id,COALESCE(NULLIF(u.username,''),u.email,''),w.total_tokens,w.request_count,
- GREATEST(cost.spend,0)::text,ROUND(GREATEST(cost.spend,0)*0.10,8)::text,
+ GREATEST(cost.spend,0)::text,ROUND(GREATEST(cost.spend,0)*$2::numeric/100,8)::text,
  (u.id IS NOT NULL AND u.deleted_at IS NULL AND cost.requests=w.request_count AND cost.tokens=w.total_tokens)
 FROM winners w LEFT JOIN users u ON u.id=w.user_id
 CROSS JOIN LATERAL (
@@ -260,3 +277,39 @@ CROSS JOIN LATERAL (
  AND created_at>=($1::date::timestamp AT TIME ZONE 'Asia/Shanghai')
  AND created_at<(($1::date+1)::timestamp AT TIME ZONE 'Asia/Shanghai')
 ) cost ORDER BY w.total_tokens DESC,w.request_count DESC,w.user_id ASC`
+
+// @brief Normalize an administrator-entered percentage to two decimals in the inclusive 0.01-100 range.
+func normalizeLeaderboardRewardRatePercent(value string) (string, error) {
+	value = strings.TrimSpace(value)
+	parts := strings.Split(value, ".")
+	if len(parts) > 2 || parts[0] == "" || len(parts) == 2 && len(parts[1]) > 2 {
+		return "", infraerrors.BadRequest("INVALID_REWARD_RATE", "奖励比例必须在 0.01% 到 100% 之间，最多两位小数")
+	}
+	for _, part := range parts {
+		if part == "" && len(parts) == 2 {
+			continue
+		}
+		if _, err := strconv.Atoi(part); err != nil {
+			return "", infraerrors.BadRequest("INVALID_REWARD_RATE", "奖励比例必须在 0.01% 到 100% 之间，最多两位小数")
+		}
+	}
+	whole, _ := strconv.Atoi(parts[0])
+	fraction := 0
+	if len(parts) == 2 && parts[1] != "" {
+		fraction, _ = strconv.Atoi(parts[1] + strings.Repeat("0", 2-len(parts[1])))
+	}
+	cents := whole*100 + fraction
+	if cents < 1 || cents > 10000 {
+		return "", infraerrors.BadRequest("INVALID_REWARD_RATE", "奖励比例必须在 0.01% 到 100% 之间，最多两位小数")
+	}
+	return fmt.Sprintf("%d.%02d", cents/100, cents%100), nil
+}
+
+// @brief Convert a normalized percentage into the decimal fraction retained for API compatibility.
+func leaderboardRewardRateFraction(ratePercent string) string {
+	whole, _ := strconv.Atoi(strings.ReplaceAll(ratePercent, ".", ""))
+	if whole == 10000 {
+		return "1.0000"
+	}
+	return fmt.Sprintf("0.%04d", whole)
+}

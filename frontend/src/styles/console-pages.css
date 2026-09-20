@@ -107,6 +107,15 @@
 .console-signal .signal-checkout-breakdown { padding: 18px; }
 .console-signal .signal-checkout-breakdown dl > div { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 12px; font-size: 13px; }
 .console-signal .signal-checkout-breakdown dt { color: var(--signal-muted); }
+.console-signal .signal-payment-submit {
+  border-color: color-mix(in srgb, var(--signal-amber) 82%, black);
+  background: var(--signal-amber);
+  color: #fff;
+}
+.console-signal .signal-payment-submit:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--signal-amber) 70%, black);
+  background: color-mix(in srgb, var(--signal-amber) 88%, black);
+}
 .console-signal .payment-amount-input { display: flex; flex-direction: column; gap: 20px; }
 .console-signal .payment-amount-input > div { margin: 0; }
 .console-signal .payment-amount-input > div:last-child { order: -1; }

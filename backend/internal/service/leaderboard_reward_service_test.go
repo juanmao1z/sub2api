@@ -83,12 +83,24 @@ func TestLeaderboardRewardPostgres(t *testing.T) {
 		s.now = clock
 		return s
 	}
+	t.Run("custom_percentage_changes_preview_amounts", func(t *testing.T) {
+		rewardFixture(t, db)
+		s := makeService()
+		standard, err := s.Preview(ctx, "10")
+		require.NoError(t, err)
+		custom, err := s.Preview(ctx, "12.34")
+		require.NoError(t, err)
+		require.Equal(t, "12.34", custom.RatePercent)
+		require.Equal(t, "0.1234", custom.Rate)
+		require.Equal(t, "1.52345678", custom.Winners[0].Amount)
+		require.NotEqual(t, standard.PreviewID, custom.PreviewID)
+	})
 	t.Run("exact_spend_ranking_and_concurrent_replay", func(t *testing.T) {
 		rewardFixture(t, db)
 		cache := &rewardCacheSpy{}
 		s := makeService()
 		s.billing = cache
-		p, err := s.Preview(ctx)
+		p, err := s.Preview(ctx, "10")
 		require.NoError(t, err)
 		require.Len(t, p.Winners, 3)
 		require.Equal(t, []int64{1, 2, 3}, []int64{p.Winners[0].UserID, p.Winners[1].UserID, p.Winners[2].UserID})
@@ -99,7 +111,7 @@ func TestLeaderboardRewardPostgres(t *testing.T) {
 		errs := make(chan error, 8)
 		for i := 0; i < 8; i++ {
 			wg.Add(1)
-			go func() { defer wg.Done(); _, err := s.Pay(ctx, p.Date, p.PreviewID, 99); errs <- err }()
+			go func() { defer wg.Done(); _, err := s.Pay(ctx, p.Date, p.PreviewID, "10", 99); errs <- err }()
 		}
 		wg.Wait()
 		close(errs)
@@ -120,24 +132,24 @@ func TestLeaderboardRewardPostgres(t *testing.T) {
 		require.Equal(t, 2, history)
 		require.Len(t, cache.ids, 24)
 		restarted := makeService()
-		paid, err := restarted.Preview(ctx)
+		paid, err := restarted.Preview(ctx, "100")
 		require.NoError(t, err)
 		require.True(t, paid.Paid)
 		require.Equal(t, int64(99), paid.ActorID)
 		restarted.now = func() time.Time { return clock().Add(24 * time.Hour) }
-		retry, err := restarted.Pay(ctx, p.Date, p.PreviewID, 100)
+		retry, err := restarted.Pay(ctx, p.Date, p.PreviewID, "99.99", 100)
 		require.NoError(t, err)
 		require.Equal(t, paid, retry)
 	})
 	t.Run("failure_rolls_back_all_winners_and_receipt", func(t *testing.T) {
 		rewardFixture(t, db)
 		s := makeService()
-		p, err := s.Preview(ctx)
+		p, err := s.Preview(ctx, "10")
 		require.NoError(t, err)
 		_, err = db.Exec(`ALTER TABLE redeem_codes ADD CONSTRAINT reward_test_failure CHECK(used_by<>2)`)
 		require.NoError(t, err)
 		t.Cleanup(func() { _, _ = db.Exec(`ALTER TABLE redeem_codes DROP CONSTRAINT IF EXISTS reward_test_failure`) })
-		_, err = s.Pay(ctx, p.Date, p.PreviewID, 99)
+		_, err = s.Pay(ctx, p.Date, p.PreviewID, "10", 99)
 		require.Error(t, err)
 		var sum string
 		require.NoError(t, db.QueryRow(`SELECT SUM(balance)::text FROM users`).Scan(&sum))
@@ -149,30 +161,30 @@ func TestLeaderboardRewardPostgres(t *testing.T) {
 		require.Zero(t, count)
 		_, err = db.Exec(`ALTER TABLE redeem_codes DROP CONSTRAINT reward_test_failure`)
 		require.NoError(t, err)
-		_, err = s.Pay(ctx, p.Date, p.PreviewID, 99)
+		_, err = s.Pay(ctx, p.Date, p.PreviewID, "10", 99)
 		require.NoError(t, err)
 	})
 	t.Run("reject_changed_preview_stale_data_and_dates", func(t *testing.T) {
 		rewardFixture(t, db)
 		s := makeService()
-		p, err := s.Preview(ctx)
+		p, err := s.Preview(ctx, "10")
 		require.NoError(t, err)
 		_, err = db.Exec(`UPDATE usage_logs SET actual_cost=1 WHERE user_id=2`)
 		require.NoError(t, err)
-		_, err = s.Pay(ctx, p.Date, p.PreviewID, 99)
+		_, err = s.Pay(ctx, p.Date, p.PreviewID, "10", 99)
 		require.ErrorContains(t, err, "奖励金额已变化")
 		_, err = db.Exec(`DELETE FROM usage_logs WHERE user_id=3`)
 		require.NoError(t, err)
-		_, err = s.Preview(ctx)
+		_, err = s.Preview(ctx, "10")
 		require.ErrorContains(t, err, "消费记录已变化")
 		rewardFixture(t, db)
 		_, err = db.Exec(`DELETE FROM custom_leaderboard.refresh_runs`)
 		require.NoError(t, err)
-		_, err = s.Preview(ctx)
+		_, err = s.Preview(ctx, "10")
 		require.ErrorContains(t, err, "尚未完成统计")
 		rewardFixture(t, db)
 		s.now = func() time.Time { return clock().Add(24 * time.Hour) }
-		_, err = s.Pay(ctx, p.Date, p.PreviewID, 99)
+		_, err = s.Pay(ctx, p.Date, p.PreviewID, "10", 99)
 		require.ErrorContains(t, err, "日期已变化")
 	})
 	t.Run("empty_and_deleted_winners_fail_closed", func(t *testing.T) {
@@ -180,15 +192,15 @@ func TestLeaderboardRewardPostgres(t *testing.T) {
 		s := makeService()
 		_, err := db.Exec(`UPDATE users SET deleted_at=now() WHERE id=1`)
 		require.NoError(t, err)
-		_, err = s.Preview(ctx)
+		_, err = s.Preview(ctx, "10")
 		require.Error(t, err)
 		rewardFixture(t, db)
 		_, err = db.Exec(`DELETE FROM custom_leaderboard.daily_user_usage`)
 		require.NoError(t, err)
-		p, err := s.Preview(ctx)
+		p, err := s.Preview(ctx, "10")
 		require.NoError(t, err)
 		require.Empty(t, p.Winners)
-		_, err = s.Pay(ctx, p.Date, p.PreviewID, 99)
+		_, err = s.Pay(ctx, p.Date, p.PreviewID, "10", 99)
 		require.ErrorContains(t, err, "暂无获奖用户")
 	})
 }
@@ -199,4 +211,19 @@ func TestLeaderboardRewardBeijingDate(t *testing.T) {
 	require.Equal(t, "2026-09-18", s.yesterday())
 	s.now = func() time.Time { return time.Date(2026, 9, 18, 15, 59, 59, 0, time.UTC) }
 	require.Equal(t, "2026-09-17", s.yesterday())
+}
+
+// @brief Administrators can select any percentage from 0.01 through 100 with at most two decimals.
+func TestNormalizeLeaderboardRewardRatePercent(t *testing.T) {
+	for input, expected := range map[string]string{
+		"0.01": "0.01", "1": "1.00", "10": "10.00", "12.3": "12.30", "100.00": "100.00",
+	} {
+		actual, err := normalizeLeaderboardRewardRatePercent(input)
+		require.NoError(t, err, input)
+		require.Equal(t, expected, actual, input)
+	}
+	for _, input := range []string{"", "0", "0.001", "100.01", "-1", "ten"} {
+		_, err := normalizeLeaderboardRewardRatePercent(input)
+		require.Error(t, err, input)
+	}
 }

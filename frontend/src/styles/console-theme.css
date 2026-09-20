@@ -723,7 +723,7 @@ html .console-signal .signal-main :is(.date-picker-trigger,.date-picker-dropdown
   border-color: var(--signal-line);
 }
 .console-signal .sidebar-header {
-  height: 64px;
+  height: 56px;
   padding-inline: 16px;
   border-bottom-color: transparent;
 }
@@ -821,8 +821,9 @@ html .console-signal .signal-main :is(.date-picker-trigger,.date-picker-dropdown
   border: 1px solid color-mix(in srgb,var(--signal-accent) 80%,black);
   box-shadow: inset 0 1px #ffffff30,0 2px 5px #00000014;
 }
-:is(.console-signal,body:has(.console-signal)>.modal-overlay,body:has(.console-signal)>.dialog-overlay) .input {
+:is(.console-signal,body:has(.console-signal)>.modal-overlay,body:has(.console-signal)>.dialog-overlay) :is(.input,.select-trigger) {
   background: var(--signal-inset);
+  border-color: var(--signal-control-line);
   box-shadow: inset 0 1px 2px #00000008;
 }
 :is(.console-signal,body:has(.console-signal)>.modal-overlay,body:has(.console-signal)>.dialog-overlay) .select-trigger {

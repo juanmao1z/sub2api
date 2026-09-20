@@ -61,7 +61,7 @@
                     <div v-if="balanceRechargeMultiplier !== 1"><dt>{{ t('payment.creditedBalance') }}</dt><dd>${{ creditedAmount.toFixed(2) }}</dd></div>
                   </dl>
                   <p v-if="balanceRechargeMultiplier !== 1" class="mb-4 text-xs text-gray-500 dark:text-gray-400">{{ t('payment.rechargeRatePreview', { currency: selectedCurrency, usd: balanceRechargeMultiplier.toFixed(2) }) }}</p>
-                  <button :class="['btn w-full py-3 text-sm font-medium', paymentButtonClass]" :disabled="!canSubmit || submitting" @click="handleSubmitRecharge"><span v-if="submitting">{{ t('common.processing') }}</span><span v-else>{{ t('payment.createOrder') }} {{ formatSelectedPaymentAmount(totalAmount) }}</span></button>
+                  <button :class="['signal-payment-submit btn w-full py-3 text-sm font-medium', paymentButtonClass]" :disabled="!canSubmit || submitting" @click="handleSubmitRecharge"><span v-if="submitting">{{ t('common.processing') }}</span><span v-else>{{ t('payment.createOrder') }} {{ formatSelectedPaymentAmount(totalAmount) }}</span></button>
                 </div>
               </aside>
             </div>
@@ -145,7 +145,7 @@
                   </div>
                 </div>
               </div>
-              <button :class="['btn w-full py-3 text-base font-medium', paymentButtonClass]" :disabled="!canSubmitSubscription || submitting" @click="confirmSubscribe">
+              <button :class="['signal-payment-submit btn w-full py-3 text-base font-medium', paymentButtonClass]" :disabled="!canSubmitSubscription || submitting" @click="confirmSubscribe">
                 <span v-if="submitting" class="flex items-center justify-center gap-2">
                   <span class="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></span>
                   {{ t('common.processing') }}
@@ -695,7 +695,7 @@ watch(() => [validAmount.value, selectedMethod.value] as const, ([amt, method]) 
   if (available) selectedMethod.value = available
 })
 
-// Payment button class: follows selected payment method color
+// Provider colors remain a fallback; the console theme gives confirmation one consistent amber accent.
 const paymentButtonClass = computed(() => {
   const m = selectedMethod.value
   if (!m) return 'btn-primary'

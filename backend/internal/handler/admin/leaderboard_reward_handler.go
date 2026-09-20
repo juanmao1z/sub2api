@@ -11,8 +11,8 @@ import (
 
 // @brief Narrow contract for admin-only preview and atomic daily settlement.
 type leaderboardRewardService interface {
-	Preview(context.Context) (*service.LeaderboardRewardPreview, error)
-	Pay(context.Context, string, string, int64) (*service.LeaderboardRewardPreview, error)
+	Preview(context.Context, string) (*service.LeaderboardRewardPreview, error)
+	Pay(context.Context, string, string, string, int64) (*service.LeaderboardRewardPreview, error)
 }
 
 // @brief Expose reward actions under the existing admin authentication and audit middleware.
@@ -46,7 +46,7 @@ func (h *LeaderboardRewardHandler) Preview(c *gin.Context) {
 	}
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 15*time.Second)
 	defer cancel()
-	result, err := h.svc.Preview(ctx)
+	result, err := h.svc.Preview(ctx, c.DefaultQuery("rate_percent", "10"))
 	if err != nil {
 		response.ErrorFrom(c, err)
 		return
@@ -61,8 +61,9 @@ func (h *LeaderboardRewardHandler) Pay(c *gin.Context) {
 		return
 	}
 	var input struct {
-		Date      string `json:"date" binding:"required"`
-		PreviewID string `json:"preview_id" binding:"required"`
+		Date        string `json:"date" binding:"required"`
+		PreviewID   string `json:"preview_id" binding:"required"`
+		RatePercent string `json:"rate_percent" binding:"required"`
 	}
 	if err := c.ShouldBindJSON(&input); err != nil {
 		response.BadRequest(c, "请刷新奖励信息后重试")
@@ -70,7 +71,7 @@ func (h *LeaderboardRewardHandler) Pay(c *gin.Context) {
 	}
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 20*time.Second)
 	defer cancel()
-	result, err := h.svc.Pay(ctx, input.Date, input.PreviewID, actor)
+	result, err := h.svc.Pay(ctx, input.Date, input.PreviewID, input.RatePercent, actor)
 	if err != nil {
 		response.ErrorFrom(c, err)
 		return

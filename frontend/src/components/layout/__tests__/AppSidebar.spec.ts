@@ -88,6 +88,13 @@ describe('AppSidebar header navigation', () => {
   })
 })
 
+describe('AppSidebar color scheme', () => {
+  it('does not expose a dark-mode control', () => {
+    expect(componentSource).not.toContain('toggleTheme')
+    expect(componentSource).not.toContain("t('nav.darkMode')")
+  })
+})
+
 describe('AppSidebar recharge nav item', () => {
   it('contains the custom recharge route and label key', () => {
     expect(componentSource).toContain("path: '/recharge'")

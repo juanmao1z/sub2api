@@ -49,14 +49,6 @@
             <Icon name="grid" size="md" />
             <span class="hidden sm:inline">{{ t('nav.modelPlaza') }}</span>
           </router-link>
-          <button
-            class="flex h-10 w-10 shrink-0 items-center justify-center rounded-none text-[#62706e] hover:bg-[#edf1ef] dark:text-[#a0aca6] dark:hover:bg-[#252c29]"
-            :title="isDark ? t('home.switchToLight') : t('home.switchToDark')"
-            @click="toggleTheme"
-          >
-            <Icon v-if="isDark" name="sun" size="md" />
-            <Icon v-else name="moon" size="md" />
-          </button>
           <router-link
             :to="isAuthenticated ? dashboardPath : '/login'"
             class="inline-flex min-h-10 shrink-0 items-center justify-center rounded-none bg-[#087f6a] px-4 py-2 text-sm font-medium text-white hover:bg-[#066853] dark:bg-[#6ce4bd] dark:text-[#111315] dark:hover:bg-[#93efd0]"
@@ -143,16 +135,6 @@
             <span class="hidden sm:inline">{{ t('nav.modelPlaza') }}</span>
           </router-link>
 
-          <!-- Theme Toggle -->
-          <button
-            type="button"
-            class="home-icon-button"
-            :title="isDark ? t('home.switchToLight') : t('home.switchToDark')"
-            @click="toggleTheme"
-          >
-            <Icon v-if="isDark" name="sun" size="md" />
-            <Icon v-else name="moon" size="md" />
-          </button>
           <router-link
             v-if="isAuthenticated"
             :to="dashboardPath"
@@ -171,15 +153,6 @@
 
         <div class="flex items-center gap-1 md:hidden">
           <LocaleSwitcher />
-          <button
-            type="button"
-            class="home-icon-button"
-            :title="isDark ? t('home.switchToLight') : t('home.switchToDark')"
-            @click="toggleTheme"
-          >
-            <Icon v-if="isDark" name="sun" size="md" />
-            <Icon v-else name="moon" size="md" />
-          </button>
           <button
             type="button"
             class="home-icon-button"
@@ -398,7 +371,6 @@ const currentYear = computed(() => new Date().getFullYear())
 const redeemUrl = 'https://pay.ldxp.cn/shop/1WGCPCG0'
 const leaderboardUrl = 'https://api.zhouz.online/custom/usage-leaderboard'
 
-const isDark = ref(document.documentElement.classList.contains('dark'))
 const mobileMenuOpen = ref(false)
 const communityOpen = ref(false)
 const now = ref(new Date())
@@ -432,23 +404,6 @@ function handleKeydown(event: KeyboardEvent): void {
   if (event.key === 'Escape' && communityOpen.value) closeCommunity()
 }
 
-function toggleTheme(): void {
-  isDark.value = !isDark.value
-  document.documentElement.classList.toggle('dark', isDark.value)
-  localStorage.setItem('theme', isDark.value ? 'dark' : 'light')
-}
-
-function initTheme(): void {
-  const savedTheme = localStorage.getItem('theme')
-  if (
-    savedTheme === 'dark'
-    || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)
-  ) {
-    isDark.value = true
-    document.documentElement.classList.add('dark')
-  }
-}
-
 function stopClock(): void {
   if (clockTimer !== null) clearInterval(clockTimer)
   clockTimer = null
@@ -466,7 +421,6 @@ function syncClock(enabled: boolean): void {
 watch(showDefaultHome, syncClock)
 
 onMounted(() => {
-  initTheme()
   authStore.checkAuth()
   syncClock(showDefaultHome.value)
   document.addEventListener('keydown', handleKeydown)

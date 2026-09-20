@@ -38,7 +38,7 @@ describe('embedded-url', () => {
     expect(url.searchParams.get('plan')).toBe('pro')
     expect(url.searchParams.get('user_id')).toBe('42')
     expect(url.searchParams.get('token')).toBe('token-123')
-    expect(url.searchParams.get('theme')).toBe('dark')
+    expect(url.searchParams.get('theme')).toBe('light')
     expect(url.searchParams.get('lang')).toBe('zh-CN')
     expect(url.searchParams.get('ui_mode')).toBe('embedded')
     expect(url.searchParams.get('src_host')).toBe('https://app.example.com')
@@ -60,8 +60,8 @@ describe('embedded-url', () => {
     expect(buildEmbeddedUrl('not a url', 1, 'token')).toBe('not a url')
   })
 
-  it('detects dark mode from document root class', () => {
+  it('keeps embedded pages light when a stale dark class is present', () => {
     document.documentElement.classList.add('dark')
-    expect(detectTheme()).toBe('dark')
+    expect(detectTheme()).toBe('light')
   })
 })
