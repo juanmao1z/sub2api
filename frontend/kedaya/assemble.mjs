@@ -69,7 +69,11 @@ export function assemble({ homeDir, outputDir = homeDir }) {
     if (source.split(before).length !== 2) throw new Error(`Expected one patch anchor in ${file}`);
     const originalHash = hash(target);
     fs.writeFileSync(target, source.replace(before, after), 'utf8');
-    changes.push({ file, reason, originalHash, adaptedHash: hash(target) });
+    const previous = changes.find(change => change.file === file);
+    if (previous) {
+      previous.reason += ' ' + reason;
+      previous.adaptedHash = hash(target);
+    } else changes.push({ file, reason, originalHash, adaptedHash: hash(target) });
   }
 
   copyTree(homeDir, outputDir);
@@ -82,6 +86,18 @@ export function assemble({ homeDir, outputDir = homeDir }) {
     '{path:"/ip-allowlist",label:l("nav.ipAllowlist"),icon:ue},',
     '',
     'Apply the requested console menu selection.');
+  patch('assets/AppLayout.vue_vue_type_script_setup_true_lang-D-wpKinR.js',
+    'const{t:l}=Te(),g=We(),{isConsoleSignal:A}=Je()',
+    'const{t:l,locale:kedayaLocale}=Te(),g=We(),{isConsoleSignal:A}=Je()',
+    'Use the current language for the site ticket menu.');
+  patch('assets/AppLayout.vue_vue_type_script_setup_true_lang-D-wpKinR.js',
+    '{path:"/profile",label:l("nav.profile"),icon:S}',
+    '{path:"/tickets",label:kedayaLocale.value.startsWith("zh")?"工单系统":"Tickets",icon:_},{path:"/profile",label:l("nav.profile"),icon:S}',
+    'Restore the user ticket workspace entry.');
+  patch('assets/AppLayout.vue_vue_type_script_setup_true_lang-D-wpKinR.js',
+    '{path:"/admin/users",label:l("nav.users"),icon:I,hideInSimpleMode:!0}',
+    '{path:"/admin/tickets",label:kedayaLocale.value.startsWith("zh")?"工单系统":"Tickets",icon:_},{path:"/admin/users",label:l("nav.users"),icon:I,hideInSimpleMode:!0}',
+    'Restore the administrator ticket workspace entry.');
   patch('assets/index-DlKpmTe8.js',
     'function va(P){const k=(P==null?void 0:P.trim())||"";return/^data:image\\//i.test(k)?"/site-logo":k}',
     'function va(P){return(P==null?void 0:P.trim())||"/logo.png?v=20260715"}',
@@ -89,8 +105,38 @@ export function assemble({ homeDir, outputDir = homeDir }) {
   const integration = path.join(outputDir, 'integration');
   fs.mkdirSync(integration, { recursive: true });
   copyTree(path.join(root, 'runtime'), integration);
-  entries.console.styles.push('/integration/console.css');
+  // The release directory prevents existing immutable browser/CDN caches from mixing builds.
+  const revision = createHash('sha256').update(hash(fileURLToPath(import.meta.url))).update(JSON.stringify({ entries, changes })).update(
+    fs.readdirSync(path.join(root, 'runtime')).sort().map(file => hash(path.join(root, 'runtime', file))).join('')
+  ).digest('hex').slice(0, 12);
+  const releasePrefix = `/integration/${revision}`;
+  const releaseDirectory = path.join(outputDir, releasePrefix);
+  fs.mkdirSync(releaseDirectory, { recursive: true });
+  copyTree(path.join(root, 'runtime'), releaseDirectory);
+  const publishedAssets = [];
+  for (const asset of referenceManifest.assets.filter(item => item.path.startsWith('/assets/'))) {
+    const target = path.join(releaseDirectory, asset.path);
+    fs.mkdirSync(path.dirname(target), { recursive: true });
+    fs.copyFileSync(path.join(outputDir, asset.path), target);
+    if (asset.path === entries.console.script) {
+      const code = fs.readFileSync(target, 'utf8');
+      const anchor = 'Va=function(e){return"/"+e}';
+      if (code.split(anchor).length !== 2) throw new Error('Expected the pinned Vite asset resolver');
+      fs.writeFileSync(target, code.replace(anchor, `Va=function(e){return"${releasePrefix}/"+e}`), 'utf8');
+    }
+    publishedAssets.push({ file: releasePrefix + asset.path, sha256: hash(target) });
+  }
+  entries.console.script = releasePrefix + entries.console.script;
+  entries.console.styles = entries.console.styles.map(file => releasePrefix + file);
+  const nativeLayoutStyles = fs.readdirSync(path.join(homeDir, 'assets')).filter(file => /^AppHeader-.*\.css$/.test(file)).map(file => '/assets/' + file);
+  if (nativeLayoutStyles.length !== 1) throw new Error('Expected the original console layout stylesheet');
+  entries.native = {
+    script: entries.home.script,
+    styles: [...entries.home.styles, ...nativeLayoutStyles, ...entries.console.styles, releasePrefix + '/assets/ConsoleAtmosphere-M5YVlMLF.css', releasePrefix + '/console.css'],
+  };
+  entries.console.styles.push(releasePrefix + '/console.css');
   fs.writeFileSync(path.join(integration, 'entries.js'), `/** @brief Generated application entry descriptors. */\nexport const entries = ${JSON.stringify(entries, null, 2)};\n`, 'utf8');
+  fs.copyFileSync(path.join(integration, 'entries.js'), path.join(releaseDirectory, 'entries.js'));
   fs.writeFileSync(path.join(outputDir, 'index.html'), `<!doctype html>
 <html lang="zh-CN">
   <head>
@@ -98,12 +144,12 @@ export function assemble({ homeDir, outputDir = homeDir }) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" type="image/png" href="/logo.png?v=20260715" />
     <title>Sub2API - AI API Gateway</title>
-    <script type="module" src="/integration/bootstrap.js"></script>
+    <script type="module" src="${releasePrefix}/bootstrap.js"></script>
   </head>
   <body><div id="app"></div></body>
 </html>
 `, 'utf8');
-  const manifest = { builtAt: new Date().toISOString(), entries, homeAssets, changes };
+  const manifest = { builtAt: new Date().toISOString(), releasePrefix, entries, homeAssets, changes, publishedAssets };
   fs.writeFileSync(path.join(integration, 'build-manifest.json'), JSON.stringify(manifest, null, 2), 'utf8');
   return manifest;
 }

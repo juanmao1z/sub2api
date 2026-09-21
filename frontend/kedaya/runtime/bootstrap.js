@@ -1,9 +1,9 @@
 /** @file @brief Load the site's original homepage or the Kedaya console, with isolated styles. */
-import { isHomePath, installNavigation } from './navigation.js';
+import { runtimeForPath, installNavigation } from './navigation.js';
 import { entries } from './entries.js';
 
 installNavigation(window);
-const kind = isHomePath(location.pathname) ? 'home' : 'console';
+const kind = runtimeForPath(location.pathname);
 document.documentElement.dataset.frontend = kind;
 
 /** @brief Load one stylesheet before application mount to avoid a flash of unstyled content.

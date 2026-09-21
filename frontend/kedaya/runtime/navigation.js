@@ -1,4 +1,4 @@
-/** @file @brief Keep the original homepage and Kedaya console in separate documents. */
+/** @file @brief Isolate homepage, site features, and Kedaya console application documents. */
 
 /** @brief Identify the original homepage entry, including root aliases.
  * @param pathname Absolute URL pathname. @return Whether the homepage runtime owns it.
@@ -7,13 +7,22 @@ export function isHomePath(pathname) {
   return ['/', '/home', '/home/', '/index.html'].includes(pathname);
 }
 
-/** @brief Install full navigation only when crossing the two application boundaries.
+/** @brief Select the application that implements a route, preserving site-specific features.
+ * @param pathname Absolute URL pathname. @return Homepage, native feature, or Kedaya console entry.
+ */
+export function runtimeForPath(pathname) {
+  if (isHomePath(pathname)) return 'home';
+  if (/^\/(?:admin\/)?tickets\/?$/.test(pathname) || pathname.startsWith('/custom/')) return 'native';
+  return 'console';
+}
+
+/** @brief Install full navigation when crossing application entry boundaries.
  * @param win Browser window or equivalent test double.
  * @param originalOrigin Production origin whose internal links also work in preview.
  */
 export function installNavigation(win, originalOrigin = 'https://api.zhouz.online') {
-  const homeRuntime = isHomePath(win.location.pathname);
-  const crosses = url => url.origin === win.location.origin && isHomePath(url.pathname) !== homeRuntime;
+  const runtime = runtimeForPath(win.location.pathname);
+  const crosses = url => url.origin === win.location.origin && runtimeForPath(url.pathname) !== runtime;
   for (const method of ['pushState', 'replaceState']) {
     const original = win.history[method].bind(win.history);
     win.history[method] = (state, unused, target) => {
@@ -28,7 +37,7 @@ export function installNavigation(win, originalOrigin = 'https://api.zhouz.onlin
     };
   }
   win.addEventListener('popstate', () => {
-    if (isHomePath(win.location.pathname) !== homeRuntime) win.location.reload();
+    if (runtimeForPath(win.location.pathname) !== runtime) win.location.reload();
   });
   win.document.addEventListener('click', event => {
     if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;

@@ -1,9 +1,9 @@
 /** @file @brief Align the shared user and administrator console header with the sidebar brand. */
-html[data-frontend="console"] .console-signal {
+html:is([data-frontend="console"], [data-frontend="native"]) .console-signal {
   --zhouz-console-header-height: 64px;
 }
 
-html[data-frontend="console"] .console-signal :is(.signal-header, .sidebar-header) {
+html:is([data-frontend="console"], [data-frontend="native"]) .console-signal :is(.signal-header, .sidebar-header) {
   box-sizing: border-box;
   height: var(--zhouz-console-header-height);
   min-height: var(--zhouz-console-header-height);
@@ -11,7 +11,7 @@ html[data-frontend="console"] .console-signal :is(.signal-header, .sidebar-heade
   border-bottom: 1px solid var(--signal-line);
 }
 
-html[data-frontend="console"] .console-signal .signal-header .header-inner {
+html:is([data-frontend="console"], [data-frontend="native"]) .console-signal .signal-header .header-inner {
   height: 100%;
   min-height: 0;
 }

@@ -65,6 +65,7 @@ jobs:
         run: |
           pnpm run build
           node --test kedaya/verify.mjs
+          pnpm exec vitest run src/views/user/__tests__/SupportTicketsView.spec.ts src/views/admin/__tests__/SupportTicketsView.spec.ts src/views/user/__tests__/CustomPageView.spec.ts
       - uses: actions/setup-go@v6
         with:
           go-version-file: backend/go.mod
