@@ -16,7 +16,7 @@ html:is([data-frontend="console"], [data-frontend="native"]) .console-signal .si
   min-height: 0;
 }
 
-/** @brief Keep administrator usage values on one line; endpoints retain two clipped lines. */
+/** @brief Compact administrator usage values while keeping endpoints and latency on two lines. */
 html[data-frontend="console"] .signal-admin .usage-table th {
   white-space: nowrap;
 }
@@ -55,7 +55,7 @@ html[data-frontend="console"] .signal-admin .usage-table :is(.zhouz-usage-model,
   padding-left: 0 !important;
 }
 
-html[data-frontend="console"] .signal-admin .usage-table :is(.zhouz-usage-tokens, .zhouz-usage-cost, .zhouz-usage-latency, .zhouz-usage-ip_address) div {
+html[data-frontend="console"] .signal-admin .usage-table :is(.zhouz-usage-tokens, .zhouz-usage-cost, .zhouz-usage-ip_address) div {
   display: inline-flex;
   flex-direction: row;
   align-items: center;
@@ -63,8 +63,25 @@ html[data-frontend="console"] .signal-admin .usage-table :is(.zhouz-usage-tokens
   margin-block: 0;
 }
 
-html[data-frontend="console"] .signal-admin .usage-table .zhouz-usage-latency > div > span[aria-hidden] {
-  min-height: 1rem;
+/** @brief Show first-token/total latency above the full output rate without clipping either row. */
+html[data-frontend="console"] .signal-admin .usage-table .zhouz-usage-latency,
+html[data-frontend="console"] .signal-admin .usage-table .zhouz-usage-latency > div {
+  max-width: none;
+  overflow: visible;
+}
+
+html[data-frontend="console"] .signal-admin .usage-table .zhouz-usage-latency > div > div {
+  grid-template-columns: repeat(4, max-content);
+}
+
+html[data-frontend="console"] .signal-admin .usage-table .zhouz-usage-latency > div > div > :nth-child(5) {
+  grid-row: 2;
+  grid-column: 1;
+}
+
+html[data-frontend="console"] .signal-admin .usage-table .zhouz-usage-latency > div > div > :nth-child(6) {
+  grid-row: 2;
+  grid-column: 2 / -1;
 }
 
 html[data-frontend="console"] .signal-admin .usage-table .zhouz-usage-group {
