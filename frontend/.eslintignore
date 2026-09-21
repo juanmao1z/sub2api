@@ -12,3 +12,6 @@ dist/
 # 忽略缓存
 .cache/
 .vite/
+
+# Published upstream build artifacts
+kedaya/vendor/

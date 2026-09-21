@@ -60,6 +60,20 @@ jobs:
         run: pnpm install --frozen-lockfile
       - name: Frontend typecheck and critical vitest
         run: make test-frontend
+      - name: Build and verify the integrated frontend
+        working-directory: frontend
+        run: |
+          pnpm run build
+          node --test kedaya/verify.mjs
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: backend/go.mod
+          check-latest: false
+          cache: true
+          cache-dependency-path: backend/go.sum
+      - name: Verify embedded frontend delivery
+        working-directory: backend
+        run: go test -tags embed ./internal/web
 
   golangci-lint:
     runs-on: ubuntu-latest

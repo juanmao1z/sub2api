@@ -20,3 +20,6 @@ backend/migrations/*.sql text eol=lf
 
 # Dockerfile
 Dockerfile text eol=lf
+
+# Preserve the checksum-pinned upstream frontend bytes on every platform.
+frontend/kedaya/vendor/** -text
