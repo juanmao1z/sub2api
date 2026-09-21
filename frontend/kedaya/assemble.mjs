@@ -78,6 +78,10 @@ export function assemble({ homeDir, outputDir = homeDir }) {
 
   copyTree(homeDir, outputDir);
   copyTree(reference, outputDir);
+  patch('assets/GroupDistributionChart.vue_vue_type_script_setup_true_lang-CFxB0FuD.js',
+    'class:[c.class,I.has(c.key)?"usage-text-column":"",c.key==="created_at"?"usage-date-column":""]',
+    'class:[c.class,"zhouz-usage-"+c.key,I.has(c.key)?"usage-text-column":"",c.key==="created_at"?"usage-date-column":""]',
+    'Identify usage columns so administrator cells can truncate independently of column visibility and order.');
   patch('assets/KeysView-DKiqlBTi.js',
     'async function Qa(){const{data:y}=await Oa.get("/user/custom-endpoints");return y}',
     'async function Qa(){const{data:y}=await Oa.get("/settings/public");return y.custom_endpoints||[]}',
