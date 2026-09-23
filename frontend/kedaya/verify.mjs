@@ -66,6 +66,20 @@ test('site ticket and custom pages use their complete native implementation', ()
   assert.deepEqual(calls[1], ['assign', 'https://api.zhouz.online/dashboard']);
 });
 
+test('Kedaya admin sidebar includes tickets in the shared order and follows subscription settings', () => {
+  const layout = manifest.publishedAssets.find(asset => asset.file.endsWith('/AppLayout.vue_vue_type_script_setup_true_lang-D-wpKinR.js'));
+  assert.ok(layout, 'published admin layout asset is present');
+  const consoleLayout = fs.readFileSync(path.join(output, layout.file), 'utf8');
+  const pluginIndex = consoleLayout.indexOf('path:"/admin/plugins"');
+  const ticketIndex = consoleLayout.indexOf('path:"/admin/tickets"', pluginIndex);
+  const announcementIndex = consoleLayout.indexOf('path:"/admin/announcements"', pluginIndex);
+
+  assert.ok(pluginIndex >= 0);
+  assert.ok(ticketIndex > pluginIndex);
+  assert.ok(announcementIndex > ticketIndex);
+  assert.ok(consoleLayout.includes('subscription_enabled'), 'subscription visibility follows public settings');
+});
+
 test('published console imports and styles use an immutable release directory', () => {
   assert.match(manifest.releasePrefix, /^\/integration\/[a-f0-9]{12}$/);
   assert.ok(manifest.entries.console.script.startsWith(manifest.releasePrefix + '/assets/'));

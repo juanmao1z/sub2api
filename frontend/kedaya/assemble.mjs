@@ -107,13 +107,13 @@ export function assemble({ homeDir, outputDir = homeDir }) {
     '{path:"/tickets",label:kedayaLocale.value.startsWith("zh")?"工单系统":"Tickets",icon:_},{path:"/profile",label:l("nav.profile"),icon:S}',
     'Restore the user ticket workspace entry.');
   patch('assets/AppLayout.vue_vue_type_script_setup_true_lang-D-wpKinR.js',
-    '],U=a(V);if(P.isSimpleMode){const N=U.filter(b=>!b.hideInSimpleMode);',
-    '],U=a(V);if(P.isSimpleMode){const N=U.filter(b=>!b.hideInSimpleMode);N.splice(Math.min(7,N.length),0,{path:"/admin/tickets",label:kedayaLocale.value.startsWith("zh")?"工单系统":"Tickets",icon:_});',
-    'Place the administrator ticket workspace at the eighth visible menu position in simple mode.');
+    '{path:"/admin/subscriptions",label:l("nav.subscriptions"),icon:Z,hideInSimpleMode:!0}',
+    '{path:"/admin/subscriptions",label:l("nav.subscriptions"),icon:Z,hideInSimpleMode:!0,featureFlag:()=>{var U;return((U=x.cachedPublicSettings)==null?void 0:U.subscription_enabled)!==false}}',
+    'Apply the same subscription visibility flag as the native sidebar.');
   patch('assets/AppLayout.vue_vue_type_script_setup_true_lang-D-wpKinR.js',
-    'return N}U.push({path:"/admin/settings",label:l("nav.settings"),icon:pe});',
-    'return N}U.splice(Math.min(7,U.length),0,{path:"/admin/tickets",label:kedayaLocale.value.startsWith("zh")?"工单系统":"Tickets",icon:_});U.push({path:"/admin/settings",label:l("nav.settings"),icon:pe});',
-    'Place the administrator ticket workspace at the eighth visible menu position.');
+    '{path:"/admin/plugins",label:l("nav.plugins"),icon:R,featureFlag:Ne},{path:"/admin/announcements",label:l("nav.announcements"),icon:q}',
+    '{path:"/admin/plugins",label:l("nav.plugins"),icon:R,featureFlag:Ne},{path:"/admin/tickets",label:kedayaLocale.value.startsWith("zh")?"工单系统":"Tickets",icon:_},{path:"/admin/announcements",label:l("nav.announcements"),icon:q}',
+    'Keep the administrator ticket workspace before announcements across feature-flag combinations.');
   patch('assets/index-DlKpmTe8.js',
     'function va(P){const k=(P==null?void 0:P.trim())||"";return/^data:image\\//i.test(k)?"/site-logo":k}',
     'function va(P){return(P==null?void 0:P.trim())||"/logo.png?v=20260715"}',
