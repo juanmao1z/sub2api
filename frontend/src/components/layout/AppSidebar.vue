@@ -752,7 +752,6 @@ const adminNavItems = computed((): NavItem[] => {
     { path: '/admin/accounts', label: t('nav.accounts'), icon: GlobeIcon },
     { path: '/admin/plugins', label: t('nav.plugins'), icon: PluginIcon, featureFlag: flagPluginManagement },
     { path: '/admin/announcements', label: t('nav.announcements'), icon: BellIcon },
-    { path: '/admin/tickets', label: t('nav.supportTickets'), icon: TicketIcon },
     { path: '/admin/proxies', label: t('nav.proxies'), icon: ServerIcon },
     {
       path: '/admin/security-audit',
@@ -798,10 +797,12 @@ const adminNavItems = computed((): NavItem[] => {
   ]
 
   const visible = applyFeatureFlags(baseItems)
+  const adminTicketItem: NavItem = { path: '/admin/tickets', label: t('nav.supportTickets'), icon: TicketIcon }
 
   // 简单模式下，在系统设置前插入 API密钥
   if (authStore.isSimpleMode) {
     const filtered = visible.filter(item => !item.hideInSimpleMode)
+    filtered.splice(Math.min(7, filtered.length), 0, adminTicketItem)
     filtered.push({ path: '/keys', label: t('nav.apiKeys'), icon: KeyIcon })
     filtered.push({ path: '/admin/settings', label: t('nav.settings'), icon: CogIcon })
     for (const cm of customMenuItemsForAdmin.value) {
@@ -810,6 +811,7 @@ const adminNavItems = computed((): NavItem[] => {
     return filtered
   }
 
+  visible.splice(Math.min(7, visible.length), 0, adminTicketItem)
   visible.push({ path: '/admin/settings', label: t('nav.settings'), icon: CogIcon })
   for (const cm of customMenuItemsForAdmin.value) {
     visible.push({ path: `/custom/${cm.id}`, label: cm.label, icon: null, iconSvg: cm.icon_svg })

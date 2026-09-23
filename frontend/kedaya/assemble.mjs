@@ -87,6 +87,14 @@ export function assemble({ homeDir, outputDir = homeDir }) {
     'async function Qa(){const{data:y}=await Oa.get("/settings/public");return y.custom_endpoints||[]}',
     'Custom endpoints are provided by the existing public-settings API.');
   patch('assets/AppLayout.vue_vue_type_script_setup_true_lang-D-wpKinR.js',
+    'H=k(()=>{var L;return!P.isSimpleMode&&((L=$.value)==null?void 0:L.role)==="admin"})',
+    'H=k(()=>!1)',
+    'Remove the onboarding replay action from the account menu.');
+  patch('assets/AppLayout.vue_vue_type_script_setup_true_lang-D-wpKinR.js',
+    'Ut({storageKey:P.value?"admin_guide":"user_guide"})',
+    'Ut({storageKey:P.value?"admin_guide":"user_guide",autoStart:!1})',
+    'Disable automatic onboarding tour startup in the pinned console.');
+  patch('assets/AppLayout.vue_vue_type_script_setup_true_lang-D-wpKinR.js',
     '{path:"/ip-allowlist",label:l("nav.ipAllowlist"),icon:ue},',
     '',
     'Apply the requested console menu selection.');
@@ -99,9 +107,13 @@ export function assemble({ homeDir, outputDir = homeDir }) {
     '{path:"/tickets",label:kedayaLocale.value.startsWith("zh")?"工单系统":"Tickets",icon:_},{path:"/profile",label:l("nav.profile"),icon:S}',
     'Restore the user ticket workspace entry.');
   patch('assets/AppLayout.vue_vue_type_script_setup_true_lang-D-wpKinR.js',
-    '{path:"/admin/users",label:l("nav.users"),icon:I,hideInSimpleMode:!0}',
-    '{path:"/admin/tickets",label:kedayaLocale.value.startsWith("zh")?"工单系统":"Tickets",icon:_},{path:"/admin/users",label:l("nav.users"),icon:I,hideInSimpleMode:!0}',
-    'Restore the administrator ticket workspace entry.');
+    '],U=a(V);if(P.isSimpleMode){const N=U.filter(b=>!b.hideInSimpleMode);',
+    '],U=a(V);if(P.isSimpleMode){const N=U.filter(b=>!b.hideInSimpleMode);N.splice(Math.min(7,N.length),0,{path:"/admin/tickets",label:kedayaLocale.value.startsWith("zh")?"工单系统":"Tickets",icon:_});',
+    'Place the administrator ticket workspace at the eighth visible menu position in simple mode.');
+  patch('assets/AppLayout.vue_vue_type_script_setup_true_lang-D-wpKinR.js',
+    'return N}U.push({path:"/admin/settings",label:l("nav.settings"),icon:pe});',
+    'return N}U.splice(Math.min(7,U.length),0,{path:"/admin/tickets",label:kedayaLocale.value.startsWith("zh")?"工单系统":"Tickets",icon:_});U.push({path:"/admin/settings",label:l("nav.settings"),icon:pe});',
+    'Place the administrator ticket workspace at the eighth visible menu position.');
   patch('assets/index-DlKpmTe8.js',
     'function va(P){const k=(P==null?void 0:P.trim())||"";return/^data:image\\//i.test(k)?"/site-logo":k}',
     'function va(P){return(P==null?void 0:P.trim())||"/logo.png?v=20260715"}',
