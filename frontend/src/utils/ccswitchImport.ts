@@ -30,6 +30,16 @@ function withoutV1Suffix(baseUrl: string): string {
 }
 
 /**
+ * @brief Ensures an OpenAI-compatible endpoint has exactly one `/v1` suffix.
+ * @param baseUrl The configured API base URL.
+ * @return The normalized URL ending in `/v1`.
+ */
+function withV1Endpoint(baseUrl: string): string {
+  const normalizedBaseUrl = baseUrl.replace(/\/+$/, '')
+  return normalizedBaseUrl.endsWith('/v1') ? normalizedBaseUrl : `${normalizedBaseUrl}/v1`
+}
+
+/**
  * @brief Resolves the CCS provider configuration for a platform.
  * @param platform The API group platform.
  * @param clientType The CCS client receiving the import.
@@ -45,12 +55,12 @@ export function resolveCcSwitchImportConfig(
     case 'antigravity':
       return {
         app: clientType === 'gemini' ? 'gemini' : 'claude',
-        endpoint: `${baseUrl}/antigravity`
+        endpoint: `${baseUrl.replace(/\/+$/, '')}/antigravity`
       }
     case 'openai':
       return {
         app: 'codex',
-        endpoint: baseUrl,
+        endpoint: withV1Endpoint(baseUrl),
         model: OPENAI_CC_SWITCH_CODEX_MODEL
       }
     case 'gemini':
