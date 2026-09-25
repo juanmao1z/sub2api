@@ -20,9 +20,10 @@ function stylesheet(href) {
   });
 }
 
+let stopWatchingApp;
+
 try {
   const appRoot = document.getElementById('app');
-  let stopWatchingApp;
   const appMounted = new Promise(resolve => {
     if (!appRoot || appRoot.hasChildNodes()) {
       resolve();
