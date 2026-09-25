@@ -3,11 +3,12 @@ import { flushPromises, mount } from '@vue/test-utils'
 import { nextTick } from 'vue'
 import CustomPageView from '../CustomPageView.vue'
 
-const { appStore } = vi.hoisted(() => ({
+const { appStore, apiGet } = vi.hoisted(() => ({
   appStore: {
     publicSettingsLoaded: true,
     cachedPublicSettings: { custom_menu_items: [{ id: 'docs', url: 'https://example.com/docs' }] },
   },
+  apiGet: vi.fn(),
 }))
 
 vi.mock('@/components/layout/AppLayout.vue', () => ({ default: { template: '<div><slot /></div>' } }))
@@ -16,7 +17,10 @@ vi.mock('vue-i18n', () => ({ useI18n: () => ({ t: (key: string) => key, locale: 
 vi.mock('@/stores', () => ({ useAppStore: () => appStore }))
 vi.mock('@/stores/auth', () => ({ useAuthStore: () => ({ isAdmin: false, user: { id: 7 }, token: 'test-token' }) }))
 vi.mock('@/stores/adminSettings', () => ({ useAdminSettingsStore: () => ({ customMenuItems: [] }) }))
-vi.mock('@/api/client', () => ({ buildApiUrl: (path: string) => `/api/v1${path}` }))
+vi.mock('@/api/client', () => ({
+  apiClient: { get: apiGet },
+  buildApiUrl: (path: string) => `/api/v1${path}`,
+}))
 
 let notifyResize: () => void
 const wrappers: ReturnType<typeof mount>[] = []
@@ -66,6 +70,7 @@ function click(button: HTMLElement, detail = 1) {
 
 describe('custom page open button', () => {
   beforeEach(() => {
+    apiGet.mockReset()
     appStore.cachedPublicSettings.custom_menu_items = [{ id: 'docs', url: 'https://example.com/docs' }]
     vi.stubGlobal('ResizeObserver', class {
       constructor(callback: () => void) { notifyResize = callback }
@@ -90,7 +95,7 @@ describe('custom page open button', () => {
     const { wrapper, button } = mountEmbed()
     expect(button.href).toBe(wrapper.get('iframe').attributes('src'))
     expect(button.href).toContain('user_id=7')
-    expect(button.href).toContain('token=test-token')
+    expect(button.href).not.toContain('test-token')
     expect(button.target).toBe('_blank')
     expect(button.rel).toBe('noopener noreferrer')
     await pointer(button, 'pointerdown', 700, 24)
@@ -158,7 +163,7 @@ describe('custom page open button', () => {
 
   it('keeps Markdown pages separate from the embedded-page controls', async () => {
     appStore.cachedPublicSettings.custom_menu_items = [{ id: 'docs', url: 'md:guide' }]
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, text: async () => '# Guide' }))
+    apiGet.mockResolvedValue({ data: '# Guide' })
     const wrapper = mountPage()
     await flushPromises()
     expect(wrapper.find('.custom-open-fab').exists()).toBe(false)
