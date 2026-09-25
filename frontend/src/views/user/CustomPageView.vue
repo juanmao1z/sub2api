@@ -307,13 +307,24 @@ const displayedMarkdownSlug = computed(() => activeGuideSlug.value || markdownSl
 
 const embeddedUrl = computed(() => {
   if (!menuItem.value || isMarkdownMode.value) return ''
-  return buildEmbeddedUrl(
+  const url = buildEmbeddedUrl(
     menuItem.value.url,
     authStore.user?.id,
     authStore.token,
     pageTheme.value,
     locale.value,
   )
+
+  // The standalone leaderboard reads its short-lived access credential from
+  // the token query parameter; other custom embeds must not receive it.
+  if (menuItemId.value !== 'usage-leaderboard' || !authStore.token) return url
+  try {
+    const embedded = new URL(url)
+    embedded.searchParams.set('token', authStore.token)
+    return embedded.toString()
+  } catch {
+    return url
+  }
 })
 
 const isValidUrl = computed(() => {
