@@ -145,9 +145,9 @@ func SecurityHeaders(cfg config.CSPConfig, getFrameSrcOrigins func() []string) g
 			// Generate nonce for this request
 			nonce, err := GenerateNonce()
 			if err != nil {
-				// crypto/rand 失败时降级为无 nonce 的 CSP 策略
-				log.Printf("[SecurityHeaders] %v — 降级为无 nonce 的 CSP", err)
-				c.Header("Content-Security-Policy", strings.ReplaceAll(finalPolicy, NonceTemplate, "'unsafe-inline'"))
+				// 随机源不可用时必须保持 CSP 收紧；unsafe-inline 会把故障转化为 XSS 放大器。
+				log.Printf("[SecurityHeaders] %v — 使用无 nonce 的收紧 CSP", err)
+				c.Header("Content-Security-Policy", strings.ReplaceAll(finalPolicy, NonceTemplate, ""))
 			} else {
 				c.Set(CSPNonceKey, nonce)
 				c.Header("Content-Security-Policy", strings.ReplaceAll(finalPolicy, NonceTemplate, "'nonce-"+nonce+"'"))

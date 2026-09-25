@@ -4,12 +4,12 @@
     <!-- iframe mode -->
     <iframe
       v-if="isHomeContentUrl"
-      :src="homeContent.trim()"
+      :src="homeContentUrl"
       class="h-screen w-full border-0"
       allowfullscreen
+      referrerpolicy="no-referrer"
     ></iframe>
-    <!-- HTML mode - SECURITY: homeContent is admin-only setting, XSS risk is acceptable -->
-    <div v-else v-html="homeContent"></div>
+    <div v-else v-html="sanitizedHomeContent"></div>
   </div>
 
   <!-- Compact Home Page -->
@@ -331,6 +331,7 @@ import {
 } from '@/utils/homepageStatus'
 import { sanitizeUrl } from '@/utils/url'
 import { FeatureFlags, isFeatureFlagEnabled } from '@/utils/featureFlags'
+import DOMPurify from 'dompurify'
 
 const { t, locale } = useI18n()
 const authStore = useAuthStore()
@@ -341,6 +342,8 @@ const siteLogo = computed(() => sanitizeUrl(appStore.cachedPublicSettings?.site_
 const siteSubtitle = computed(() => appStore.cachedPublicSettings?.site_subtitle || 'AI API Gateway Platform')
 const docUrl = computed(() => sanitizeUrl(appStore.cachedPublicSettings?.doc_url || appStore.docUrl || ''))
 const homeContent = computed(() => appStore.cachedPublicSettings?.home_content || '')
+const sanitizedHomeContent = computed(() => DOMPurify.sanitize(homeContent.value))
+const homeContentUrl = computed(() => sanitizeUrl(homeContent.value.trim()))
 const hasHomeContent = computed(() => homeContent.value.trim().length > 0)
 const compactHomeEnabled = computed(() => appStore.cachedPublicSettings?.compact_home_enabled === true)
 const showDefaultHome = computed(
@@ -353,7 +356,7 @@ const modelPlazaEnabled = computed(() => isFeatureFlagEnabled(FeatureFlags.model
 
 const isHomeContentUrl = computed(() => {
   const content = homeContent.value.trim()
-  return content.startsWith('http://') || content.startsWith('https://')
+  return Boolean(content && homeContentUrl.value)
 })
 
 const isAuthenticated = computed(() => authStore.isAuthenticated)

@@ -154,6 +154,7 @@
             :src="embeddedUrl"
             class="custom-embed-frame"
             allowfullscreen
+            referrerpolicy="no-referrer"
           ></iframe>
         </div>
       </div>
@@ -171,7 +172,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useAdminSettingsStore } from '@/stores/adminSettings'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import Icon from '@/components/icons/Icon.vue'
-import { buildApiUrl } from '@/api/client'
+import { apiClient, buildApiUrl } from '@/api/client'
 import { buildEmbeddedUrl, detectTheme } from '@/utils/embedded-url'
 import { marked } from 'marked'
 import DOMPurify from 'dompurify'
@@ -364,14 +365,8 @@ async function fetchAndRenderMarkdown(slug: string) {
   try {
     let raw = builtinMarkdownPages[slug]
     if (!raw) {
-      const resp = await fetch(buildApiUrl(`/pages/${encodeURIComponent(slug)}`), {
-        headers: authStore.token ? { Authorization: `Bearer ${authStore.token}` } : {},
-      })
-      if (!resp.ok) {
-        renderedHtml.value = `<p class="text-red-500">${t('common.pageNotFound')}</p>`
-        return
-      }
-      raw = await resp.text()
+      const resp = await apiClient.get<string>(`/pages/${encodeURIComponent(slug)}`)
+      raw = resp.data
     }
 
     raw = raw.replace(

@@ -389,6 +389,7 @@ export const useAppStore = defineStore('app', () => {
       apiRequest = fetchPublicSettingsAPI()
     } catch (error) {
       console.error('Failed to fetch public settings:', error)
+      publicSettingsLoaded.value = true
       publicSettingsLoading.value = false
       return Promise.resolve(null)
     }
@@ -400,6 +401,7 @@ export const useAppStore = defineStore('app', () => {
       })
       .catch((error) => {
         console.error('Failed to fetch public settings:', error)
+        publicSettingsLoaded.value = true
         return null
       })
       .finally(() => {

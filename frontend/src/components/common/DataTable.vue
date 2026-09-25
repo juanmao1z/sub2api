@@ -121,6 +121,9 @@
             v-for="(column, index) in columns"
             :key="column.key"
             scope="col"
+            :role="column.sortable ? 'button' : undefined"
+            :tabindex="column.sortable ? 0 : undefined"
+            :aria-label="column.sortable ? column.label : undefined"
             :aria-sort="column.sortable ? getColumnAriaSort(column.key) : undefined"
             :class="[
               'sticky-header-cell py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-dark-400',
@@ -130,6 +133,8 @@
               column.class
             ]"
             @click="column.sortable && handleSort(column.key)"
+            @keydown.enter.prevent="column.sortable && handleSort(column.key)"
+            @keydown.space.prevent="column.sortable && handleSort(column.key)"
           >
             <div :class="['flex items-center space-x-1', getHeaderContentAlignmentClass(column)]">
               <slot
