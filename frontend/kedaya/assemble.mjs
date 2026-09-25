@@ -160,9 +160,22 @@ export function assemble({ homeDir, outputDir = homeDir }) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" type="image/png" href="/logo.png?v=20260715" />
     <title>Sub2API - AI API Gateway</title>
+    <style>
+      html, body { min-height: 100%; margin: 0; }
+      #startup-loading { position: fixed; inset: 0; z-index: 2147483647; display: grid; place-content: center; justify-items: center; gap: 12px; background: #f9fafb; color: #4b5563; font: 14px system-ui, sans-serif; }
+      #startup-loading-indicator { width: 24px; height: 24px; border: 2px solid #d1d5db; border-top-color: #15803d; border-radius: 50%; animation: startup-spin .8s linear infinite; }
+      @keyframes startup-spin { to { transform: rotate(360deg); } }
+      @media (prefers-reduced-motion: reduce) { #startup-loading-indicator { animation: none; } }
+    </style>
     <script type="module" src="${releasePrefix}/bootstrap.js"></script>
   </head>
-  <body><div id="app"></div></body>
+  <body>
+    <div id="app"></div>
+    <div id="startup-loading" role="status" aria-live="polite">
+      <span id="startup-loading-indicator" aria-hidden="true"></span>
+      <span>正在加载页面</span>
+    </div>
+  </body>
 </html>
 `, 'utf8');
   const manifest = { builtAt: new Date().toISOString(), releasePrefix, entries, homeAssets, changes, publishedAssets };

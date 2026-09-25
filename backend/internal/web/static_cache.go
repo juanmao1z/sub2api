@@ -17,7 +17,11 @@ const staticAssetsCacheControl = "public, max-age=31536000, immutable"
 func isFingerprintedEmbeddedAssetPath(cleanPath string) bool {
 	cleanPath = strings.TrimPrefix(cleanPath, "/")
 	if !strings.HasPrefix(cleanPath, "assets/") {
-		return false
+		assetsIndex := strings.LastIndex(cleanPath, "/assets/")
+		if assetsIndex < 0 {
+			return false
+		}
+		cleanPath = cleanPath[assetsIndex+1:]
 	}
 
 	filename := path.Base(cleanPath)
