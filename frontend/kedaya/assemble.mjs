@@ -118,6 +118,73 @@ export function assemble({ homeDir, outputDir = homeDir }) {
     'function va(P){const k=(P==null?void 0:P.trim())||"";return/^data:image\\//i.test(k)?"/site-logo":k}',
     'function va(P){return(P==null?void 0:P.trim())||"/logo.png?v=20260715"}',
     'Keep the site logo URL/data URI and original PNG fallback; no /site-logo endpoint is required.');
+
+  const ticketAssetSetup = ({ releasePrefix, releaseDirectory, routeAsset }) => {
+    const consoleVendorVue = referenceManifest.assets.find(asset => asset.path.startsWith('/assets/vendor-vue-') && asset.path.endsWith('.js'));
+    if (!consoleVendorVue) throw new Error('Expected the pinned console Vue runtime asset');
+    const nativeTicketScripts = fs.readdirSync(path.join(outputDir, 'assets')).filter(file => /^SupportTicketsView-.*\.js$/.test(file));
+    const userTicketScript = nativeTicketScripts.find(file => !fs.readFileSync(path.join(outputDir, 'assets', file), 'utf8').includes('adminList'));
+    const adminTicketScript = nativeTicketScripts.find(file => fs.readFileSync(path.join(outputDir, 'assets', file), 'utf8').includes('adminList'));
+    if (!userTicketScript || !adminTicketScript) throw new Error('Expected native user and administrator ticket chunks');
+    const ticketBridge = path.join(releaseDirectory, 'ticket-bridge.js');
+    fs.writeFileSync(ticketBridge, `/** @brief Adapt native ticket services to the Kedaya console runtime. */
+import { d as defineComponent } from '${releasePrefix}${consoleVendorVue.path}';
+
+const messages = {
+  'zh': {
+    'support.centerTitle': '工单系统', 'support.centerDescription': '提交问题并与支持团队保持沟通', 'support.title': '我的工单', 'support.adminTitle': '工单管理', 'support.adminDescription': '查看和处理用户提交的工单', 'support.adminSearch': '搜索工单、用户或邮箱', 'support.search': '搜索工单', 'support.filterStatus': '筛选状态', 'support.allTickets': '全部工单', 'support.ticketCount': ({ count }) => count + ' 条', 'support.newTicket': '新建工单', 'support.empty': '暂无工单', 'support.noMatches': '没有匹配的工单', 'support.historyHint': '你的工单和对话会显示在这里。', 'support.adminEmptyHint': '当前没有待处理的工单。', 'support.changeFilters': '请调整筛选条件后重试。', 'support.resetFilters': '重置筛选', 'support.selectTicket': '选择一个工单', 'support.selectHint': '从左侧选择工单查看详情。', 'support.emptyHint': '创建工单后可在这里查看对话。', 'support.adminSelectHint': '从左侧选择工单查看详情。', 'support.contactSupport': '联系支持', 'support.createHint': '请描述你遇到的问题，我们会尽快回复。', 'support.type': '问题类型', 'support.refund': '退款记录', 'support.suggestion': '建议', 'support.refundHint': '与订单退款相关的问题', 'support.suggestionHint': '反馈问题或提出建议', 'support.subject': '主题', 'support.subjectPlaceholder': '请输入工单主题', 'support.orderId': '订单号', 'support.orderPlaceholder': '请输入订单号', 'support.contact': '联系方式', 'support.contactPlaceholder': '邮箱、电话或其他联系方式', 'support.description': '问题描述', 'support.descriptionPlaceholder': '请详细描述问题', 'support.privacyHint': '请勿填写密码或其他敏感信息。', 'support.submitTicket': '提交工单', 'support.submitting': '提交中...', 'support.reply': '回复', 'support.replyPlaceholder': '输入回复内容', 'support.sending': '发送中...', 'support.close': '关闭工单', 'support.closedHint': '该工单已关闭。', 'support.adminReplyHint': '回复会发送给提交工单的用户。', 'support.manageStatus': '工单状态', 'support.saveStatus': '保存状态', 'support.savingStatus': '保存中...', 'support.adminClosedHint': '该工单已关闭。', 'support.user': '用户', 'support.you': '你', 'support.team': '支持团队', 'support.originalMessage': '原始问题', 'support.created': '工单已创建', 'support.replySent': '回复已发送', 'support.closed': '工单已关闭', 'support.statusSaved': '状态已保存', 'support.status.OPEN': '未关闭', 'support.status.RESOLVED': '已解决', 'support.status.CLOSED': '已关闭', 'common.loading': '加载中...', 'common.refresh': '刷新', 'common.cancel': '取消', 'common.error': '操作失败'
+  },
+  'en': {
+    'support.centerTitle': 'Ticket System', 'support.centerDescription': 'Submit issues and stay in touch with support', 'support.title': 'My Tickets', 'support.adminTitle': 'Ticket Management', 'support.adminDescription': 'Review and respond to user tickets', 'support.adminSearch': 'Search tickets, users or email', 'support.search': 'Search tickets', 'support.filterStatus': 'Filter status', 'support.allTickets': 'All tickets', 'support.ticketCount': ({ count }) => count + ' tickets', 'support.newTicket': 'New Ticket', 'support.empty': 'No tickets yet', 'support.noMatches': 'No matching tickets', 'support.historyHint': 'Your tickets and conversations will appear here.', 'support.adminEmptyHint': 'There are no tickets to handle.', 'support.changeFilters': 'Adjust the filters and try again.', 'support.resetFilters': 'Reset filters', 'support.selectTicket': 'Select a ticket', 'support.selectHint': 'Select a ticket on the left to view details.', 'support.emptyHint': 'Create a ticket to start a conversation.', 'support.adminSelectHint': 'Select a ticket on the left to view details.', 'support.contactSupport': 'Contact support', 'support.createHint': 'Describe the issue and our team will reply as soon as possible.', 'support.type': 'Issue type', 'support.refund': 'Refund record', 'support.suggestion': 'Suggestion', 'support.refundHint': 'Questions about an order refund', 'support.suggestionHint': 'Report an issue or share a suggestion', 'support.subject': 'Subject', 'support.subjectPlaceholder': 'Enter a subject', 'support.orderId': 'Order ID', 'support.orderPlaceholder': 'Enter the order ID', 'support.contact': 'Contact information', 'support.contactPlaceholder': 'Email, phone, or another contact method', 'support.description': 'Description', 'support.descriptionPlaceholder': 'Describe the issue', 'support.privacyHint': 'Do not include passwords or other sensitive information.', 'support.submitTicket': 'Submit ticket', 'support.submitting': 'Submitting...', 'support.reply': 'Reply', 'support.replyPlaceholder': 'Write a reply', 'support.sending': 'Sending...', 'support.close': 'Close ticket', 'support.closedHint': 'This ticket is closed.', 'support.adminReplyHint': 'The reply will be sent to the ticket owner.', 'support.manageStatus': 'Ticket status', 'support.saveStatus': 'Save status', 'support.savingStatus': 'Saving...', 'support.adminClosedHint': 'This ticket is closed.', 'support.user': 'User', 'support.you': 'You', 'support.team': 'Support team', 'support.originalMessage': 'Original issue', 'support.created': 'Ticket created', 'support.replySent': 'Reply sent', 'support.closed': 'Ticket closed', 'support.statusSaved': 'Status saved', 'support.status.OPEN': 'Open', 'support.status.RESOLVED': 'Resolved', 'support.status.CLOSED': 'Closed', 'common.loading': 'Loading...', 'common.refresh': 'Refresh', 'common.cancel': 'Cancel', 'common.error': 'Operation failed'
+  }
+};
+
+export function u() {
+  const locale = { value: document.documentElement.lang?.startsWith('zh') ? 'zh' : 'en' };
+  return { locale, t(key, params) { const value = messages[locale.value][key] ?? messages.en[key] ?? key; return typeof value === 'function' ? value(params || {}) : value; } };
+}
+
+export function a() { return { showError: message => console.error(message), showSuccess: message => console.info(message) }; }
+export const _ = defineComponent({ name: 'TicketIcon', setup: () => () => null });
+export function B(component) { return component; }
+export function b(error) { return error?.message || 'Operation failed'; }
+
+async function request(method, url, body) {
+  const headers = { 'Content-Type': 'application/json', 'Accept-Language': document.documentElement.lang?.startsWith('zh') ? 'zh' : 'en' };
+  const token = localStorage.getItem('auth_token');
+  if (token) headers.Authorization = \`Bearer \${token}\`;
+  const response = await fetch('/api/v1' + url, { method, headers, credentials: 'include', body: body === undefined ? undefined : JSON.stringify(body) });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok || payload.code && payload.code !== 0) throw Object.assign(new Error(payload.message || 'Request failed'), { status: response.status, response: { data: payload } });
+  return { data: payload.data };
+}
+export const f = { get: url => request('GET', url), post: (url, body) => request('POST', url, body), patch: (url, body) => request('PATCH', url, body) };
+export const s = { list: () => f.get('/support/tickets'), create: body => f.post('/support/tickets', body), get: id => f.get(\`/support/tickets/\${id}\`), addMessage: (id, body) => f.post(\`/support/tickets/\${id}/messages\`, { body }), close: id => f.post(\`/support/tickets/\${id}/close\`), adminList: () => f.get('/admin/support/tickets'), adminGet: id => f.get(\`/admin/support/tickets/\${id}\`), adminAddMessage: (id, body) => f.post(\`/admin/support/tickets/\${id}/messages\`, { body }), adminSetStatus: (id, status) => f.patch(\`/admin/support/tickets/\${id}/status\`, { status }) };
+`, 'utf8');
+
+  function prepareTicketChunk(sourceName, outputName) {
+    let source = fs.readFileSync(path.join(outputDir, 'assets', sourceName), 'utf8');
+    source = source.replace(/from"\.\/vendor-vue-[^"]+\.js"/, `from"${releasePrefix}${consoleVendorVue.path}"`)
+      .replace(/from"\.\/AppLayout\.vue_vue_type_script_setup_true_lang-[^"]+\.js"/, `from"${releasePrefix}/assets/AppLayout.vue_vue_type_script_setup_true_lang-D-wpKinR.js"`)
+      .replace(/from"\.\/index-[^"]+\.js"/, `from"${releasePrefix}/ticket-bridge.js"`)
+      .replace(/from"\.\/supportTickets-[^"]+\.js"/, `from"${releasePrefix}/ticket-bridge.js"`)
+      .replace(/from"\.\/apiError-[^"]+\.js"/, `from"${releasePrefix}/ticket-bridge.js"`)
+      .replace(/from"\.\/vendor-i18n-[^"]+\.js"/, `from"${releasePrefix}/ticket-bridge.js"`);
+    fs.writeFileSync(path.join(releaseDirectory, outputName), source, 'utf8');
+  }
+  prepareTicketChunk(userTicketScript, 'tickets-user.js');
+  prepareTicketChunk(adminTicketScript, 'tickets-admin.js');
+  for (const css of fs.readdirSync(path.join(outputDir, 'assets')).filter(file => /^SupportTicketsView-.*\.css$/.test(file))) {
+    fs.copyFileSync(path.join(outputDir, 'assets', css), path.join(releaseDirectory, css));
+  }
+
+  let routeSource = fs.readFileSync(routeAsset, 'utf8');
+  const routeAnchor = '{path:"/admin",redirect:"/admin/dashboard"}';
+  if (routeSource.split(routeAnchor).length !== 2) throw new Error('Expected Kedaya admin route anchor');
+  routeSource = routeSource.replace(routeAnchor,
+    `{path:"/tickets",name:"SupportTickets",component:()=>g(()=>import("${releasePrefix}/tickets-user.js")),meta:{requiresAuth:!0,title:"Ticket System",titleKey:"nav.supportTickets"}},{path:"/admin/tickets",name:"AdminSupportTickets",component:()=>g(()=>import("${releasePrefix}/tickets-admin.js")),meta:{requiresAuth:!0,requiresAdmin:!0,title:"Ticket System",titleKey:"nav.supportTickets"}},{path:"/admin",redirect:"/admin/dashboard"}`);
+    fs.writeFileSync(routeAsset, routeSource, 'utf8');
+  };
   const integration = path.join(outputDir, 'integration');
   fs.mkdirSync(integration, { recursive: true });
   copyTree(path.join(root, 'runtime'), integration);
@@ -142,6 +209,9 @@ export function assemble({ homeDir, outputDir = homeDir }) {
     }
     publishedAssets.push({ file: releasePrefix + asset.path, sha256: hash(target) });
   }
+  ticketAssetSetup({ releasePrefix, releaseDirectory, routeAsset: path.join(releaseDirectory, entries.console.script.slice(1)) });
+  const patchedConsoleAsset = publishedAssets.find(asset => asset.file === releasePrefix + entries.console.script);
+  if (patchedConsoleAsset) patchedConsoleAsset.sha256 = hash(path.join(outputDir, patchedConsoleAsset.file));
   entries.console.script = releasePrefix + entries.console.script;
   entries.console.styles = entries.console.styles.map(file => releasePrefix + file);
   const nativeLayoutStyles = fs.readdirSync(path.join(homeDir, 'assets')).filter(file => /^AppHeader-.*\.css$/.test(file)).map(file => '/assets/' + file);
@@ -151,6 +221,7 @@ export function assemble({ homeDir, outputDir = homeDir }) {
     styles: [...entries.home.styles, ...nativeLayoutStyles, ...entries.console.styles, releasePrefix + '/assets/ConsoleAtmosphere-M5YVlMLF.css', releasePrefix + '/console.css'],
   };
   entries.console.styles.push(releasePrefix + '/console.css');
+  for (const css of fs.readdirSync(releaseDirectory).filter(file => /^SupportTicketsView-.*\.css$/.test(file))) entries.console.styles.push(releasePrefix + '/' + css);
   fs.writeFileSync(path.join(integration, 'entries.js'), `/** @brief Generated application entry descriptors. */\nexport const entries = ${JSON.stringify(entries, null, 2)};\n`, 'utf8');
   fs.copyFileSync(path.join(integration, 'entries.js'), path.join(releaseDirectory, 'entries.js'));
   fs.writeFileSync(path.join(outputDir, 'index.html'), `<!doctype html>

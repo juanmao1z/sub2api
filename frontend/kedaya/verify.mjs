@@ -51,19 +51,22 @@ test('production entry has isolated styles and no preview account initialization
   assert.ok(!html.includes('__APP_CONFIG__='));
 });
 
-test('site ticket and custom pages use their complete native implementation', () => {
-  for (const route of ['/tickets', '/tickets/', '/admin/tickets', '/custom/cc-switch-guide', '/custom/usage-leaderboard']) assert.equal(runtimeForPath(route), 'native', route);
+test('ticket routes stay inside the console while custom pages use the native implementation', () => {
+  for (const route of ['/tickets', '/tickets/', '/admin/tickets']) assert.equal(runtimeForPath(route), 'console', route);
+  for (const route of ['/custom/cc-switch-guide', '/custom/usage-leaderboard']) assert.equal(runtimeForPath(route), 'native', route);
   assert.equal(runtimeForPath('/home'), 'home');
   assert.equal(runtimeForPath('/dashboard'), 'console');
   assert.equal(runtimeForPath('/admin/users'), 'console');
   assert.equal(manifest.entries.native.script, manifest.entries.home.script);
   const calls = [];
-  const win = { location: { origin: 'https://api.zhouz.online', href: 'https://api.zhouz.online/tickets', pathname: '/tickets', assign: url => calls.push(['assign', url]) }, history: { pushState: (...args) => calls.push(['pushState', ...args]), replaceState() {} }, addEventListener() {}, document: { addEventListener() {} } };
+  const win = { location: { origin: 'https://api.zhouz.online', href: 'https://api.zhouz.online/dashboard', pathname: '/dashboard', assign: url => calls.push(['assign', url]) }, history: { pushState: (...args) => calls.push(['pushState', ...args]), replaceState() {} }, addEventListener() {}, document: { addEventListener() {} } };
   installNavigation(win);
+  win.history.pushState({}, '', '/tickets');
+  win.history.pushState({}, '', '/admin/users');
   win.history.pushState({}, '', '/custom/cc-switch-guide');
-  win.history.pushState({}, '', '/dashboard');
   assert.equal(calls[0][0], 'pushState');
-  assert.deepEqual(calls[1], ['assign', 'https://api.zhouz.online/dashboard']);
+  assert.equal(calls[1][0], 'pushState');
+  assert.deepEqual(calls[2], ['assign', 'https://api.zhouz.online/custom/cc-switch-guide']);
 });
 
 test('Kedaya admin sidebar includes tickets in the shared order and follows subscription settings', () => {
@@ -78,6 +81,16 @@ test('Kedaya admin sidebar includes tickets in the shared order and follows subs
   assert.ok(ticketIndex > pluginIndex);
   assert.ok(announcementIndex > ticketIndex);
   assert.ok(consoleLayout.includes('subscription_enabled'), 'subscription visibility follows public settings');
+});
+
+test('Kedaya console registers user and administrator ticket routes', () => {
+  const routeAsset = manifest.publishedAssets.find(asset => asset.file.endsWith('/index-DlKpmTe8.js'));
+  assert.ok(routeAsset, 'published console router asset is present');
+  const consoleRouter = fs.readFileSync(path.join(output, routeAsset.file), 'utf8');
+  assert.match(consoleRouter, /path:"\/tickets"/);
+  assert.match(consoleRouter, /path:"\/admin\/tickets"/);
+  assert.ok(fs.existsSync(path.join(output, manifest.releasePrefix, 'tickets-user.js')));
+  assert.ok(fs.existsSync(path.join(output, manifest.releasePrefix, 'tickets-admin.js')));
 });
 
 test('published console imports and styles use an immutable release directory', () => {
