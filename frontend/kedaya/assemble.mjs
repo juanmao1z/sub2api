@@ -169,7 +169,8 @@ export const s = { list: () => f.get('/support/tickets'), create: body => f.post
       .replace(/from"\.\/index-[^"]+\.js"/, `from"${releasePrefix}/ticket-bridge.js"`)
       .replace(/from"\.\/supportTickets-[^"]+\.js"/, `from"${releasePrefix}/ticket-bridge.js"`)
       .replace(/from"\.\/apiError-[^"]+\.js"/, `from"${releasePrefix}/ticket-bridge.js"`)
-      .replace(/from"\.\/vendor-i18n-[^"]+\.js"/, `from"${releasePrefix}/ticket-bridge.js"`);
+      .replace(/from"\.\/vendor-i18n-[^"]+\.js"/, `from"${releasePrefix}/ticket-bridge.js"`)
+      .replace(/(from|import)"\.\/([^"]+)"/g, (_, syntax, asset) => `${syntax}"/assets/${asset}"`);
     fs.writeFileSync(path.join(releaseDirectory, outputName), source, 'utf8');
   }
   prepareTicketChunk(userTicketScript, 'tickets-user.js');

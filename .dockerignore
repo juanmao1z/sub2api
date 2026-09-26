@@ -30,6 +30,13 @@ Thumbs.db
 # Build artifacts
 dist/
 build/
+/deploy-artifacts/
+/build-local/
+/backend/build-local/
+/backend/internal/web/dist/
+/.tmp/
+*.tar
+*.tar.gz
 
 # Node modules (will be installed in container)
 frontend/node_modules/
