@@ -95,6 +95,10 @@ export function assemble({ homeDir, outputDir = homeDir }) {
     'Ut({storageKey:P.value?"admin_guide":"user_guide",autoStart:!1})',
     'Disable automatic onboarding tour startup in the pinned console.');
   patch('assets/AppLayout.vue_vue_type_script_setup_true_lang-D-wpKinR.js',
+    'l.isSimpleMode||!(((d=l.user)==null?void 0:d.role)==="admin")||y()||($=setTimeout(()=>{W()},f.AUTO_START_DELAY_MS))',
+    'i.autoStart===false||l.isSimpleMode||!(((d=l.user)==null?void 0:d.role)==="admin")||y()||($=setTimeout(()=>{W()},f.AUTO_START_DELAY_MS))',
+    'Make the autoStart option effective so the console does not block navigation with an onboarding overlay.');
+  patch('assets/AppLayout.vue_vue_type_script_setup_true_lang-D-wpKinR.js',
     '{path:"/ip-allowlist",label:l("nav.ipAllowlist"),icon:ue},',
     '',
     'Apply the requested console menu selection.');
@@ -121,7 +125,12 @@ export function assemble({ homeDir, outputDir = homeDir }) {
 
   const ticketAssetSetup = ({ releasePrefix, releaseDirectory, routeAsset }) => {
     const consoleVendorVue = referenceManifest.assets.find(asset => asset.path.startsWith('/assets/vendor-vue-') && asset.path.endsWith('.js'));
-    if (!consoleVendorVue) throw new Error('Expected the pinned console Vue runtime asset');
+    const consoleUseClipboard = referenceManifest.assets.find(asset => asset.path.startsWith('/assets/useClipboard-') && asset.path.endsWith('.js'));
+    const consoleVendorMisc = referenceManifest.assets.find(asset => asset.path.startsWith('/assets/vendor-misc-') && asset.path.endsWith('.js'));
+    const consoleLocaleSwitcher = referenceManifest.assets.find(asset => asset.path.startsWith('/assets/LocaleSwitcher-') && asset.path.endsWith('.js'));
+    if (!consoleVendorVue || !consoleUseClipboard || !consoleVendorMisc || !consoleLocaleSwitcher) {
+      throw new Error('Expected the pinned console runtime assets');
+    }
     const nativeTicketScripts = fs.readdirSync(path.join(outputDir, 'assets')).filter(file => /^SupportTicketsView-.*\.js$/.test(file));
     const userTicketScript = nativeTicketScripts.find(file => !fs.readFileSync(path.join(outputDir, 'assets', file), 'utf8').includes('adminList'));
     const adminTicketScript = nativeTicketScripts.find(file => fs.readFileSync(path.join(outputDir, 'assets', file), 'utf8').includes('adminList'));
@@ -170,7 +179,10 @@ export const s = { list: () => f.get('/support/tickets'), create: body => f.post
       .replace(/from"\.\/supportTickets-[^"]+\.js"/, `from"${releasePrefix}/ticket-bridge.js"`)
       .replace(/from"\.\/apiError-[^"]+\.js"/, `from"${releasePrefix}/ticket-bridge.js"`)
       .replace(/from"\.\/vendor-i18n-[^"]+\.js"/, `from"${releasePrefix}/ticket-bridge.js"`)
-      .replace(/(from|import)"\.\/([^"]+)"/g, (_, syntax, asset) => `${syntax}"/assets/${asset}"`);
+      .replace(/import"\.\/AppHeader[^\"]+\.js";?/g, '')
+      .replace(/import"\.\/useClipboard-[^\"]+\.js";?/g, `import"${releasePrefix}${consoleUseClipboard.path}";`)
+      .replace(/import"\.\/vendor-misc-[^\"]+\.js";?/g, `import"${releasePrefix}${consoleVendorMisc.path}";`)
+      .replace(/import"\.\/LocaleSwitcher-[^\"]+\.js";?/g, `import"${releasePrefix}${consoleLocaleSwitcher.path}";`);
     fs.writeFileSync(path.join(releaseDirectory, outputName), source, 'utf8');
   }
   prepareTicketChunk(userTicketScript, 'tickets-user.js');

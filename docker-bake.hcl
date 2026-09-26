@@ -14,6 +14,10 @@ variable "DATE" {
   default = ""
 }
 
+variable "PLATFORM" {
+  default = "linux/arm64"
+}
+
 group "default" {
   targets = ["app"]
 }
@@ -21,7 +25,7 @@ group "default" {
 target "app" {
   context    = "."
   dockerfile = "Dockerfile"
-  platforms  = ["linux/arm64"]
+  platforms  = [PLATFORM]
   tags       = [IMAGE]
   output     = ["type=docker"]
   args = {

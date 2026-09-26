@@ -14,10 +14,13 @@ $PSNativeCommandUseErrorActionPreference = $true
 $repo = Split-Path -Parent $PSScriptRoot
 $workspace = Split-Path -Parent $repo
 $workspaceConfigPath = Join-Path $workspace 'workspace.json'
+$targetPlatform = 'linux/arm64'
 if (Test-Path -LiteralPath $workspaceConfigPath) {
     $workspaceConfig = Get-Content -LiteralPath $workspaceConfigPath -Raw -Encoding UTF8 | ConvertFrom-Json
     $targetPlatform = [string]$workspaceConfig.target.platform
-    if ($targetPlatform -ne 'linux/arm64') { throw "workspace.json 的目标平台 '$targetPlatform' 不是 linux/arm64" }
+    if ([string]::IsNullOrWhiteSpace($targetPlatform) -or $targetPlatform -notmatch '^linux/(amd64|arm64)$') {
+        throw "workspace.json 的目标平台 '$targetPlatform' 无法用于当前 Docker 构建"
+    }
     if (-not $Builder) { $Builder = [string]$workspaceConfig.target.buildxBuilder }
     if (-not $Tag) { $Tag = [string](@($workspaceConfig.projects | Where-Object id -eq 'sub2api-custom')[0].build.defaultTag) }
     if ($UseProxy) {
@@ -48,6 +51,7 @@ try {
     $arguments = @(
         'buildx', 'bake', '--builder', $Builder,
         '--file', 'docker-bake.hcl',
+        '--set', "app.platform=$targetPlatform",
         '--set', "app.tags=$Tag",
         '--set', "app.args.VERSION=$version",
         '--set', "app.args.COMMIT=$commit",
