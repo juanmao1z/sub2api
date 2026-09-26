@@ -106,11 +106,9 @@ describe('user ticket workspace', () => {
   it('opens the inline composer from an empty inbox', async () => {
     api.list.mockResolvedValue({ data: [] })
     const wrapper = await mountPage()
-    expect(wrapper.get('.ticket-list-empty').text()).toContain('No tickets yet')
-    await wrapper.get('.ticket-detail-empty button').trigger('click')
-    await flushPromises()
     expect(wrapper.find('.ticket-create-form').exists()).toBe(true)
-    expect(wrapper.find('.ticket-detail-empty').exists()).toBe(false)
+    expect(wrapper.get('.ticket-history').classes()).toContain('ticket-history-composer')
+    expect(wrapper.get('.ticket-detail-empty').text()).toContain('New Ticket')
     expect(wrapper.find('[role="dialog"]').exists()).toBe(false)
   })
 
@@ -130,15 +128,17 @@ describe('user ticket workspace', () => {
     expect(wrapper.get('.ticket-panel-heading').text()).toContain('Question 4')
   })
 
-  it('replaces the right-hand empty state with an inline form while retaining history and drafts', async () => {
+  it('shows the composer in the left pane and retains drafts across navigation', async () => {
     const wrapper = await mountPage()
     expect(wrapper.get('.ticket-detail-empty').text()).toContain('Select a ticket')
     await compose(wrapper)
     expect(wrapper.find('[role="dialog"]').exists()).toBe(false)
-    expect(wrapper.find('.ticket-detail-empty').exists()).toBe(false)
-    expect(wrapper.findAll('.ticket-list-item')).toHaveLength(3)
+    expect(wrapper.get('.ticket-history').classes()).toContain('ticket-history-composer')
+    expect(wrapper.find('.ticket-list-item').exists()).toBe(false)
+    expect(wrapper.get('.ticket-detail-empty').text()).toContain('New Ticket')
     await fillDraft(wrapper)
-    await wrapper.findAll('.ticket-list-item')[0].trigger('click')
+    await wrapper.get('.ticket-create-form .ticket-button').trigger('click')
+    await wrapper.get('[data-status="OPEN"] .ticket-list-item').trigger('click')
     await flushPromises()
     expect(wrapper.get('.ticket-conversation').text()).toContain('Original issue 1')
     await compose(wrapper)

@@ -25,54 +25,18 @@
       </header>
 
       <div class="ticket-workspace">
-        <aside class="ticket-history" :aria-label="t('support.title')">
-          <div class="ticket-history-heading"><h2>{{ t('support.title') }}</h2><span class="ticket-count">{{ t('support.ticketCount', { count: tickets.length }) }}</span></div>
-          <div class="ticket-status-filters">
-            <button v-for="status in statuses" :key="status" type="button" :aria-pressed="statusFilter === status" @click="statusFilter = statusFilter === status ? 'ALL' : status">
-              <span class="ticket-dot" :class="`ticket-dot-${status.toLowerCase()}`"></span>
-              {{ t(`support.status.${status}`) }}<span>{{ tickets.filter(ticket => ticket.status === status).length }}</span>
-            </button>
-          </div>
-          <div class="ticket-list" :aria-busy="loading">
-            <div v-if="loading && !tickets.length" class="ticket-list-empty" role="status">{{ t('common.loading') }}</div>
-            <div v-else-if="listError" class="ticket-list-empty" role="alert">
-              <Icon name="refresh" size="lg" /><p>{{ t('support.loadFailed') }}</p>
-              <button class="ticket-button" type="button" @click="load">{{ t('support.retry') }}</button>
-            </div>
-            <template v-else-if="filteredTickets.length">
-              <section v-for="group in ticketGroups" :key="group.status" class="ticket-group" :data-status="group.status">
-                <h3>
-                  <button :id="`ticket-group-heading-${group.status}`" type="button" class="ticket-group-toggle" :aria-expanded="expandedGroups[group.status]" :aria-controls="`ticket-group-items-${group.status}`" @click="expandedGroups[group.status] = !expandedGroups[group.status]">
-                    <Icon name="chevronRight" size="sm" class="ticket-group-chevron" :class="{ 'ticket-group-chevron-open': expandedGroups[group.status] }" aria-hidden="true" />
-                    <span class="ticket-dot" :class="`ticket-dot-${group.status.toLowerCase()}`"></span>
-                    <span>{{ t(`support.status.${group.status}`) }}</span><span class="ticket-group-count">{{ group.items.length }}</span>
-                  </button>
-                </h3>
-                <div v-show="expandedGroups[group.status]" :id="`ticket-group-items-${group.status}`" role="region" :aria-labelledby="`ticket-group-heading-${group.status}`">
-                  <button v-for="ticket in group.items" :key="ticket.id" type="button" class="ticket-list-item" :class="{ 'ticket-list-item-active': !showCreate && activeTicketId === ticket.id }" :aria-pressed="!showCreate && activeTicketId === ticket.id" :disabled="busy" @click="openTicket(ticket.id)">
-                    <span class="ticket-list-meta"><span>#{{ ticket.id }} · {{ t(ticket.type === 'REFUND' ? 'support.refund' : 'support.suggestion') }}</span><time :datetime="ticket.updated_at">{{ formatDate(ticket.updated_at, true) }}</time></span>
-                    <span class="ticket-list-subject">{{ ticket.subject }}</span>
-                    <span class="ticket-list-description">{{ ticket.description }}</span>
-                    <span class="ticket-status"><span class="ticket-dot" :class="`ticket-dot-${ticket.status.toLowerCase()}`"></span>{{ t(`support.status.${ticket.status}`) }}</span>
-                  </button>
-                </div>
-              </section>
-            </template>
-            <div v-else class="ticket-list-empty">
-              <span class="ticket-empty-icon"><Icon :name="tickets.length ? 'search' : 'chat'" size="lg" /></span>
-              <h3>{{ t(tickets.length ? 'support.noMatches' : 'support.empty') }}</h3>
-              <p>{{ t(tickets.length ? 'support.changeFilters' : 'support.historyHint') }}</p>
-              <button v-if="tickets.length" type="button" class="ticket-button" @click="resetFilters">{{ t('support.resetFilters') }}</button>
-            </div>
-          </div>
-        </aside>
-
-        <section ref="detailPanel" class="ticket-detail" :aria-label="t(showCreate ? 'support.newTicket' : 'support.details')" :aria-busy="detailLoading">
+        <aside ref="composePanel" class="ticket-history" :class="{ 'ticket-history-composer': showCreate }" :aria-label="t(showCreate ? 'support.newTicket' : 'support.title')">
           <template v-if="showCreate">
-            <header class="ticket-panel-heading">
-              <div><span class="ticket-eyebrow">{{ t('support.contactSupport') }}</span><h2>{{ t('support.newTicket') }}</h2><p>{{ t('support.createHint') }}</p></div>
-              <button type="button" class="ticket-icon-button" :aria-label="t('common.cancel')" :disabled="busy" @click="showCreate = false"><Icon name="x" size="sm" /></button>
-            </header>
+            <div class="ticket-composer-heading">
+              <div>
+                <span class="ticket-eyebrow">{{ t('support.contactSupport') }}</span>
+                <h2>{{ t('support.newTicket') }}</h2>
+                <p>{{ t('support.createHint') }}</p>
+              </div>
+              <button type="button" class="ticket-icon-button" :aria-label="t('support.title')" :title="t('support.title')" :disabled="busy" @click="showCreate = false">
+                <Icon name="chevronRight" size="sm" />
+              </button>
+            </div>
             <div class="ticket-form-scroll">
               <form class="ticket-create-form" @submit.prevent="createTicket">
                 <fieldset :disabled="busy" class="ticket-fields">
@@ -86,10 +50,10 @@
                       </label>
                     </div>
                   </fieldset>
-                  <div class="ticket-field"><label for="ticket-subject">{{ t('support.subject') }}</label><input id="ticket-subject" ref="subjectInput" v-model="form.subject" required :placeholder="t('support.subjectPlaceholder')" /></div>
+                  <div class="ticket-field"><label for="ticket-subject">{{ t('support.subject') }}</label><input id="ticket-subject" ref="subjectInput" v-model="form.subject" required autocomplete="off" :placeholder="t('support.subjectPlaceholder')" /></div>
                   <div v-if="form.type === 'REFUND'" class="ticket-refund-fields">
                     <div class="ticket-field"><label for="ticket-order">{{ t('support.orderId') }}</label><input id="ticket-order" v-model.number="form.order_id" type="number" min="1" step="1" required :placeholder="t('support.orderPlaceholder')" /></div>
-                    <div class="ticket-field"><label for="ticket-contact">{{ t('support.contact') }}</label><input id="ticket-contact" v-model="form.contact" required :placeholder="t('support.contactPlaceholder')" /></div>
+                    <div class="ticket-field"><label for="ticket-contact">{{ t('support.contact') }}</label><input id="ticket-contact" v-model="form.contact" required autocomplete="email" :placeholder="t('support.contactPlaceholder')" /></div>
                   </div>
                   <div class="ticket-field"><label for="ticket-description">{{ t('support.description') }}</label><textarea id="ticket-description" v-model="form.description" rows="7" required :placeholder="t('support.descriptionPlaceholder')" /></div>
                   <p class="ticket-form-note"><Icon name="lock" size="sm" />{{ t('support.privacyHint') }}</p>
@@ -98,7 +62,51 @@
               </form>
             </div>
           </template>
-          <div v-else-if="detailLoading" class="ticket-detail-empty" role="status"><Icon name="refresh" size="lg" class="animate-spin" /><p>{{ t('common.loading') }}</p></div>
+          <template v-else>
+            <div class="ticket-history-heading"><h2>{{ t('support.title') }}</h2><span class="ticket-count">{{ t('support.ticketCount', { count: tickets.length }) }}</span></div>
+            <div class="ticket-status-filters">
+              <button v-for="status in statuses" :key="status" type="button" :aria-pressed="statusFilter === status" @click="statusFilter = statusFilter === status ? 'ALL' : status">
+                <span class="ticket-dot" :class="`ticket-dot-${status.toLowerCase()}`"></span>
+                {{ t(`support.status.${status}`) }}<span>{{ tickets.filter(ticket => ticket.status === status).length }}</span>
+              </button>
+            </div>
+            <div class="ticket-list" :aria-busy="loading">
+              <div v-if="loading && !tickets.length" class="ticket-list-empty" role="status">{{ t('common.loading') }}</div>
+              <div v-else-if="listError" class="ticket-list-empty" role="alert">
+                <Icon name="refresh" size="lg" /><p>{{ t('support.loadFailed') }}</p>
+                <button class="ticket-button" type="button" @click="load">{{ t('support.retry') }}</button>
+              </div>
+              <template v-else-if="filteredTickets.length">
+                <section v-for="group in ticketGroups" :key="group.status" class="ticket-group" :data-status="group.status">
+                  <h3>
+                    <button :id="`ticket-group-heading-${group.status}`" type="button" class="ticket-group-toggle" :aria-expanded="expandedGroups[group.status]" :aria-controls="`ticket-group-items-${group.status}`" @click="expandedGroups[group.status] = !expandedGroups[group.status]">
+                      <Icon name="chevronRight" size="sm" class="ticket-group-chevron" :class="{ 'ticket-group-chevron-open': expandedGroups[group.status] }" aria-hidden="true" />
+                      <span class="ticket-dot" :class="`ticket-dot-${group.status.toLowerCase()}`"></span>
+                      <span>{{ t(`support.status.${group.status}`) }}</span><span class="ticket-group-count">{{ group.items.length }}</span>
+                    </button>
+                  </h3>
+                  <div v-show="expandedGroups[group.status]" :id="`ticket-group-items-${group.status}`" role="region" :aria-labelledby="`ticket-group-heading-${group.status}`">
+                    <button v-for="ticket in group.items" :key="ticket.id" type="button" class="ticket-list-item" :class="{ 'ticket-list-item-active': !showCreate && activeTicketId === ticket.id }" :aria-pressed="!showCreate && activeTicketId === ticket.id" :disabled="busy" @click="openTicket(ticket.id)">
+                      <span class="ticket-list-meta"><span>#{{ ticket.id }} · {{ t(ticket.type === 'REFUND' ? 'support.refund' : 'support.suggestion') }}</span><time :datetime="ticket.updated_at">{{ formatDate(ticket.updated_at, true) }}</time></span>
+                      <span class="ticket-list-subject">{{ ticket.subject }}</span>
+                      <span class="ticket-list-description">{{ ticket.description }}</span>
+                      <span class="ticket-status"><span class="ticket-dot" :class="`ticket-dot-${ticket.status.toLowerCase()}`"></span>{{ t(`support.status.${ticket.status}`) }}</span>
+                    </button>
+                  </div>
+                </section>
+              </template>
+              <div v-else class="ticket-list-empty">
+                <span class="ticket-empty-icon"><Icon :name="tickets.length ? 'search' : 'chat'" size="lg" /></span>
+                <h3>{{ t(tickets.length ? 'support.noMatches' : 'support.empty') }}</h3>
+                <p>{{ t(tickets.length ? 'support.changeFilters' : 'support.historyHint') }}</p>
+                <button v-if="tickets.length" type="button" class="ticket-button" @click="resetFilters">{{ t('support.resetFilters') }}</button>
+              </div>
+            </div>
+          </template>
+        </aside>
+
+        <section ref="detailPanel" class="ticket-detail" :aria-label="t('support.details')" :aria-busy="detailLoading">
+          <div v-if="detailLoading" class="ticket-detail-empty" role="status"><Icon name="refresh" size="lg" class="animate-spin" /><p>{{ t('common.loading') }}</p></div>
           <div v-else-if="detailError" class="ticket-detail-empty" role="alert"><span class="ticket-empty-icon"><Icon name="chat" size="lg" /></span><h2>{{ t('support.loadFailed') }}</h2><button type="button" class="ticket-button" @click="activeTicketId !== null && openTicket(activeTicketId)">{{ t('support.retry') }}</button></div>
           <template v-else-if="selected">
             <header class="ticket-panel-heading">
@@ -118,9 +126,9 @@
           </template>
           <div v-else class="ticket-detail-empty">
             <span class="ticket-empty-icon ticket-empty-icon-large"><Icon name="chat" size="xl" /></span>
-            <h2>{{ t(tickets.length ? 'support.selectTicket' : 'support.empty') }}</h2>
-            <p>{{ t(tickets.length ? 'support.selectHint' : 'support.emptyHint') }}</p>
-            <button type="button" class="ticket-button ticket-button-primary" @click="startCreate"><Icon name="plus" size="sm" />{{ t('support.newTicket') }}</button>
+            <h2>{{ t(showCreate ? 'support.newTicket' : tickets.length ? 'support.selectTicket' : 'support.empty') }}</h2>
+            <p>{{ t(showCreate ? 'support.createHint' : tickets.length ? 'support.selectHint' : 'support.emptyHint') }}</p>
+            <button v-if="!showCreate" type="button" class="ticket-button ticket-button-primary" @click="startCreate"><Icon name="plus" size="sm" />{{ t('support.newTicket') }}</button>
           </div>
         </section>
       </div>
@@ -155,6 +163,7 @@ const query = ref('')
 const statusFilter = ref<SupportTicketStatus | 'ALL'>('ALL')
 const reply = ref('')
 const detailPanel = ref<HTMLElement | null>(null)
+const composePanel = ref<HTMLElement | null>(null)
 const subjectInput = ref<HTMLInputElement | null>(null)
 const statuses: SupportTicketStatus[] = ['OPEN', 'RESOLVED', 'CLOSED']
 const expandedGroups = reactive<Record<SupportTicketStatus, boolean>>({ OPEN: true, RESOLVED: false, CLOSED: false })
@@ -199,7 +208,10 @@ async function load() {
   const revision = historyRevision
   try {
     const { data } = await supportTicketsAPI.list()
-    if (revision === historyRevision) tickets.value = data ?? []
+    if (revision === historyRevision) {
+      tickets.value = data ?? []
+      if (!tickets.value.length && !selected.value) showCreate.value = true
+    }
   } catch (error) {
     if (revision === historyRevision) { listError.value = true; reportError(error) }
   }
@@ -219,7 +231,10 @@ function updateHistory(ticket: SupportTicket) {
 /** @brief Bring the right panel into view on narrow screens without scrolling desktop history. */
 async function revealPanel() {
   await nextTick()
-  if (window.matchMedia('(max-width: 900px)').matches) detailPanel.value?.scrollIntoView({ block: 'start' })
+  if (window.matchMedia('(max-width: 900px)').matches) {
+    const panel = showCreate.value ? composePanel.value : detailPanel.value
+    panel?.scrollIntoView({ block: 'start' })
+  }
 }
 
 /** @brief Show the inline composer and retain its draft when visiting history. */

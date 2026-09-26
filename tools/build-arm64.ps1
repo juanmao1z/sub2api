@@ -33,7 +33,7 @@ if ($UseProxy) {
     $env:HTTPS_PROXY = $proxy
     $env:NO_PROXY = $noProxy
     $env:http_proxy = $proxy
-    $env:https_proxy = $noProxy
+    $env:https_proxy = $proxy
     $env:no_proxy = $noProxy
 }
 if (-not $Builder) { $Builder = 'desktop-linux' }
