@@ -125,6 +125,7 @@ func SecurityHeaders(cfg config.CSPConfig, getFrameSrcOrigins func() []string) g
 
 	return func(c *gin.Context) {
 		finalPolicy := policy
+		canvasAsset := c.Request.URL.Path == "/canvas" || strings.HasPrefix(c.Request.URL.Path, "/canvas/")
 		if getFrameSrcOrigins != nil {
 			for _, origin := range getFrameSrcOrigins() {
 				if origin != "" {
@@ -134,7 +135,12 @@ func SecurityHeaders(cfg config.CSPConfig, getFrameSrcOrigins func() []string) g
 		}
 
 		c.Header("X-Content-Type-Options", "nosniff")
-		c.Header("X-Frame-Options", "DENY")
+		if canvasAsset {
+			c.Header("X-Frame-Options", "SAMEORIGIN")
+			finalPolicy = setCSPDirective(finalPolicy, "frame-ancestors", "'self'")
+		} else {
+			c.Header("X-Frame-Options", "DENY")
+		}
 		c.Header("Referrer-Policy", "strict-origin-when-cross-origin")
 		if isAPIRoutePath(c) {
 			c.Next()
@@ -155,6 +161,18 @@ func SecurityHeaders(cfg config.CSPConfig, getFrameSrcOrigins func() []string) g
 		}
 		c.Next()
 	}
+}
+
+func setCSPDirective(policy, directive, value string) string {
+	directives := strings.Split(policy, ";")
+	for i, rawDirective := range directives {
+		fields := strings.Fields(rawDirective)
+		if len(fields) > 0 && fields[0] == directive {
+			directives[i] = directive + " " + value
+			return strings.Join(directives, ";")
+		}
+	}
+	return addToDirective(policy, directive, value)
 }
 
 func isAPIRoutePath(c *gin.Context) bool {

@@ -1,4 +1,4 @@
-/** @file @brief Isolate homepage, site features, and Kedaya console application documents. */
+/** @file @brief Keep the homepage, custom pages, and console in their intended application documents. */
 
 /** @brief Identify the original homepage entry, including root aliases.
  * @param pathname Absolute URL pathname. @return Whether the homepage runtime owns it.
@@ -12,7 +12,7 @@ export function isHomePath(pathname) {
  */
 export function runtimeForPath(pathname) {
   if (isHomePath(pathname)) return 'home';
-  if (/^\/(?:admin\/)?tickets\/?$/.test(pathname) || pathname.startsWith('/custom/')) return 'native';
+  if (pathname.startsWith('/custom/')) return 'native';
   return 'console';
 }
 
