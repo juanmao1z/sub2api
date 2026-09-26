@@ -135,9 +135,44 @@ export function assemble({ homeDir, outputDir = homeDir }) {
     const userTicketScript = nativeTicketScripts.find(file => !fs.readFileSync(path.join(outputDir, 'assets', file), 'utf8').includes('adminList'));
     const adminTicketScript = nativeTicketScripts.find(file => fs.readFileSync(path.join(outputDir, 'assets', file), 'utf8').includes('adminList'));
     if (!userTicketScript || !adminTicketScript) throw new Error('Expected native user and administrator ticket chunks');
+
+    /** @brief Read Vite's case-sensitive export alias table from a vendor module. */
+    function readExportAliases(file) {
+      const source = fs.readFileSync(file, 'utf8');
+      const match = source.match(/export\{([^}]*)\}\s*;?\s*$/);
+      if (!match) throw new Error(`Expected an export table in ${file}`);
+      const aliases = new Map();
+      for (const specifier of match[1].split(',')) {
+        const parts = specifier.trim().split(/\s+as\s+/);
+        if (!parts[0]) continue;
+        aliases.set(parts[1] || parts[0], parts[0]);
+      }
+      return aliases;
+    }
+
+    /** @brief Map the native chunk's Vue aliases to the pinned console bundle. */
+    const adminTicketSource = fs.readFileSync(path.join(outputDir, 'assets', adminTicketScript), 'utf8');
+    const nativeVueImport = adminTicketSource.match(/from"\.\/(vendor-vue-[^"]+\.js)"/);
+    if (!nativeVueImport) throw new Error('Expected the native ticket chunk Vue import');
+    const nativeVueFile = path.join(outputDir, 'assets', nativeVueImport[1]);
+    const nativeVueAliases = readExportAliases(nativeVueFile);
+    const consoleVueAliases = readExportAliases(path.join(outputDir, consoleVendorVue.path.slice(1)));
+    const consoleAliasByInternal = new Map();
+    for (const [alias, internal] of consoleVueAliases) {
+      if (consoleAliasByInternal.has(internal)) throw new Error(`Ambiguous console Vue export for ${internal}`);
+      consoleAliasByInternal.set(internal, alias);
+    }
+    const nativeToConsoleVueAlias = new Map();
+    for (const [alias, internal] of nativeVueAliases) {
+      const consoleAlias = consoleAliasByInternal.get(internal);
+      if (consoleAlias) nativeToConsoleVueAlias.set(alias, consoleAlias);
+    }
+    const nativeDefineComponent = nativeVueAliases.get('d');
+    const consoleDefineComponent = consoleAliasByInternal.get(nativeDefineComponent);
+    if (!consoleDefineComponent) throw new Error('Unable to map Vue defineComponent into the console bundle');
     const ticketBridge = path.join(releaseDirectory, 'ticket-bridge.js');
     fs.writeFileSync(ticketBridge, `/** @brief Adapt native ticket services to the Kedaya console runtime. */
-import { d as defineComponent } from '${releasePrefix}${consoleVendorVue.path}';
+import { ${consoleDefineComponent} as defineComponent } from '${releasePrefix}${consoleVendorVue.path}';
 
 const messages = {
   'zh': {
@@ -173,7 +208,15 @@ export const s = { list: () => f.get('/support/tickets'), create: body => f.post
 
   function prepareTicketChunk(sourceName, outputName) {
     let source = fs.readFileSync(path.join(outputDir, 'assets', sourceName), 'utf8');
-    source = source.replace(/from"\.\/vendor-vue-[^"]+\.js"/, `from"${releasePrefix}${consoleVendorVue.path}"`)
+    source = source.replace(/import\{([^}]*)\}from"\.\/vendor-vue-[^"]+\.js"/, (match, specifiers) => {
+      const mapped = specifiers.split(',').map(specifier => {
+        const parts = specifier.trim().split(/\s+as\s+/);
+        const consoleAlias = nativeToConsoleVueAlias.get(parts[0]);
+        if (!consoleAlias) throw new Error(`Unable to map native Vue export '${parts[0]}' in ${sourceName}`);
+        return parts[1] ? `${consoleAlias} as ${parts[1]}` : consoleAlias;
+      }).join(',');
+      return `import{${mapped}}from"${releasePrefix}${consoleVendorVue.path}"`;
+    })
       .replace(/from"\.\/AppLayout\.vue_vue_type_script_setup_true_lang-[^"]+\.js"/, `from"${releasePrefix}/assets/AppLayout.vue_vue_type_script_setup_true_lang-D-wpKinR.js"`)
       .replace(/from"\.\/index-[^"]+\.js"/, `from"${releasePrefix}/ticket-bridge.js"`)
       .replace(/from"\.\/supportTickets-[^"]+\.js"/, `from"${releasePrefix}/ticket-bridge.js"`)
