@@ -190,7 +190,10 @@ export function u() {
 
 export function a() { return { showError: message => console.error(message), showSuccess: message => console.info(message) }; }
 export const _ = defineComponent({ name: 'TicketIcon', setup: () => () => null });
-export function B(component) { return component; }
+export function B(component, descriptors = []) {
+  for (const [key, value] of descriptors) component[key] = value;
+  return component;
+}
 export function b(error) { return error?.message || 'Operation failed'; }
 
 async function request(method, url, body) {
