@@ -12,6 +12,7 @@ import (
 	"github.com/Wei-Shaw/sub2api/internal/config"
 	"github.com/Wei-Shaw/sub2api/internal/handler"
 	"github.com/Wei-Shaw/sub2api/internal/handler/admin"
+	"github.com/Wei-Shaw/sub2api/internal/integration/zammad"
 	"github.com/Wei-Shaw/sub2api/internal/payment"
 	"github.com/Wei-Shaw/sub2api/internal/repository"
 	"github.com/Wei-Shaw/sub2api/internal/securityaudit"
@@ -45,6 +46,17 @@ func initializeApplication(buildInfo handler.BuildInfo) (*Application, error) {
 	if err != nil {
 		return nil, err
 	}
+	zammadClient, err := zammad.NewClient(configConfig.Zammad)
+	if err != nil {
+		return nil, err
+	}
+	zammadIdentityMappingRepository := repository.NewZammadIdentityMappingRepository(db)
+	zammadIdentityService := service.NewZammadIdentityService(zammadClient, zammadIdentityMappingRepository)
+	zammadTicketLinkRepository := repository.NewZammadTicketLinkRepository(db)
+	zammadTicketSyncOutboxRepository := repository.NewZammadTicketSyncOutboxRepository(db)
+	zammadTicketService := service.NewZammadTicketService(zammadClient, zammadIdentityService, zammadTicketLinkRepository, zammadTicketSyncOutboxRepository)
+	zammadTicketApprovalRepository := repository.NewZammadTicketApprovalRepository(db)
+	zammadTicketApprovalService := service.NewZammadTicketApprovalService(zammadTicketApprovalRepository)
 	userRepository := repository.NewUserRepository(client, db)
 	redeemCodeRepository := repository.NewRedeemCodeRepository(client)
 	redisClient := repository.ProvideRedis(configConfig)
@@ -281,7 +293,8 @@ func initializeApplication(buildInfo handler.BuildInfo) (*Application, error) {
 	promptService := securityaudit.NewPromptService(configManager, postgreSQLRepository, redisPayloadStore, openAICompatibleScanner, atomicMetrics)
 	promptAdminHandler := securityaudit.NewPromptAdminHandler(promptService)
 	paymentHandler := admin.NewPaymentHandler(paymentService, paymentConfigService)
-	supportTicketService := service.NewSupportTicketService(client)
+	supportTicketService := service.NewSupportTicketService(client, zammadTicketService)
+	supportTicketService.SetApprovalService(zammadTicketApprovalService)
 	supportTicketHandler := admin.NewSupportTicketHandler(supportTicketService)
 	leaderboardRewardService := service.NewLeaderboardRewardService(db, billingCache, apiKeyAuthCacheInvalidator)
 	leaderboardRewardHandler := admin.NewLeaderboardRewardHandler(leaderboardRewardService)

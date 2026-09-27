@@ -48,6 +48,14 @@ services:
       - AUTO_SETUP=true
 
       # =======================================================================
+      # Zammad ticket integration (staged integration, disabled by default)
+      # =======================================================================
+      - ZAMMAD_ENABLED=${ZAMMAD_ENABLED:-false}
+      - ZAMMAD_BASE_URL=${ZAMMAD_BASE_URL:-https://support.zhouz.online}
+      - ZAMMAD_API_TOKEN=${ZAMMAD_API_TOKEN:-}
+      - ZAMMAD_TIMEOUT_SECONDS=${ZAMMAD_TIMEOUT_SECONDS:-10}
+
+      # =======================================================================
       # Server Configuration
       # =======================================================================
       - SERVER_HOST=0.0.0.0

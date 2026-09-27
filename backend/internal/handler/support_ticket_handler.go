@@ -92,7 +92,11 @@ func (h *SupportTicketHandler) Get(c *gin.Context) {
 		response.ErrorFrom(c, err)
 		return
 	}
-	m, _ := h.svc.Messages(c, id)
+	m, err := h.svc.Messages(c, id)
+	if err != nil {
+		response.ErrorFrom(c, err)
+		return
+	}
 	response.Success(c, gin.H{"ticket": t, "messages": m})
 }
 

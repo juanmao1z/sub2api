@@ -22,7 +22,9 @@ const (
 
 // SupportTicketService provides persistence and workflow operations for support tickets.
 type SupportTicketService struct {
-	client *dbent.Client
+	client   *dbent.Client
+	zammad   *ZammadTicketService
+	approval *ZammadTicketApprovalService
 }
 
 // SupportTicketUser identifies the account that submitted a support ticket.
@@ -39,8 +41,44 @@ type SupportTicketAdminView struct {
 }
 
 // NewSupportTicketService creates a support ticket service.
-func NewSupportTicketService(client *dbent.Client) *SupportTicketService {
-	return &SupportTicketService{client: client}
+func NewSupportTicketService(client *dbent.Client, zammadServices ...*ZammadTicketService) *SupportTicketService {
+	var zammadService *ZammadTicketService
+	if len(zammadServices) > 0 {
+		zammadService = zammadServices[0]
+	}
+	return &SupportTicketService{client: client, zammad: zammadService}
+}
+
+func (s *SupportTicketService) SetApprovalService(approval *ZammadTicketApprovalService) {
+	s.approval = approval
+}
+
+func (s *SupportTicketService) GetApproval(ctx context.Context, ticketID int64) (*ZammadTicketApproval, error) {
+	if s.zammad == nil || s.approval == nil {
+		return nil, infraerrors.BadRequest("ZAMMAD_APPROVAL_UNAVAILABLE", "Zammad approval is not configured")
+	}
+	link, err := s.zammad.LinkForLocalTicket(ctx, ticketID)
+	if err != nil {
+		return nil, err
+	}
+	if link == nil {
+		return nil, infraerrors.NotFound("ZAMMAD_LINK_MISSING", "ticket has no Zammad association")
+	}
+	return s.approval.Get(ctx, link.ID)
+}
+
+func (s *SupportTicketService) DecideApproval(ctx context.Context, ticketID, adminID int64, state, reason string) (*ZammadTicketApproval, error) {
+	if s.zammad == nil || s.approval == nil {
+		return nil, infraerrors.BadRequest("ZAMMAD_APPROVAL_UNAVAILABLE", "Zammad approval is not configured")
+	}
+	link, err := s.zammad.LinkForLocalTicket(ctx, ticketID)
+	if err != nil {
+		return nil, err
+	}
+	if link == nil {
+		return nil, infraerrors.NotFound("ZAMMAD_LINK_MISSING", "ticket has no Zammad association")
+	}
+	return s.approval.Decide(ctx, link.ID, adminID, state, reason)
 }
 
 func (s *SupportTicketService) Create(ctx context.Context, userID int64, typ, subject, description, contact string, orderID *int64) (*dbent.SupportTicket, error) {
@@ -65,6 +103,17 @@ func (s *SupportTicketService) Create(ctx context.Context, userID int64, typ, su
 		orderID = nil
 		contact = ""
 	}
+	var remoteLink *ZammadTicketLink
+	if s.zammad != nil && s.zammad.Enabled() {
+		account, err := s.client.User.Get(ctx, userID)
+		if err != nil {
+			return nil, infraerrors.NotFound("USER_NOT_FOUND", "ticket owner not found")
+		}
+		remoteLink, err = s.zammad.Create(ctx, userID, account.Email, typ, subject, description, contact, orderID)
+		if err != nil {
+			return nil, err
+		}
+	}
 	b := s.client.SupportTicket.Create().SetUserID(userID).SetType(typ).SetSubject(subject).SetDescription(description).SetStatus(SupportTicketStatusOpen)
 	if contact != "" {
 		b.SetContact(contact)
@@ -72,7 +121,16 @@ func (s *SupportTicketService) Create(ctx context.Context, userID int64, typ, su
 	if orderID != nil {
 		b.SetOrderID(*orderID)
 	}
-	return b.Save(ctx)
+	ticket, err := b.Save(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if remoteLink != nil {
+		if err := s.zammad.AttachLocalTicket(ctx, remoteLink, ticket.ID); err != nil {
+			return nil, err
+		}
+	}
+	return ticket, nil
 }
 
 // AdminList returns all tickets with basic submitting-user identity data.
@@ -141,6 +199,40 @@ func (s *SupportTicketService) Get(ctx context.Context, id, userID int64, admin 
 }
 
 func (s *SupportTicketService) Messages(ctx context.Context, id int64) ([]*dbent.SupportTicketMessage, error) {
+	if s.zammad != nil && s.zammad.Enabled() {
+		link, err := s.zammad.LinkForLocalTicket(ctx, id)
+		if err != nil {
+			return nil, err
+		}
+		if link != nil {
+			remoteMessages, err := s.zammad.Messages(ctx, link)
+			if err != nil {
+				return nil, err
+			}
+			ticket, err := s.client.SupportTicket.Get(ctx, id)
+			if err != nil {
+				return nil, err
+			}
+			messages := make([]*dbent.SupportTicketMessage, 0, len(remoteMessages))
+			initialDescriptionSkipped := false
+			for _, remote := range remoteMessages {
+				if !initialDescriptionSkipped && strings.TrimSpace(remote.Body) == strings.TrimSpace(ticket.Description) {
+					initialDescriptionSkipped = true
+					continue
+				}
+				createdAt, _ := time.Parse(time.RFC3339Nano, remote.CreatedAt)
+				messages = append(messages, &dbent.SupportTicketMessage{
+					ID:         remote.ID,
+					TicketID:   id,
+					SenderID:   remote.CreatedBy,
+					SenderType: remote.SenderType,
+					Body:       remote.Body,
+					CreatedAt:  createdAt,
+				})
+			}
+			return messages, nil
+		}
+	}
 	return s.client.SupportTicketMessage.Query().Where(supportticketmessage.TicketIDEQ(id)).Order(dbent.Asc(supportticketmessage.FieldCreatedAt)).All(ctx)
 }
 
@@ -156,6 +248,18 @@ func (s *SupportTicketService) AddMessage(ctx context.Context, ticketID, senderI
 	if t.Status == SupportTicketStatusClosed {
 		return nil, infraerrors.BadRequest("TICKET_CLOSED", "ticket is closed")
 	}
+	if s.zammad != nil && s.zammad.Enabled() {
+		link, linkErr := s.zammad.links.GetByLocalTicketID(ctx, ticketID)
+		if linkErr != nil {
+			return nil, linkErr
+		}
+		if link == nil {
+			return nil, infraerrors.BadRequest("ZAMMAD_LINK_MISSING", "ticket is missing its Zammad association")
+		}
+		if err := s.zammad.Reply(ctx, link, body, senderType == "ADMIN"); err != nil {
+			return nil, err
+		}
+	}
 	m, err := s.client.SupportTicketMessage.Create().SetTicketID(ticketID).SetSenderID(senderID).SetSenderType(senderType).SetBody(body).Save(ctx)
 	if err != nil {
 		return nil, err
@@ -168,6 +272,18 @@ func (s *SupportTicketService) SetStatus(ctx context.Context, id int64, status s
 	status = strings.ToUpper(strings.TrimSpace(status))
 	if status != SupportTicketStatusOpen && status != SupportTicketStatusClosed && status != SupportTicketStatusResolved {
 		return nil, infraerrors.BadRequest("INVALID_STATUS", "invalid ticket status")
+	}
+	if s.zammad != nil && s.zammad.Enabled() {
+		link, linkErr := s.zammad.links.GetByLocalTicketID(ctx, id)
+		if linkErr != nil {
+			return nil, linkErr
+		}
+		if link == nil {
+			return nil, infraerrors.BadRequest("ZAMMAD_LINK_MISSING", "ticket is missing its Zammad association")
+		}
+		if err := s.zammad.SetStatus(ctx, link, status); err != nil {
+			return nil, err
+		}
 	}
 	t, err := s.client.SupportTicket.UpdateOneID(id).SetStatus(status).SetUpdatedAt(time.Now()).Save(ctx)
 	if dbent.IsNotFound(err) {

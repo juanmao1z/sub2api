@@ -45,6 +45,7 @@
             <div class="ticket-admin-controls">
               <div class="ticket-owner"><span class="ticket-empty-icon"><Icon name="user" size="md" /></span><div><strong>{{ selected.user.username || selected.user.email || `#${selected.user.id}` }}</strong><span>{{ selected.user.email }} · #{{ selected.user.id }}</span></div></div>
               <form class="ticket-status-form" @submit.prevent="saveStatus"><label for="admin-ticket-status">{{ t('support.manageStatus') }}</label><div><select id="admin-ticket-status" v-model="nextStatus" class="ticket-filter" :disabled="busy"><option v-for="status in statuses" :key="status" :value="status">{{ t(`support.status.${status}`) }}</option></select><button type="submit" class="ticket-button" :disabled="busy || nextStatus === selected.ticket.status">{{ t(savingStatus ? 'support.savingStatus' : 'support.saveStatus') }}</button></div></form>
+              <form v-if="selected.ticket.type === 'REFUND' && approval" class="ticket-approval-form" @submit.prevent="decideApproval"><label for="admin-ticket-approval">{{ t('support.approvalLabel') }}</label><div><select id="admin-ticket-approval" v-model="nextApproval" class="ticket-filter" :disabled="busy"><option value="PENDING">{{ t('support.approval.PENDING') }}</option><option value="APPROVED">{{ t('support.approval.APPROVED') }}</option><option value="REJECTED">{{ t('support.approval.REJECTED') }}</option></select><button type="submit" class="ticket-button" :disabled="busy || approvalSaving || nextApproval === approval.approval_state || nextApproval === 'PENDING'">{{ t(approvalSaving ? 'support.savingApproval' : 'support.saveApproval') }}</button></div><input v-model="approvalReason" class="ticket-approval-reason" :disabled="busy" :placeholder="t('support.approvalReasonPlaceholder')" :aria-label="t('support.approvalReasonPlaceholder')" /></form>
             </div>
             <div ref="conversation" class="ticket-conversation">
               <div v-if="selected.ticket.order_id || selected.ticket.contact" class="ticket-order-info"><span v-if="selected.ticket.order_id">{{ t('support.orderId') }} · {{ selected.ticket.order_id }}</span><span v-if="selected.ticket.contact">{{ t('support.contact') }} · {{ selected.ticket.contact }}</span></div>
@@ -67,7 +68,7 @@ import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import Icon from '@/components/icons/Icon.vue'
-import { supportTicketsAPI, type SupportTicketAdminView, type SupportTicketMessage, type SupportTicketStatus } from '@/api/supportTickets'
+import { supportTicketsAPI, type SupportTicketAdminView, type SupportTicketApproval, type SupportTicketApprovalState, type SupportTicketMessage, type SupportTicketStatus } from '@/api/supportTickets'
 import { useAppStore } from '@/stores/app'
 import { extractI18nErrorMessage } from '@/utils/apiError'
 
@@ -85,9 +86,13 @@ const listError = ref(false)
 const detailError = ref(false)
 const sending = ref(false)
 const savingStatus = ref(false)
-const busy = computed(() => sending.value || savingStatus.value)
+const approvalSaving = ref(false)
+const busy = computed(() => sending.value || savingStatus.value || approvalSaving.value)
 const reply = ref('')
 const nextStatus = ref<SupportTicketStatus>('OPEN')
+const approval = ref<SupportTicketApproval | null>(null)
+const nextApproval = ref<SupportTicketApprovalState>('PENDING')
+const approvalReason = ref('')
 const statuses: SupportTicketStatus[] = ['OPEN', 'RESOLVED', 'CLOSED']
 const query = ref('')
 const statusFilter = ref<SupportTicketStatus | 'ALL'>('ALL')
@@ -161,11 +166,41 @@ async function openTicket(id: number, clearDraft = true) {
     selected.value = { ...data, messages: data.messages ?? [] }
     if (clearDraft) nextStatus.value = data.ticket.status
     updateHistory(data)
+    approval.value = null
+    nextApproval.value = 'PENDING'
+    approvalReason.value = ''
+    if (supportTicketsAPI.adminGetApproval && data.ticket.type === 'REFUND') {
+      try {
+        const approvalResponse = await supportTicketsAPI.adminGetApproval(id)
+        if (request !== detailRequest) return
+        approval.value = approvalResponse.data
+        nextApproval.value = approvalResponse.data.approval_state
+        approvalReason.value = approvalResponse.data.decision_reason || ''
+      } catch {
+        if (request === detailRequest) approval.value = null
+      }
+    }
   } catch (error) {
     if (request !== detailRequest) return
     detailError.value = true
     reportError(error)
   } finally { if (request === detailRequest) detailLoading.value = false }
+}
+
+/** @brief Persist the administrative decision while keeping the refund execution separate. */
+async function decideApproval() {
+  const state = nextApproval.value
+  if (busy.value || !selected.value || !approval.value || state === 'PENDING' || state === approval.value.approval_state) return
+  if (!supportTicketsAPI.adminDecideApproval) return
+  approvalSaving.value = true
+  try {
+    const { data } = await supportTicketsAPI.adminDecideApproval(selected.value.ticket.id, state, approvalReason.value.trim())
+    approval.value = data
+    nextApproval.value = data.approval_state
+    approvalReason.value = data.decision_reason || ''
+    appStore.showSuccess(t('support.approvalSaved'))
+  } catch (error) { reportError(error) }
+  finally { approvalSaving.value = false }
 }
 
 /** @brief Refresh both panes while preserving an unsent reply and pending status selection. */
@@ -229,10 +264,16 @@ onMounted(load)
 .ticket-status-form label { display: block; margin-bottom: 6px; color: var(--signal-muted); font-size: 11px; }
 .ticket-status-form > div { display: flex; align-items: center; gap: 8px; }
 .ticket-status-form .ticket-filter { max-width: 150px; }
+.ticket-approval-form { min-width: 290px; }
+.ticket-approval-form label { display: block; margin-bottom: 6px; color: var(--signal-muted); font-size: 11px; }
+.ticket-approval-form > div { display: flex; align-items: center; gap: 8px; }
+.ticket-approval-form .ticket-filter { max-width: 150px; }
+.ticket-approval-reason { width: 100%; margin-top: 8px; padding: 7px 9px; border: 1px solid var(--signal-line); border-radius: 6px; background: var(--signal-surface); color: var(--signal-text); font-size: 12px; }
 @media (max-width: 1200px) { .ticket-admin-controls { align-items: flex-start; flex-direction: column; gap: 16px; } }
 @media (max-width: 540px) {
   .ticket-admin-controls { padding: 18px 20px; }
-  .ticket-status-form, .ticket-status-form > div { width: 100%; }
+  .ticket-status-form, .ticket-status-form > div, .ticket-approval-form, .ticket-approval-form > div { width: 100%; }
   .ticket-status-form .ticket-filter { flex: 1; max-width: none; }
+  .ticket-approval-form .ticket-filter { flex: 1; max-width: none; }
 }
 </style>

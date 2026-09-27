@@ -30,6 +30,10 @@ type statusRequest struct {
 type adminMessageRequest struct {
 	Body string `json:"body" binding:"required"`
 }
+type approvalRequest struct {
+	State  string `json:"state" binding:"required"`
+	Reason string `json:"reason"`
+}
 
 // List lists all tickets.
 func (h *SupportTicketHandler) List(c *gin.Context) {
@@ -52,7 +56,11 @@ func (h *SupportTicketHandler) Get(c *gin.Context) {
 		response.ErrorFrom(c, e)
 		return
 	}
-	m, _ := h.svc.Messages(c, id)
+	m, err := h.svc.Messages(c, id)
+	if err != nil {
+		response.ErrorFrom(c, err)
+		return
+	}
 	response.Success(c, gin.H{"ticket": t.Ticket, "user": t.User, "messages": m})
 }
 
@@ -101,4 +109,42 @@ func (h *SupportTicketHandler) SetStatus(c *gin.Context) {
 		return
 	}
 	response.Success(c, t)
+}
+
+// GetApproval returns the approval state for a Zammad-linked ticket.
+func (h *SupportTicketHandler) GetApproval(c *gin.Context) {
+	id, ok := adminTicketID(c)
+	if !ok {
+		return
+	}
+	approval, err := h.svc.GetApproval(c, id)
+	if err != nil {
+		response.ErrorFrom(c, err)
+		return
+	}
+	response.Success(c, approval)
+}
+
+// DecideApproval records an administrative approval decision.
+func (h *SupportTicketHandler) DecideApproval(c *gin.Context) {
+	id, ok := adminTicketID(c)
+	if !ok {
+		return
+	}
+	subject, ok := middleware.GetAuthSubjectFromContext(c)
+	if !ok || subject.UserID <= 0 {
+		response.Unauthorized(c, "Admin user not authenticated")
+		return
+	}
+	var req approvalRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.BadRequest(c, err.Error())
+		return
+	}
+	approval, err := h.svc.DecideApproval(c, id, subject.UserID, req.State, req.Reason)
+	if err != nil {
+		response.ErrorFrom(c, err)
+		return
+	}
+	response.Success(c, approval)
 }
