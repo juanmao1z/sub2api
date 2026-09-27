@@ -96,7 +96,7 @@
                   </fieldset>
                   <div class="ticket-field"><label for="ticket-subject">{{ t('support.subject') }}</label><input id="ticket-subject" ref="subjectInput" v-model="form.subject" required autocomplete="off" :placeholder="t('support.subjectPlaceholder')" /></div>
                   <div v-if="form.type === 'REFUND'" class="ticket-refund-fields">
-                    <div class="ticket-field"><label for="ticket-order">{{ t('support.orderId') }}</label><input id="ticket-order" v-model.number="form.order_id" type="number" min="1" step="1" required :placeholder="t('support.orderPlaceholder')" /></div>
+                    <div class="ticket-field"><label for="ticket-order">{{ t('support.orderId') }}</label><input id="ticket-order" v-model.trim="form.order_id" type="text" inputmode="numeric" autocomplete="off" required :placeholder="t('support.orderPlaceholder')" /></div>
                     <div class="ticket-field"><label for="ticket-contact">{{ t('support.contact') }}</label><input id="ticket-contact" v-model="form.contact" required autocomplete="email" :placeholder="t('support.contactPlaceholder')" /></div>
                   </div>
                   <div class="ticket-field"><label for="ticket-description">{{ t('support.description') }}</label><textarea id="ticket-description" v-model="form.description" rows="7" required :placeholder="t('support.descriptionPlaceholder')" /></div>
@@ -165,11 +165,14 @@ const subjectInput = ref<HTMLInputElement | null>(null)
 const statuses: SupportTicketStatus[] = ['OPEN', 'RESOLVED', 'CLOSED']
 const expandedGroups = reactive<Record<SupportTicketStatus, boolean>>({ OPEN: true, RESOLVED: false, CLOSED: false })
 const ticketTypes: SupportTicketType[] = ['SUGGESTION', 'REFUND']
-const form = reactive<{ type: SupportTicketType; subject: string; description: string; contact: string; order_id?: number | '' }>({ type: 'SUGGESTION', subject: '', description: '', contact: '' })
+const form = reactive<{ type: SupportTicketType; subject: string; description: string; contact: string; order_id?: string }>({ type: 'SUGGESTION', subject: '', description: '', contact: '' })
 let detailRequest = 0
 let historyRevision = 0
 const busy = computed(() => submitting.value || replying.value || closing.value)
-const canCreate = computed(() => !!form.subject.trim() && !!form.description.trim() && (form.type !== 'REFUND' || (typeof form.order_id === 'number' && Number.isSafeInteger(form.order_id) && form.order_id > 0 && !!form.contact.trim())))
+const canCreate = computed(() => {
+  const orderId = Number(form.order_id)
+  return !!form.subject.trim() && !!form.description.trim() && (form.type !== 'REFUND' || (Number.isSafeInteger(orderId) && orderId > 0 && !!form.contact.trim()))
+})
 const filteredTickets = computed(() => {
   const search = query.value.trim().toLocaleLowerCase()
   return tickets.value.filter(ticket => (statusFilter.value === 'ALL' || ticket.status === statusFilter.value) && (!search || `${ticket.id} ${ticket.subject} ${ticket.description}`.toLocaleLowerCase().includes(search)))

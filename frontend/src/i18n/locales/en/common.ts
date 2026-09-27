@@ -202,7 +202,7 @@ export default {
     docs: 'Docs',
     myOrders: 'My Orders',
     orderManagement: 'Orders',
-    supportTickets: 'Ticket System',
+    supportTickets: 'My Tickets',
     paymentDashboard: 'Payment Dashboard',
     paymentConfig: 'Payment Config',
     paymentPlans: 'Plans',
@@ -234,7 +234,7 @@ export default {
     statusSaved: 'Ticket status updated',
     adminClosedHint: 'This ticket is closed. Set it to In progress to continue replying.',
     adminReplyHint: 'Replying returns the ticket to In progress. You can then mark it resolved.',
-    centerTitle: 'Ticket System',
+    centerTitle: 'My Tickets',
     centerDescription: 'Ask a question, track progress, and stay in touch.',
     search: 'Search tickets',
     filterStatus: 'Filter by ticket status',
@@ -269,7 +269,7 @@ export default {
     replySent: 'Reply sent',
     closed: 'Ticket closed',
     status: { OPEN: 'In progress', RESOLVED: 'Resolved', CLOSED: 'Closed' },
-    title: 'My Support Tickets', adminTitle: 'Ticket System', newTicket: 'New Ticket', empty: 'No tickets yet', type: 'Type', refund: 'Refund Record', suggestion: 'Suggestion', subject: 'Subject', description: 'Description', orderId: 'Order ID', contact: 'Contact information', contactPlaceholder: 'Email, phone, or other contact method', user: 'User', reply: 'Reply', replyPlaceholder: 'Write a reply', close: 'Close Ticket', errors: { INVALID_TYPE: 'Invalid ticket type', ORDER_REQUIRED: 'A refund record requires an order', CONTACT_REQUIRED: 'Refund tickets require contact information' }
+    title: 'My Support Tickets', adminTitle: 'Ticket System', newTicket: 'New Ticket', empty: 'No tickets yet', type: 'Type', refund: 'Refund', suggestion: 'Suggestion', subject: 'Subject', description: 'Description', orderId: 'Order ID', contact: 'Contact information', contactPlaceholder: 'Email, phone, or other contact method', user: 'User', reply: 'Reply', replyPlaceholder: 'Write a reply', close: 'Close Ticket', errors: { INVALID_TYPE: 'Invalid ticket type', ORDER_REQUIRED: 'A refund ticket requires an order', CONTACT_REQUIRED: 'Refund tickets require contact information' }
   },
 
   // Auth
