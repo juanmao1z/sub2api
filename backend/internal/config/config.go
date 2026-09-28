@@ -105,7 +105,6 @@ type Config struct {
 	BatchImage              BatchImageConfig              `mapstructure:"batch_image"`
 	ImageStorage            ImageStorageConfig            `mapstructure:"image_storage"`
 	Plugins                 PluginConfig                  `mapstructure:"plugins"`
-	Zammad                  ZammadConfig                  `mapstructure:"zammad"`
 
 	// Enforce only API-key spending windows in simple mode.
 	SimpleModeKeyRateLimitEnabled bool `mapstructure:"simple_mode_key_rate_limit_enabled" yaml:"simple_mode_key_rate_limit_enabled"`
@@ -125,15 +124,6 @@ type PluginConfig struct {
 	MaxUploadBytes       int64             `mapstructure:"max_upload_bytes"`
 	MaxUncompressedBytes int64             `mapstructure:"max_uncompressed_bytes"`
 	StartTimeoutSeconds  int               `mapstructure:"start_timeout_seconds"`
-}
-
-// ZammadConfig contains server-only credentials for the staged ticket integration.
-// The integration remains inactive until enabled and a token is supplied.
-type ZammadConfig struct {
-	Enabled        bool   `mapstructure:"enabled"`
-	BaseURL        string `mapstructure:"base_url"`
-	APIToken       string `mapstructure:"api_token"`
-	TimeoutSeconds int    `mapstructure:"timeout_seconds"`
 }
 
 type LogConfig struct {
@@ -2325,12 +2315,6 @@ func setDefaults() {
 	viper.SetDefault("plugins.max_upload_bytes", int64(128*1024*1024))
 	viper.SetDefault("plugins.max_uncompressed_bytes", int64(256*1024*1024))
 	viper.SetDefault("plugins.start_timeout_seconds", 15)
-
-	// Zammad ticket integration. Disabled until the server-side token is supplied.
-	viper.SetDefault("zammad.enabled", false)
-	viper.SetDefault("zammad.base_url", "https://support.zhouz.online")
-	viper.SetDefault("zammad.api_token", "")
-	viper.SetDefault("zammad.timeout_seconds", 10)
 
 	// Timezone (default to Asia/Shanghai for Chinese users)
 	viper.SetDefault("timezone", "Asia/Shanghai")

@@ -11,17 +11,6 @@
 # 服务器配置
 # =============================================================================
 
-# =============================================================================
-# Zammad Ticket Integration
-# Zammad 工单接入
-# =============================================================================
-# The integration remains disabled until a server-side API token is supplied.
-zammad:
-  enabled: false
-  base_url: "https://support.zhouz.online"
-  api_token: ""
-  timeout_seconds: 10
-
 server:
   # Bind address (0.0.0.0 for all interfaces)
   # 绑定地址（0.0.0.0 表示监听所有网络接口）

@@ -38,7 +38,7 @@ func TestKedayaEmbeddedModules(t *testing.T) {
 		require.Contains(t, response.Header().Get("Content-Type"), "javascript", route)
 		require.False(t, strings.Contains(response.Body.String(), "<!doctype html>"), route)
 	}
-	for _, route := range []string{"/home", "/dashboard", "/admin/dashboard", "/tickets", "/admin/tickets", "/custom/cc-switch-guide", "/custom/usage-leaderboard"} {
+	for _, route := range []string{"/home", "/dashboard", "/admin/dashboard", "/custom/cc-switch-guide", "/custom/usage-leaderboard"} {
 		response := httptest.NewRecorder()
 		router.ServeHTTP(response, httptest.NewRequest(http.MethodGet, route, nil))
 		require.Equal(t, http.StatusOK, response.Code, route)

@@ -36,19 +36,6 @@ func RegisterAdminRoutes(
 			admin.POST("/leaderboard/rewards", h.Admin.LeaderboardReward.Pay)
 		}
 
-		// 客服工单（退款 / 建议）
-		if h.Admin.SupportTicket != nil {
-			tickets := admin.Group("/support/tickets")
-			{
-				tickets.GET("", h.Admin.SupportTicket.List)
-				tickets.GET("/:id/approval", h.Admin.SupportTicket.GetApproval)
-				tickets.PATCH("/:id/approval", h.Admin.SupportTicket.DecideApproval)
-				tickets.GET("/:id", h.Admin.SupportTicket.Get)
-				tickets.POST("/:id/messages", h.Admin.SupportTicket.AddMessage)
-				tickets.PATCH("/:id/status", h.Admin.SupportTicket.SetStatus)
-			}
-		}
-
 		// 部署与运营合规确认
 		registerAdminComplianceRoutes(admin, h)
 

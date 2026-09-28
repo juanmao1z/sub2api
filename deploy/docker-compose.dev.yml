@@ -25,10 +25,6 @@ services:
       - ./data:/app/data:Z
     environment:
       - AUTO_SETUP=true
-      - ZAMMAD_ENABLED=${ZAMMAD_ENABLED:-false}
-      - ZAMMAD_BASE_URL=${ZAMMAD_BASE_URL:-https://support.zhouz.online}
-      - ZAMMAD_API_TOKEN=${ZAMMAD_API_TOKEN:-}
-      - ZAMMAD_TIMEOUT_SECONDS=${ZAMMAD_TIMEOUT_SECONDS:-10}
       - SERVER_HOST=0.0.0.0
       - SERVER_PORT=8080
       - SERVER_MODE=debug

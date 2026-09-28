@@ -19,19 +19,6 @@ describe('AppSidebar custom SVG styles', () => {
   })
 })
 
-describe('AppSidebar administrator ticket order', () => {
-  it('keeps tickets between plugin management and announcements in both admin modes', () => {
-    const pluginIndex = componentSource.indexOf("path: '/admin/plugins'")
-    const ticketIndex = componentSource.indexOf("path: '/admin/tickets'")
-    const announcementIndex = componentSource.indexOf("path: '/admin/announcements'")
-
-    expect(pluginIndex).toBeGreaterThan(-1)
-    expect(ticketIndex).toBeGreaterThan(pluginIndex)
-    expect(announcementIndex).toBeGreaterThan(ticketIndex)
-    expect(componentSource).not.toContain('splice(Math.min(7,')
-  })
-})
-
 describe('AppSidebar site branding initialization', () => {
   it('hides the fallback brand name until public settings are loaded', () => {
     expect(componentSource).toContain(':class="{ invisible: !settingsLoaded }"')
