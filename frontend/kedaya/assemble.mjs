@@ -135,6 +135,10 @@ export function assemble({ homeDir, outputDir = homeDir }) {
     const userTicketScript = nativeTicketScripts.find(file => !fs.readFileSync(path.join(outputDir, 'assets', file), 'utf8').includes('adminList'));
     const adminTicketScript = nativeTicketScripts.find(file => fs.readFileSync(path.join(outputDir, 'assets', file), 'utf8').includes('adminList'));
     if (!userTicketScript || !adminTicketScript) throw new Error('Expected native user and administrator ticket chunks');
+    const ticketStyles = fs.readdirSync(path.join(outputDir, 'assets'))
+      .filter(file => /^SupportTicketsView-.*\.css$/.test(file))
+      .map(file => `${releasePrefix}/${file}`);
+    if (ticketStyles.length !== 2) throw new Error('Expected user and administrator ticket stylesheets');
 
     /** @brief Read Vite's case-sensitive export alias table from a vendor module. */
     function readExportAliases(file) {
@@ -186,6 +190,15 @@ const messages = {
 export function u() {
   const locale = { value: document.documentElement.lang?.startsWith('zh') ? 'zh' : 'en' };
   return { locale, t(key, params) { const value = messages[locale.value][key] ?? messages.en[key] ?? key; return typeof value === 'function' ? value(params || {}) : value; } };
+}
+
+for (const href of ${JSON.stringify(ticketStyles)}) {
+  if (!document.querySelector('link[rel="stylesheet"][href="' + href + '"]')) {
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = href;
+    document.head.append(link);
+  }
 }
 
 export function a() { return { showError: message => console.error(message), showSuccess: message => console.info(message) }; }

@@ -354,7 +354,7 @@ func (c *Client) doJSON(ctx context.Context, method, path string, payload any, r
 		return fmt.Errorf("create zammad request: %w", err)
 	}
 	req.Header.Set("Accept", "application/json")
-	req.Header.Set("Authorization", "Token "+c.token)
+	req.Header.Set("Authorization", "Token token="+c.token)
 	if payload != nil {
 		req.Header.Set("Content-Type", "application/json")
 	}
