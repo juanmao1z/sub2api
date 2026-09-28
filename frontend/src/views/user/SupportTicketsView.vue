@@ -71,10 +71,12 @@
           <div v-if="detailLoading" class="ticket-detail-empty" role="status"><Icon name="refresh" size="lg" class="animate-spin" /><p>{{ t('common.loading') }}</p></div>
           <div v-else-if="detailError" class="ticket-detail-empty" role="alert"><span class="ticket-empty-icon"><Icon name="chat" size="lg" /></span><h2>{{ t('support.loadFailed') }}</h2><button type="button" class="ticket-button" @click="activeTicketId !== null && openTicket(activeTicketId)">{{ t('support.retry') }}</button></div>
           <template v-else-if="showCreate">
-            <div class="ticket-detail-empty ticket-create-state" aria-hidden="true">{{ t('support.newTicket') }}</div>
             <div class="ticket-composer-heading">
               <div>
-                <span class="ticket-eyebrow">{{ t('support.contactSupport') }}</span>
+                <div class="ticket-composer-title-row">
+                  <span class="ticket-composer-icon"><Icon name="chat" size="md" aria-hidden="true" /></span>
+                  <span class="ticket-eyebrow">{{ t('support.contactSupport') }}</span>
+                </div>
                 <h2>{{ t('support.newTicket') }}</h2>
                 <p>{{ t('support.createHint') }}</p>
               </div>
