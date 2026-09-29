@@ -21,31 +21,36 @@ export interface CcSwitchImportDeeplinkInput {
 }
 
 /**
- * @brief Removes a trailing `/v1` path from a CCS base URL.
- * @param baseUrl The configured API base URL.
- * @return The URL without trailing slashes or a trailing `/v1` segment.
+ * Balance query CC Switch runs against the imported provider. CC Switch fills
+ * `{{baseUrl}}` with the provider's base URL as stored. The script strips an
+ * existing `/v1` before appending the usage endpoint.
  */
-function withoutV1Suffix(baseUrl: string): string {
-  return baseUrl.replace(/\/+$/, '').replace(/\/v1$/i, '')
-}
+export const CC_SWITCH_USAGE_SCRIPT = `({
+    request: {
+      url: "{{baseUrl}}".replace(/\\/+$/, "").replace(/\\/v1$/, "") + "/v1/usage",
+      method: "GET",
+      headers: { "Authorization": "Bearer {{apiKey}}" }
+    },
+    extractor: function(response) {
+      const remaining = response?.remaining ?? response?.quota?.remaining ?? response?.balance;
+      const unit = response?.unit ?? response?.quota?.unit ?? "USD";
+      return {
+        isValid: response?.is_active ?? response?.isValid ?? true,
+        remaining,
+        unit
+      };
+    }
+  })`
 
-/**
- * @brief Ensures an OpenAI-compatible endpoint has exactly one `/v1` suffix.
- * @param baseUrl The configured API base URL.
- * @return The normalized URL ending in `/v1`.
- */
 function withV1Endpoint(baseUrl: string): string {
   const normalizedBaseUrl = baseUrl.replace(/\/+$/, '')
   return normalizedBaseUrl.endsWith('/v1') ? normalizedBaseUrl : `${normalizedBaseUrl}/v1`
 }
 
-/**
- * @brief Resolves the CCS provider configuration for a platform.
- * @param platform The API group platform.
- * @param clientType The CCS client receiving the import.
- * @param baseUrl The API base URL to expose to CCS.
- * @return The provider app, endpoint, and optional model configuration.
- */
+function withoutTrailingSlashes(baseUrl: string): string {
+  return baseUrl.replace(/\/+$/, '')
+}
+
 export function resolveCcSwitchImportConfig(
   platform: GroupPlatform | undefined | null,
   clientType: CcSwitchClientType,
@@ -60,7 +65,8 @@ export function resolveCcSwitchImportConfig(
     case 'openai':
       return {
         app: 'codex',
-        endpoint: withV1Endpoint(baseUrl),
+        // CC Switch's Codex provider appends the OpenAI-compatible path itself.
+        endpoint: withoutTrailingSlashes(baseUrl),
         model: OPENAI_CC_SWITCH_CODEX_MODEL
       }
     case 'gemini':
@@ -71,7 +77,7 @@ export function resolveCcSwitchImportConfig(
     case 'grok':
       return {
         app: 'grokbuild',
-        endpoint: withoutV1Suffix(baseUrl),
+        endpoint: withV1Endpoint(baseUrl),
         model: GROK_CC_SWITCH_MODEL
       }
     default:
@@ -82,20 +88,13 @@ export function resolveCcSwitchImportConfig(
   }
 }
 
-/**
- * @brief Builds a CCS provider import deeplink.
- * @param input Provider details and the API base URL to import.
- * @return A `ccswitch://` deeplink containing the provider configuration.
- */
 export function buildCcSwitchImportDeeplink(input: CcSwitchImportDeeplinkInput): string {
-  const platform = input.platform || 'anthropic'
-  const baseUrl = platform === 'grok' ? withoutV1Suffix(input.baseUrl) : input.baseUrl
-  const config = resolveCcSwitchImportConfig(platform, input.clientType, baseUrl)
+  const config = resolveCcSwitchImportConfig(input.platform, input.clientType, input.baseUrl)
   const entries: [string, string][] = [
     ['resource', 'provider'],
     ['app', config.app],
     ['name', input.providerName],
-    ['homepage', baseUrl],
+    ['homepage', input.baseUrl],
     ['endpoint', config.endpoint],
     ['apiKey', input.apiKey],
     ['configFormat', 'json'],
