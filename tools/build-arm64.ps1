@@ -73,6 +73,17 @@ try {
         '--set', "app.labels.org.opencontainers.image.revision=$commit",
         '--set', "app.labels.org.opencontainers.image.created=$date"
     )
+    if ($UseProxy) {
+        $buildProxy = $proxy -replace '127\.0\.0\.1|localhost', 'host.docker.internal'
+        $arguments += @(
+            '--set', "app.args.HTTP_PROXY=$buildProxy",
+            '--set', "app.args.HTTPS_PROXY=$buildProxy",
+            '--set', "app.args.NO_PROXY=$noProxy",
+            '--set', "app.args.http_proxy=$buildProxy",
+            '--set', "app.args.https_proxy=$buildProxy",
+            '--set', "app.args.no_proxy=$noProxy"
+        )
+    }
     if ($Print) { $arguments += '--print' }
     & docker @arguments
     if (-not $Print) {
