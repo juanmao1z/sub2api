@@ -41,8 +41,9 @@ export function buildEmbeddedUrl(
     url.searchParams.set(EMBEDDED_UI_MODE_QUERY_KEY, EMBEDDED_UI_MODE_VALUE)
     // Source tracking: let the embedded page know where it's being loaded from
     if (typeof window !== 'undefined') {
+      const sourcePath = window.location.pathname || (window.location.href ? new URL(window.location.href).pathname : '')
       url.searchParams.set(EMBEDDED_SRC_HOST_QUERY_KEY, window.location.origin)
-      url.searchParams.set(EMBEDDED_SRC_QUERY_KEY, `${window.location.origin}${window.location.pathname}`)
+      url.searchParams.set(EMBEDDED_SRC_QUERY_KEY, `${window.location.origin}${sourcePath}`)
     }
     return url.toString()
   } catch {

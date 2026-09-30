@@ -41,8 +41,8 @@ describe('HomeView default content', () => {
   it('keeps custom URL and HTML home modes intact', () => {
     expect(source).toContain('v-if="hasHomeContent"')
     expect(source).toContain('v-if="isHomeContentUrl"')
-    expect(source).toContain(':src="homeContent.trim()"')
-    expect(source).toContain('v-else v-html="homeContent"')
+    expect(source).toContain(':src="homeContentUrl"')
+    expect(source).toContain('v-else v-html="sanitizedHomeContent"')
   })
 
   it('defines the homepage navigation and status copy in both locales', () => {
