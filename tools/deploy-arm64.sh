@@ -71,11 +71,12 @@ printf 'source_image=%s\nrelease_image=%s\ntarget=%s\nssh=%s\napp_service=%s\n' 
 printf 'preserved_services=%s\n' "${preserved_services[*]}"
 printf 'version=%s\nversion_source=%s\nversion_status=%s\n' "$version" "$version_tag (tag file $tag_version)" "$version_status"
 
-if [ "$release_version_verified" != 'true' ]; then
+if [ "$release_version_verified" != 'true' ] || [ "$version" != "$tag_version" ] || [ "$tag_version" != "$expected_tag_version" ]; then
   cat >&2 <<BLOCKED
-Production deployment is blocked: the verified official tag $version_tag contains
-version $tag_version, expected $expected_tag_version. No version upgrade or
-production switch will be attempted until the official release is reconciled.
+Production deployment is blocked: source version $version, verified official tag
+$version_tag version $tag_version, expected version $expected_tag_version, and
+verification status $version_status must all agree. No production write or
+image switch will be attempted until the version gate passes.
 BLOCKED
   exit 3
 fi
