@@ -48,9 +48,12 @@ public_base_url=$(jq -er '.production.publicBaseUrl' "$CONFIG")
 app_service=$(jq -er '.production.appService' "$CONFIG")
 configured_architecture=$(jq -er '.production.architecture' "$CONFIG")
 release_version_verified=$(jq -r '.versionVerification.releaseVersionVerified' "$CONFIG")
+source_verified=$(jq -r '.versionVerification.sourceVerified' "$CONFIG")
 version_status=$(jq -er '.versionVerification.status' "$CONFIG")
 version_tag=$(jq -er '.versionVerification.latestVerifiedTag' "$CONFIG")
 tag_version=$(jq -er '.versionVerification.tagVersionFile' "$CONFIG")
+source_commit=$(jq -er '.versionVerification.verifiedSourceCommit' "$CONFIG")
+verified_source_version=$(jq -er '.versionVerification.verifiedSourceVersionFile' "$CONFIG")
 expected_tag_version=$(jq -er '.versionVerification.expectedTagVersion' "$CONFIG")
 mapfile -t compose_files < <(jq -er '.production.composeFiles[]' "$CONFIG")
 mapfile -t preserved_services < <(jq -er '.production.preservedServices[]' "$CONFIG")
@@ -69,17 +72,21 @@ stage="$image_root/$release"
 printf 'source_image=%s\nrelease_image=%s\ntarget=%s\nssh=%s\napp_service=%s\n' \
   "$tag" "$release_image" "$target_platform" "$ssh_alias" "$app_service"
 printf 'preserved_services=%s\n' "${preserved_services[*]}"
-printf 'version=%s\nversion_source=%s\nversion_status=%s\n' "$version" "$version_tag (tag file $tag_version)" "$version_status"
+printf 'version=%s\nofficial_release=%s (tag VERSION %s)\nverified_source=%s (VERSION %s)\nversion_status=%s\n' \
+  "$version" "$version_tag" "$tag_version" "$source_commit" "$verified_source_version" "$version_status"
 
-if [ "$release_version_verified" != 'true' ] || [ "$version" != "$tag_version" ] || [ "$tag_version" != "$expected_tag_version" ]; then
+if [ "$release_version_verified" != 'true' ] || [ "$source_verified" != 'true' ] || \
+  [ "$version" != "$verified_source_version" ] || [ "$verified_source_version" != "$expected_tag_version" ]; then
   cat >&2 <<BLOCKED
-Production deployment is blocked: source version $version, verified official tag
-$version_tag version $tag_version, expected version $expected_tag_version, and
-verification status $version_status must all agree. No production write or
-image switch will be attempted until the version gate passes.
+Production deployment is blocked: source version $version, verified official source
+$source_commit version $verified_source_version, expected release version
+$expected_tag_version, and verification status $version_status must all agree.
+The official release tag $version_tag contains VERSION $tag_version. No production
+write or image switch will be attempted until the source version gate passes.
 BLOCKED
   exit 3
 fi
+
 
 [ "$apply" -eq 1 ] || { echo 'plan-only: add --apply after all checks pass'; exit 0; }
 
