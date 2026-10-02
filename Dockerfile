@@ -11,8 +11,8 @@ ARG NODE_IMAGE=node:24-alpine
 ARG GOLANG_IMAGE=golang:1.27.0-alpine
 ARG ALPINE_IMAGE=alpine:3.21
 ARG POSTGRES_IMAGE=postgres:18-alpine
-ARG GOPROXY=https://goproxy.cn,direct
-ARG GOSUMDB=sum.golang.google.cn
+ARG GOPROXY=
+ARG GOSUMDB=
 ARG NPM_CONFIG_REGISTRY=
 
 # -----------------------------------------------------------------------------
