@@ -6,12 +6,13 @@ import i18n, { initI18n } from './i18n'
 import { useAppStore } from '@/stores/app'
 import '@fontsource-variable/public-sans'
 import { updateFavicon } from '@/utils/branding'
+import { initTheme } from '@/utils/theme'
+
 import './style.css'
 
-/** @brief Keep the application in its single supported light color scheme. */
+/** @brief Restore the user's theme without changing the first-visit light default. */
 function initThemeClass() {
-  document.documentElement.classList.remove('dark')
-  localStorage.setItem('theme', 'light')
+  initTheme()
 }
 
 async function bootstrap() {

@@ -1441,3 +1441,66 @@ html .console-signal .signal-main :is(.date-picker-trigger,.date-picker-dropdown
     margin-left: 0;
   }
 }
+/* Final dark token layer keeps admin and user workspaces on the same palette. */
+.dark .console-signal,
+.dark body:has(.console-signal) > .modal-overlay,
+.dark body:has(.console-signal) > .dialog-overlay,
+.dark body:has(.console-signal) > .select-dropdown-portal {
+  --signal-bg: #0b0f14;
+  --signal-surface: #11161d;
+  --signal-line: #27313d;
+  --signal-text: #edf2f7;
+  --signal-muted: #98a5b4;
+  --signal-accent: #82a7ff;
+  --signal-amber: #e4ae56;
+  --signal-hover: #1b222c;
+  --signal-accent-soft: #1b2c4e;
+  --signal-on-accent: #0b1220;
+  --signal-control-line: #3a4654;
+  --signal-shadow: 0 18px 46px rgb(0 0 0 / 0.28);
+}
+
+.dark .console-signal .signal-header {
+  background: #0f141b;
+  border-color: var(--signal-line);
+}
+
+.dark .console-signal .signal-sidebar {
+  background: #0f141b;
+  border-color: var(--signal-line);
+}
+
+.dark .console-signal .signal-sidebar .sidebar-link-active {
+  background: var(--signal-accent-soft);
+  color: var(--signal-accent);
+}
+
+.dark .console-signal .header-balance {
+  background: var(--signal-surface);
+  border-color: var(--signal-line);
+}
+
+.dark .console-signal .header-avatar {
+  background: var(--signal-accent-soft);
+  border-color: var(--signal-line);
+  color: var(--signal-accent);
+}
+
+.dark .console-signal .signal-model-card,
+.dark .console-signal .channel-health-card,
+.dark .console-signal .signal-checkout-summary {
+  background: var(--signal-surface);
+  border-color: var(--signal-line);
+  box-shadow: var(--signal-shadow);
+}
+
+.dark .console-signal .signal-payment-submit {
+  background: var(--signal-amber);
+  border-color: var(--signal-amber);
+  color: #1d1609;
+}
+
+.dark .console-signal .signal-payment-submit:hover:not(:disabled) {
+  background: #efc16c;
+  border-color: #efc16c;
+}

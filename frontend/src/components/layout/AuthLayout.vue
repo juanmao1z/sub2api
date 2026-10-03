@@ -1,7 +1,7 @@
 <template>
   <div class="reference-auth auth-shell relative flex min-h-screen items-center justify-center overflow-y-auto px-6 pb-8 pt-28 sm:px-8 sm:pt-32">
     <!-- Logo/Brand -->
-    <div class="auth-brand absolute left-6 top-6 sm:left-12 sm:top-10">
+    <div class="auth-brand">
       <template v-if="settingsLoaded">
         <div class="auth-brand-logo flex h-9 w-9 items-center justify-center overflow-hidden">
           <img :src="siteLogo || '/logo.png?v=20260715'" alt="Logo" class="h-full w-full object-contain" />
@@ -15,6 +15,7 @@
           </p>
         </div>
       </template>
+      <ThemeToggle class="ml-auto" />
     </div>
 
     <!-- Content Container -->
@@ -39,6 +40,7 @@
 <script setup lang="ts">
 import { computed, onMounted } from 'vue'
 import '@/styles/public-pages.css'
+import ThemeToggle from '@/components/common/ThemeToggle.vue'
 import { useAppStore } from '@/stores'
 import { sanitizeUrl } from '@/utils/url'
 

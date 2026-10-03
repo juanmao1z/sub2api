@@ -52,6 +52,9 @@
           <span class="hidden sm:inline">{{ t('nav.modelPlaza') }}</span>
         </router-link>
 
+        <!-- Color scheme -->
+        <ThemeToggle />
+
         <!-- Language Switcher -->
         <LocaleSwitcher class="header-locale" />
 
@@ -235,6 +238,7 @@ import LocaleSwitcher from '@/components/common/LocaleSwitcher.vue'
 import SubscriptionProgressMini from '@/components/common/SubscriptionProgressMini.vue'
 import AnnouncementBell from '@/components/common/AnnouncementBell.vue'
 import Icon from '@/components/icons/Icon.vue'
+import ThemeToggle from '@/components/common/ThemeToggle.vue'
 import { sanitizeUrl } from '@/utils/url'
 import { FeatureFlags, isFeatureFlagEnabled } from '@/utils/featureFlags'
 import { resolveRouteMetaKeys } from '@/router/title'

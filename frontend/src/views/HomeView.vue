@@ -30,6 +30,7 @@
         </div>
         <div class="flex max-w-full shrink-0 flex-wrap items-center justify-end gap-2">
           <LocaleSwitcher />
+          <ThemeToggle />
           <a
             v-if="docUrl"
             :href="docUrl"
@@ -111,6 +112,7 @@
           </router-link>
           <span class="mx-2 h-4 w-px bg-[#dfe3e5] dark:bg-[#303538]"></span>
           <LocaleSwitcher />
+          <ThemeToggle />
 
           <!-- Doc Link -->
           <a
@@ -153,6 +155,7 @@
 
         <div class="flex items-center gap-1 md:hidden">
           <LocaleSwitcher />
+          <ThemeToggle />
           <button
             type="button"
             class="home-icon-button"
@@ -322,6 +325,7 @@ import { useI18n } from 'vue-i18n'
 import { useAuthStore, useAppStore } from '@/stores'
 import LocaleSwitcher from '@/components/common/LocaleSwitcher.vue'
 import Icon from '@/components/icons/Icon.vue'
+import ThemeToggle from '@/components/common/ThemeToggle.vue'
 import { useHomepageStatus } from '@/composables/useHomepageStatus'
 import {
   calculateBeijingUptime,

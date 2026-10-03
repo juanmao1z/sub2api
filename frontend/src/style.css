@@ -962,3 +962,341 @@
 .dark .bg-gradient-to-br,
 .dark .bg-gradient-to-b,
 .dark .bg-gradient-to-tr { background-color: #1f2937 !important; }
+/* Shared Kedaya-inspired neutral palette. Light values intentionally preserve the existing UI. */
+:root {
+  --app-bg: #f7f8fa;
+  --app-surface: #ffffff;
+  --app-surface-raised: #ffffff;
+  --app-surface-muted: #f1f3f5;
+  --app-line: #e3e7ec;
+  --app-line-strong: #cbd2da;
+  --app-text: #1c232b;
+  --app-text-muted: #6b7480;
+  --app-text-faint: #98a1ad;
+  --app-accent: #4f7ff0;
+  --app-accent-soft: #e9efff;
+  --app-success: #35a875;
+  --app-warning: #d59a38;
+  --app-danger: #d85e68;
+  --app-shadow: 0 10px 28px rgb(15 23 42 / 0.08);
+}
+
+.dark {
+  --app-bg: #0b0f14;
+  --app-surface: #11161d;
+  --app-surface-raised: #171d26;
+  --app-surface-muted: #1b222c;
+  --app-line: #27313d;
+  --app-line-strong: #3a4654;
+  --app-text: #edf2f7;
+  --app-text-muted: #98a5b4;
+  --app-text-faint: #6f7c8b;
+  --app-accent: #82a7ff;
+  --app-accent-soft: #1b2c4e;
+  --app-success: #58c995;
+  --app-warning: #e4ae56;
+  --app-danger: #f07b84;
+  --app-shadow: 0 18px 46px rgb(0 0 0 / 0.28);
+}
+
+html,
+body {
+  background: var(--app-bg);
+  background-color: var(--app-bg) !important;
+}
+
+body {
+  color: var(--app-text);
+  transition: background-color 160ms ease, color 160ms ease;
+}
+
+.dark body,
+.dark .app-shell,
+.dark .app-main {
+  background: var(--app-bg);
+  color: var(--app-text);
+}
+
+.dark .bg-white,
+.dark [class*="bg-white/"] {
+  background-color: var(--app-surface) !important;
+}
+
+.dark [class*="bg-gray-50"],
+.dark [class*="bg-gray-100"],
+.dark [class*="bg-dark-950"],
+.dark [class*="bg-dark-900"] {
+  background-color: var(--app-surface-muted) !important;
+}
+
+.dark [class*="bg-dark-800"],
+.dark [class*="bg-dark-700"] {
+  background-color: var(--app-surface-raised) !important;
+}
+
+.dark [class*="border-gray-100"],
+.dark [class*="border-gray-200"],
+.dark [class*="border-dark-800"],
+.dark [class*="border-dark-700"],
+.dark [class*="border-dark-600"] {
+  border-color: var(--app-line) !important;
+}
+
+.dark [class*="text-gray-900"],
+.dark [class*="text-gray-800"],
+.dark [class*="text-gray-700"],
+.dark [class*="text-white"] {
+  color: var(--app-text) !important;
+}
+
+.dark [class*="text-gray-600"],
+.dark [class*="text-gray-500"],
+.dark [class*="text-gray-400"],
+.dark [class*="text-dark-300"],
+.dark [class*="text-dark-400"],
+.dark [class*="text-dark-500"] {
+  color: var(--app-text-muted) !important;
+}
+
+.dark [class*="hover:bg-gray-50"]:hover,
+.dark [class*="hover:bg-gray-100"]:hover,
+.dark [class*="hover:bg-dark-700"]:hover,
+.dark [class*="hover:bg-dark-800"]:hover {
+  background-color: var(--app-surface-muted) !important;
+}
+
+.dark .card,
+.dark .card-glass,
+.dark .glass-card,
+.dark .glass,
+.dark .table-container,
+.dark .dropdown,
+.dark .modal-content,
+.dark .dialog-container,
+.dark .toast {
+  background: var(--app-surface);
+  border-color: var(--app-line);
+  box-shadow: var(--app-shadow);
+}
+
+.dark .card-header,
+.dark .card-footer,
+.dark .modal-header,
+.dark .modal-footer,
+.dark .dialog-header,
+.dark .dialog-footer,
+.dark .table th,
+.dark .table td {
+  border-color: var(--app-line);
+}
+
+.dark .input,
+.dark select.input,
+.dark textarea.input,
+.dark .select-trigger,
+.dark .search-input {
+  background: var(--app-surface-raised);
+  background-color: var(--app-surface-raised) !important;
+  border-color: var(--app-line-strong);
+  color: var(--app-text);
+}
+
+.dark .input::placeholder,
+.dark textarea::placeholder {
+  color: var(--app-text-faint);
+}
+
+.dark .input:focus,
+.dark select.input:focus,
+.dark textarea.input:focus,
+.dark .select-trigger:focus-visible,
+.dark .search-input:focus {
+  border-color: var(--app-accent);
+  box-shadow: 0 0 0 3px rgb(130 167 255 / 0.16);
+}
+
+.dark .btn-primary,
+.dark .auth-submit.btn-primary {
+  background: var(--app-accent);
+  border-color: var(--app-accent);
+  color: #0b1220;
+}
+
+.dark .btn-primary:hover:not(:disabled),
+.dark .auth-submit.btn-primary:hover:not(:disabled) {
+  background: #a5bfff;
+  border-color: #a5bfff;
+}
+
+.dark .btn-secondary {
+  background: var(--app-surface-raised);
+  border-color: var(--app-line-strong);
+  color: var(--app-text);
+}
+
+.dark .btn-secondary:hover:not(:disabled),
+.dark .btn-ghost:hover:not(:disabled),
+.dark .dropdown-item:hover {
+  background: var(--app-surface-muted);
+  color: var(--app-text);
+}
+
+.dark .btn-ghost,
+.dark .dropdown-item {
+  color: var(--app-text-muted);
+}
+
+.dark .table th {
+  background: var(--app-surface-muted);
+  color: var(--app-text-muted);
+}
+
+.dark .table td {
+  color: var(--app-text);
+}
+
+.dark .table tbody tr:hover {
+  background: var(--app-surface-muted);
+}
+
+.dark .tabs {
+  background: var(--app-surface-muted);
+}
+
+.dark .tab {
+  color: var(--app-text-muted);
+}
+
+.dark .tab-active {
+  background: var(--app-surface-raised);
+  color: var(--app-text);
+}
+
+.dark .sidebar {
+  background: #0f141b;
+  border-color: var(--app-line);
+}
+
+.dark .sidebar-header,
+.dark .sidebar .border-t {
+  border-color: var(--app-line);
+}
+
+.dark .sidebar-link {
+  color: var(--app-text-muted);
+}
+
+.dark .sidebar-link:hover {
+  background: var(--app-surface-muted);
+  color: var(--app-text);
+}
+
+.dark .sidebar-link-active {
+  background: var(--app-accent-soft);
+  color: var(--app-accent);
+}
+
+.dark .page-title,
+.dark .modal-title,
+.dark .empty-state-title,
+.dark .stat-value {
+  color: var(--app-text);
+}
+
+.dark .page-description,
+.dark .empty-state-description,
+.dark .stat-label,
+.dark .input-label,
+.dark .input-hint {
+  color: var(--app-text-muted);
+}
+
+.dark .divider,
+.dark .progress,
+.dark .skeleton {
+  background-color: var(--app-line);
+}
+
+.dark .progress-bar,
+.dark .switch-active {
+  background: var(--app-accent);
+}
+
+.dark .switch-thumb {
+  background: #f8fafc;
+}
+
+.dark .switch-active .switch-thumb {
+  background: #0b1220;
+}
+
+.dark .modal-overlay,
+.dark .dialog-overlay {
+  background: rgb(3 7 12 / 0.72);
+}
+
+.dark .theme-toggle {
+  color: var(--app-text-muted);
+}
+
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  min-height: 36px;
+  border-radius: 6px;
+  color: var(--app-text-muted);
+  transition: color 120ms ease, background-color 120ms ease;
+}
+
+.theme-toggle:hover {
+  background: var(--app-surface-muted);
+  color: var(--app-text);
+}
+
+.theme-toggle:focus-visible {
+  outline: 2px solid var(--app-accent);
+  outline-offset: 2px;
+}
+
+.dark .text-primary-600,
+.dark .text-primary-700,
+.dark .text-primary-500,
+.dark .text-primary-400 {
+  color: var(--app-accent) !important;
+}
+
+.dark .bg-primary-50,
+.dark .bg-primary-100,
+.dark [class*="bg-primary-900"] {
+  background-color: var(--app-accent-soft) !important;
+}
+
+.dark .text-emerald-600,
+.dark .text-emerald-700,
+.dark .text-emerald-500,
+.dark .text-emerald-400 {
+  color: var(--app-success) !important;
+}
+
+.dark .text-amber-600,
+.dark .text-amber-700,
+.dark .text-amber-500,
+.dark .text-amber-400 {
+  color: var(--app-warning) !important;
+}
+
+.dark .text-red-600,
+.dark .text-red-700,
+.dark .text-red-500,
+.dark .text-red-400 {
+  color: var(--app-danger) !important;
+}
+
+@media (max-width: 639px) {
+  .theme-toggle {
+    min-width: 34px;
+    min-height: 34px;
+  }
+}

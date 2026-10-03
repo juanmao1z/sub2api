@@ -13,11 +13,11 @@ const EMBEDDED_SRC_HOST_QUERY_KEY = 'src_host'
 const EMBEDDED_SRC_QUERY_KEY = 'src_url'
 
 /**
- * @brief Build an embedded page URL using the supported light color scheme.
+ * @brief Build an embedded page URL using the current color scheme.
  * @param baseUrl Base URL for the embedded page.
  * @param userId Optional authenticated user identifier.
  * @param _authToken Retained for caller compatibility; credentials never enter the URL.
- * @param _theme Legacy theme argument retained for caller compatibility.
+ * @param theme Color scheme to pass to the embedded page.
  * @param lang Optional locale identifier.
  * @return The augmented URL, or the original value when it is invalid.
  */
@@ -25,7 +25,7 @@ export function buildEmbeddedUrl(
   baseUrl: string,
   userId?: number,
   _authToken?: string | null,
-  _theme: 'light' | 'dark' = 'light',
+  theme: 'light' | 'dark' = 'light',
   lang?: string,
 ): string {
   if (!baseUrl) return baseUrl
@@ -34,7 +34,7 @@ export function buildEmbeddedUrl(
     if (userId) {
       url.searchParams.set(EMBEDDED_USER_ID_QUERY_KEY, String(userId))
     }
-    url.searchParams.set(EMBEDDED_THEME_QUERY_KEY, 'light')
+    url.searchParams.set(EMBEDDED_THEME_QUERY_KEY, theme)
     if (lang) {
       url.searchParams.set(EMBEDDED_LANG_QUERY_KEY, lang)
     }
@@ -51,7 +51,8 @@ export function buildEmbeddedUrl(
   }
 }
 
-/** @brief Return the application's only supported color scheme. @return Always `light`. */
-export function detectTheme(): 'light' {
-  return 'light'
+/** @brief Return the persisted application color scheme. */
+export function detectTheme(): 'light' | 'dark' {
+  if (typeof window === 'undefined') return 'light'
+  return window.localStorage.getItem('theme') === 'dark' ? 'dark' : 'light'
 }
