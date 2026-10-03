@@ -254,8 +254,14 @@ validate_remote() {
 }
 
 verify_remote() {
-  remote_output=$(remote_snapshot)
-  public_health_output=$(public_health_snapshot)
+  if ! remote_output=$(remote_snapshot); then
+    echo 'remote status snapshot unavailable' >&2
+    return 1
+  fi
+  if ! public_health_output=$(public_health_snapshot); then
+    echo 'public health snapshot unavailable' >&2
+    return 1
+  fi
   record_remote_status
   validate_remote
 }
@@ -423,8 +429,14 @@ apply_release() {
 
 status_command() {
   require_manifest
-  remote_output=$(remote_snapshot)
-  public_health_output=$(public_health_snapshot)
+  if ! remote_output=$(remote_snapshot); then
+    echo 'remote status snapshot unavailable' >&2
+    return 1
+  fi
+  if ! public_health_output=$(public_health_snapshot); then
+    echo 'public health snapshot unavailable' >&2
+    return 1
+  fi
   record_remote_status
   printf '%s\n' "$remote_output"
   printf '%s' "$public_health_output"
