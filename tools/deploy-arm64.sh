@@ -121,7 +121,11 @@ expected_hash=$7
 shift 7
 compose=(sudo docker compose)
 for compose_file in "$@"; do
-  compose+=(-f "$compose_file")
+  case "$compose_file" in
+    /*) compose_path=$compose_file ;;
+    *) compose_path="$deploy_root/$compose_file" ;;
+  esac
+  compose+=(-f "$compose_path")
 done
 override="$deploy_root/docker-compose.override.yml"
 backup_dir="$stage/rollback-$(date -u +%Y%m%d-%H%M%S)"
