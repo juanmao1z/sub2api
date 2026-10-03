@@ -5,6 +5,8 @@ SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 REPO_ROOT=$(CDPATH= cd -- "$SCRIPT_DIR/.." && pwd)
 WORKSPACE_ROOT=$(CDPATH= cd -- "$REPO_ROOT/.." && pwd)
 CONFIG="$WORKSPACE_ROOT/workspace.json"
+# shellcheck source=tools/lib/retry.sh
+source "$SCRIPT_DIR/lib/retry.sh"
 
 usage() {
   cat <<'USAGE'
@@ -90,6 +92,8 @@ fi
 
 [ "$apply" -eq 1 ] || { echo 'plan-only: add --apply after all checks pass'; exit 0; }
 
+ssh_options=(-o BatchMode=yes -o ConnectTimeout=10 -o ServerAliveInterval=5 -o ServerAliveCountMax=3)
+retry_with_backoff "production SSH preflight" ssh "${ssh_options[@]}" "$ssh_alias" true
 image_arch=$(docker image inspect "$tag" --format '{{.Architecture}}/{{.Os}}')
 [ "$image_arch" = "$target_architecture/linux" ] || {
   echo "local image $tag has architecture $image_arch, expected $target_architecture/linux" >&2
@@ -105,9 +109,9 @@ docker save --output "$image_tar" "$release_image"
 gzip -c "$image_tar" > "$archive"
 archive_hash=$(sha256sum "$archive" | awk '{print $1}')
 remote_archive="/tmp/sub2api-custom-$release.tar.gz"
-scp -o BatchMode=yes -o ConnectTimeout=10 "$archive" "$ssh_alias:$remote_archive"
+retry_with_backoff "image archive upload" scp "${ssh_options[@]}" "$archive" "$ssh_alias:$remote_archive"
 
-remote_output=$(ssh -o BatchMode=yes -o ConnectTimeout=10 "$ssh_alias" bash -s -- \
+remote_output=$(ssh "${ssh_options[@]}" "$ssh_alias" bash -s -- \
   "$deploy_root" "$stage" "$release_image" "$app_service" "$target_architecture" "$remote_archive" "$archive_hash" "${compose_files[@]}" <<'REMOTE'
 set -Eeuo pipefail
 
@@ -198,7 +202,7 @@ backup_dir=$(printf '%s\n' "$remote_output" | sed -n 's/^BACKUP_DIR=//p' | tail 
 [ -n "$backup_dir" ] || { echo 'remote deployment did not return a rollback directory' >&2; exit 1; }
 
 health_url="${public_base_url%/}/health"
-if ! health_body=$(curl --fail --silent --show-error --max-time 20 "$health_url"); then
+if ! health_body=$(retry_with_backoff "public health check" curl --fail --silent --show-error --max-time 20 "$health_url"); then
   echo "public health check failed; restoring the previous application image" >&2
   ssh -o BatchMode=yes -o ConnectTimeout=10 "$ssh_alias" bash -s -- \
     "$deploy_root" "$backup_dir" "$app_service" "${compose_files[@]}" <<'ROLLBACK'
@@ -209,7 +213,11 @@ app_service=$3
 shift 3
 compose=(sudo docker compose)
 for compose_file in "$@"; do
-  compose+=(-f "$compose_file")
+  case "$compose_file" in
+    /*) compose_path=$compose_file ;;
+    *) compose_path="$deploy_root/$compose_file" ;;
+  esac
+  compose+=(-f "$compose_path")
 done
 override="$deploy_root/docker-compose.override.yml"
 sudo cp "$backup_dir/docker-compose.override.yml" "$override"
@@ -223,7 +231,7 @@ done
 echo 'rollback_health=unhealthy' >&2
 exit 1
 ROLLBACK
-  curl --fail --silent --show-error --max-time 20 "$health_url" >/dev/null || {
+  retry_with_backoff "rollback public health check" curl --fail --silent --show-error --max-time 20 "$health_url" >/dev/null || {
     echo 'rollback completed remotely but public health is still failing' >&2
     exit 1
   }

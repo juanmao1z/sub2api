@@ -5,6 +5,8 @@ SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 REPO_ROOT=$(CDPATH= cd -- "$SCRIPT_DIR/.." && pwd)
 WORKSPACE_ROOT=$(CDPATH= cd -- "$REPO_ROOT/.." && pwd)
 CONFIG="$WORKSPACE_ROOT/workspace.json"
+# shellcheck source=tools/lib/retry.sh
+source "$SCRIPT_DIR/lib/retry.sh"
 
 usage() {
   cat <<'USAGE'
@@ -85,7 +87,10 @@ done
 [ "$print_only" -eq 1 ] && args+=(--print)
 
 printf 'context=%s\nbuilder=%s\ntarget=%s\ntag=%s\n' "$context" "${builder:-active}" "$target_platform" "$tag"
-(cd "$REPO_ROOT" && docker "${args[@]}")
+build_image() {
+  (cd "$REPO_ROOT" && docker "${args[@]}" )
+}
+retry_with_backoff "ARM64 Docker build" build_image
 
 if [ "$print_only" -eq 0 ]; then
   image_arch=$(docker image inspect "$tag" --format '{{.Architecture}}/{{.Os}}')
