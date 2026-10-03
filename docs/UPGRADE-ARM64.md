@@ -21,21 +21,32 @@ The staged release entry point is `tools/sub2api-release.sh`. It records source 
 deploy-artifacts/<release>/release.json
 ```
 
-Choose one release name and reuse it for every later command:
+Choose one release name and one immutable Git tag, then reuse both for every later command:
 
 ```bash
 version=$(tr -d '\r\n' < backend/cmd/server/VERSION)
 tag="sub2api-custom:preflight-v${version}-arm64"
 release="${version}-arm64-$(date -u +%Y%m%d-%H%M%S)"
+git_tag="release-${version}-${release}"
 ```
+
+Validate the tag name before preparing the release:
+
+```bash
+git check-ref-format "refs/tags/$git_tag"
+```
+
+`prepare` requires `--git-tag`. On a clean `main`, it creates an annotated tag at the current `HEAD` when the tag is absent. An existing tag is accepted only when it already resolves to the current `HEAD`; the release tool never moves a tag to another commit.
 
 Create the manifest and bind it to the clean source commit:
 
 ```bash
-bash tools/sub2api-release.sh prepare --release "$release" --tag "$tag"
+bash tools/sub2api-release.sh prepare --release "$release" --git-tag "$git_tag" --tag "$tag"
+git rev-parse --verify "refs/tags/$git_tag^{commit}"
+git rev-parse HEAD
 ```
 
-`prepare` is idempotent only when the existing manifest has the same image tag, source commit, and source version. Changing the source requires a new release name.
+The two commit IDs must match. The manifest records the tag in `source.git_tag`, and all new stages validate that it still resolves to `source.commit`.
 
 ## 3. Run staged checks
 
@@ -52,16 +63,17 @@ The gates are:
 
 - `verify`: clean `main`, configured remotes, verified source version, `origin/main` not ahead, remote ARM64/Docker access, application health, preserved services, mount evidence, and public health.
 - `build`: local image exists or is built through the configured Buildx path and is verified as `linux/arm64`.
-- `publish`: only the configured `origin/main` is pushed, then compared with local `HEAD`.
+- `publish`: pushes only the configured `origin/main` and the exact manifest tag to `origin`, then verifies both resolve to the expected commit. It never pushes `upstream`.
+- To validate the remote tag after publishing, run `git ls-remote origin "refs/tags/${git_tag}^{}"` and compare its commit ID with `git rev-parse HEAD`.
 - `plan`: records the deployment plan and does not upload an image or modify production.
 
 The compatibility entry point remains available:
 
 ```bash
-bash tools/release-arm64.sh --tag "$tag" --release "$release"
+bash tools/release-arm64.sh --tag "$tag" --release "$release" --git-tag "$git_tag"
 ```
 
-It forwards to `sub2api-release.sh run`, which executes `prepare`, `verify`, `build`, `publish`, and `plan`. Add `--apply` only after reviewing the manifest and plan.
+The wrapper accepts `--git-tag`; when omitted, it deterministically generates `release-${version}-${release}` and passes that value to `run`. `run` performs the same tag creation and validation before the staged checks. Add `--apply` only after reviewing the manifest and plan.
 
 ## 4. Apply production
 

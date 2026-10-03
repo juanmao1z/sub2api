@@ -11,7 +11,7 @@ source "$SCRIPT_DIR/lib/retry.sh"
 usage() {
   cat <<'USAGE'
 Usage:
-  tools/sub2api-release.sh prepare --release RELEASE [--tag IMAGE[:TAG]]
+  tools/sub2api-release.sh prepare --release RELEASE --git-tag TAG [--tag IMAGE[:TAG]]
   tools/sub2api-release.sh verify --release RELEASE
   tools/sub2api-release.sh build --release RELEASE
   tools/sub2api-release.sh publish --release RELEASE
@@ -19,12 +19,12 @@ Usage:
   tools/sub2api-release.sh apply --release RELEASE
   tools/sub2api-release.sh status --release RELEASE
   tools/sub2api-release.sh recover --release RELEASE
-  tools/sub2api-release.sh run --release RELEASE [--tag IMAGE[:TAG]] [--apply]
+  tools/sub2api-release.sh run --release RELEASE --git-tag TAG [--tag IMAGE[:TAG]] [--apply]
 
 Stages are persisted in deploy-artifacts/<release>/release.json. `run` executes
 prepare, verify, build, publish, and plan. It applies production only with
 --apply. `status` is read-only. `recover` inspects an uncertain apply and never
-blindly repeats a remote service switch.
+blindly repeats a remote service switch. Every new release requires a new Git tag.
 USAGE
 }
 
@@ -34,11 +34,13 @@ shift
 
 release=''
 tag=''
+git_tag=''
 apply=0
 while [ "$#" -gt 0 ]; do
   case "$1" in
     --release) [ "$#" -ge 2 ] || { echo 'missing value for --release' >&2; exit 2; }; release=$2; shift 2 ;;
     --tag) [ "$#" -ge 2 ] || { echo 'missing value for --tag' >&2; exit 2; }; tag=$2; shift 2 ;;
+    --git-tag) [ "$#" -ge 2 ] || { echo 'missing value for --git-tag' >&2; exit 2; }; git_tag=$2; shift 2 ;;
     --apply) apply=1; shift ;;
     -h|--help) usage; exit 0 ;;
     *) echo "unknown argument: $1" >&2; usage >&2; exit 2 ;;
@@ -94,6 +96,62 @@ now() { date -u +%Y-%m-%dT%H:%M:%SZ; }
 require_release() { [ -n "$release" ] || { echo '--release is required' >&2; exit 2; }; }
 require_manifest() { require_release; [ -f "$manifest" ] || { echo "manifest not found: $manifest; run prepare first" >&2; exit 1; }; }
 
+require_git_tag() {
+  [ -n "$git_tag" ] || {
+    echo '--git-tag is required for prepare/run; every new release requires a new Git tag' >&2
+    return 2
+  }
+  git -C "$REPO_ROOT" check-ref-format "refs/tags/$git_tag" >/dev/null 2>&1 || {
+    echo "invalid Git tag name: $git_tag" >&2
+    return 2
+  }
+}
+
+git_tag_commit() {
+  git -C "$REPO_ROOT" rev-parse --verify "refs/tags/$1^{commit}" 2>/dev/null
+}
+
+ensure_git_tag() {
+  local commit=$1 existing
+  if git -C "$REPO_ROOT" show-ref --verify --quiet "refs/tags/$git_tag"; then
+    existing=$(git_tag_commit "$git_tag") || {
+      echo "Git tag does not resolve to a commit: $git_tag" >&2
+      return 1
+    }
+    [ "$existing" = "$commit" ] || {
+      echo "Git tag=$git_tag points to $existing, expected $commit; refusing to move it" >&2
+      return 1
+    }
+  else
+    git -C "$REPO_ROOT" tag -a "$git_tag" "$commit" -m "Release $git_tag"
+  fi
+  [ "$(git_tag_commit "$git_tag")" = "$commit" ] || {
+    echo "Git tag=$git_tag does not point to source commit=$commit" >&2
+    return 1
+  }
+}
+
+verify_manifest_git_tag() {
+  local manifest_tag source_commit tagged_commit
+  manifest_tag=$(jq -r '.source.git_tag // empty' "$manifest")
+  [ -n "$manifest_tag" ] || {
+    echo 'manifest has no Git tag; only status/recover support legacy manifests' >&2
+    return 1
+  }
+  git -C "$REPO_ROOT" check-ref-format "refs/tags/$manifest_tag" >/dev/null 2>&1 || {
+    echo "manifest contains invalid Git tag name: $manifest_tag" >&2
+    return 1
+  }
+  source_commit=$(jq -er '.source.commit' "$manifest")
+  tagged_commit=$(git_tag_commit "$manifest_tag") || {
+    echo "Git tag not found locally: $manifest_tag" >&2
+    return 1
+  }
+  [ "$tagged_commit" = "$source_commit" ] || {
+    echo "Git tag=$manifest_tag points to $tagged_commit, manifest source=$source_commit" >&2
+    return 1
+  }
+}
 manifest_write() {
   local tmp="${manifest}.tmp.$$"
   jq "$@" "$manifest" > "$tmp"
@@ -162,6 +220,20 @@ repo_preflight() {
 
 fetch_origin() {
   retry_with_backoff "fetch origin main" git -C "$REPO_ROOT" fetch origin main
+}
+verify_origin_git_tag() {
+  local manifest_tag=$1 local_commit remote_commit remote_output
+  local_commit=$(git_tag_commit "$manifest_tag") || return 1
+  remote_output=$(retry_with_backoff "verify origin tag $manifest_tag" git -C "$REPO_ROOT" ls-remote origin "refs/tags/${manifest_tag}^{}")
+  remote_commit=$(printf '%s\n' "$remote_output" | awk 'NR == 1 {print $1}')
+  if [ -z "$remote_commit" ]; then
+    remote_output=$(retry_with_backoff "verify origin tag $manifest_tag" git -C "$REPO_ROOT" ls-remote origin "refs/tags/$manifest_tag")
+    remote_commit=$(printf '%s\n' "$remote_output" | awk 'NR == 1 {print $1}')
+  fi
+  [ "$remote_commit" = "$local_commit" ] || {
+    echo "origin tag=$manifest_tag does not resolve to local commit=$local_commit" >&2
+    return 1
+  }
 }
 
 ssh_options=(-o BatchMode=yes -o ConnectTimeout=10 -o ServerAliveInterval=5 -o ServerAliveCountMax=3)
@@ -268,31 +340,40 @@ verify_remote() {
 
 prepare() {
   require_release
+  require_git_tag
   [ -n "$tag" ] || tag="${project_image}:preflight-v${repo_version}-arm64"
   repo_preflight
+  local commit
+  commit=$(git -C "$REPO_ROOT" rev-parse HEAD)
   if [ -f "$manifest" ]; then
+    local existing_tag existing_git_tag
     existing_tag=$(jq -r '.artifact.source_tag // empty' "$manifest")
+    existing_git_tag=$(jq -r '.source.git_tag // empty' "$manifest")
     [ "$existing_tag" = "$tag" ] || { echo "existing release uses tag=$existing_tag, requested tag=$tag" >&2; return 1; }
+    [ "$existing_git_tag" = "$git_tag" ] || { echo "existing release uses git tag=$existing_git_tag, requested git tag=$git_tag" >&2; return 1; }
     ensure_manifest_source
+    ensure_git_tag "$commit"
+    verify_manifest_git_tag
     echo "manifest_exists=$manifest"
     return 0
   fi
+  ensure_git_tag "$commit"
   mkdir -p "$release_dir"
-  local commit
-  commit=$(git -C "$REPO_ROOT" rev-parse HEAD)
   jq -n \
     --arg release "$release" \
     --arg created "$(now)" \
     --arg commit "$commit" \
     --arg version "$repo_version" \
+    --arg git_tag "$git_tag" \
     --arg tag "$tag" \
     --arg project_image "$project_image" \
     --arg target "$target_platform" \
     --arg ssh "$ssh_alias" \
     --arg app_service "$app_service" \
-    '{schemaVersion: 1, release: $release, created_at: $created, updated_at: $created, source: {commit: $commit, version: $version, branch: "main"}, artifact: {source_tag: $tag, release_image: ($project_image + ":" + $release), target: $target}, production: {ssh_alias: $ssh, app_service: $app_service}, stages: {}, observations: {}}' \
+    '{schemaVersion: 1, release: $release, created_at: $created, updated_at: $created, source: {commit: $commit, version: $version, branch: "main", git_tag: $git_tag}, artifact: {source_tag: $tag, release_image: ($project_image + ":" + $release), target: $target}, production: {ssh_alias: $ssh, app_service: $app_service}, stages: {}, observations: {}}' \
     > "$manifest"
-  stage_set prepare passed "$(jq -cn --arg tag "$tag" --arg commit "$commit" '{tag:$tag,commit:$commit}')"
+  verify_manifest_git_tag
+  stage_set prepare passed "$(jq -cn --arg tag "$tag" --arg git_tag "$git_tag" --arg commit "$commit" '{tag:$tag,git_tag:$git_tag,commit:$commit}')"
   echo "manifest=$manifest"
 }
 
@@ -300,6 +381,7 @@ verify() {
   require_manifest
   repo_preflight
   ensure_manifest_source
+  verify_manifest_git_tag
   retry_with_backoff "fetch origin main" git -C "$REPO_ROOT" fetch origin main
   local behind ahead
   read -r behind ahead < <(git -C "$REPO_ROOT" rev-list --left-right --count origin/main...HEAD)
@@ -310,13 +392,14 @@ verify() {
     stage_set verify blocked "$(jq -cn --arg output "${remote_output:-}" --arg public "${public_health_output:-}" '{remote_output:$output,public_health_output:$public}')"
     return 1
   fi
-  stage_set verify passed "$(jq -cn --arg behind "$behind" --arg ahead "$ahead" --arg commit "$(git -C "$REPO_ROOT" rev-parse HEAD)" '{behind:$behind,ahead:$ahead,commit:$commit}')"
+  stage_set verify passed "$(jq -cn --arg behind "$behind" --arg ahead "$ahead" --arg commit "$(git -C "$REPO_ROOT" rev-parse HEAD)" --arg git_tag "$(jq -er '.source.git_tag' "$manifest")" '{behind:$behind,ahead:$ahead,commit:$commit,git_tag:$git_tag}')"
   echo "verify=passed commit=$(git -C "$REPO_ROOT" rev-parse HEAD)"
 }
 
 build() {
   require_manifest
   ensure_manifest_source
+  verify_manifest_git_tag
   local source_tag
   source_tag=$(jq -er '.artifact.source_tag' "$manifest")
   local arch image_id
@@ -337,6 +420,9 @@ build() {
 publish() {
   require_manifest
   ensure_manifest_source
+  verify_manifest_git_tag
+  local manifest_tag
+  manifest_tag=$(jq -er '.source.git_tag' "$manifest")
   [ "$(jq -r '.stages.verify.status // ""' "$manifest")" = passed ] || { echo 'verify stage must pass before publish' >&2; return 1; }
   [ "$(jq -r '.stages.build.status // ""' "$manifest")" = passed ] || { echo 'build stage must pass before publish' >&2; return 1; }
   local behind ahead
@@ -348,18 +434,21 @@ publish() {
   else
     echo 'origin/main already contains local HEAD'
   fi
+  retry_with_backoff "push origin tag $manifest_tag" git -C "$REPO_ROOT" push origin "refs/tags/$manifest_tag"
   retry_with_backoff "verify origin main" git -C "$REPO_ROOT" fetch origin main
   [ "$(git -C "$REPO_ROOT" rev-parse HEAD)" = "$(git -C "$REPO_ROOT" rev-parse origin/main)" ] || {
     echo 'origin/main does not match local HEAD' >&2
     return 1
   }
-  stage_set publish passed "$(jq -cn --arg commit "$(git -C "$REPO_ROOT" rev-parse HEAD)" '{commit:$commit}')"
-  echo "publish=passed commit=$(git -C "$REPO_ROOT" rev-parse HEAD)"
+  verify_origin_git_tag "$manifest_tag"
+  stage_set publish passed "$(jq -cn --arg commit "$(git -C "$REPO_ROOT" rev-parse HEAD)" --arg git_tag "$manifest_tag" '{commit:$commit,git_tag:$git_tag}')"
+  echo "publish=passed commit=$(git -C "$REPO_ROOT" rev-parse HEAD) git_tag=$manifest_tag"
 }
 
 plan() {
   require_manifest
   ensure_manifest_source
+  verify_manifest_git_tag
   [ "$(jq -r '.stages.publish.status // ""' "$manifest")" = passed ] || { echo 'publish stage must pass before plan' >&2; return 1; }
   local source_tag release_image plan_log status
   source_tag=$(jq -er '.artifact.source_tag' "$manifest")
@@ -382,6 +471,7 @@ plan() {
 apply_release() {
   require_manifest
   ensure_manifest_source
+  verify_manifest_git_tag
   [ "$(jq -r '.stages.plan.status // ""' "$manifest")" = passed ] || { echo 'plan stage must pass before apply' >&2; return 1; }
   local source_tag log status
   source_tag=$(jq -er '.artifact.source_tag' "$manifest")
@@ -426,6 +516,7 @@ apply_release() {
   echo "apply did not leave target image active; current_image=$current_image target_image=$target_image" >&2
   return 1
 }
+
 
 status_command() {
   require_manifest
