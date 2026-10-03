@@ -1,0 +1,55 @@
+{
+  "skill": "sub2api-arm64-upgrade",
+  "evals": [
+    {
+      "id": "trigger-complete-upgrade",
+      "prompt": "把当前 Sub2API 项目升级到官方新版本，保留自定义改动，构建 ARM64 镜像，推送 origin/main 并部署生产。网络经常失败，要有重试和回滚。",
+      "expected_output": "触发技能，读取 workspace.json，创建 release manifest，按 prepare、verify、build、publish、plan、apply 和 success/recovery 状态门执行。",
+      "expectations": [
+        "使用配置驱动的升级和发布脚本，而不是凭记忆执行命令。",
+        "把网络重试限制在幂等传输和健康检查，并验证重试后的结果。",
+        "生产只切换应用服务，保留数据库、Redis、leaderboard 和数据目录。",
+        "在切换传输不确定时先使用 status 或 recover，不盲目重复 apply。",
+        "最终报告 manifest、提交、镜像架构、容器健康和公网健康证据。"
+      ]
+    },
+    {
+      "id": "nearby-not-trigger-source-only",
+      "prompt": "只告诉我官方 Sub2API 最新版本号，不要修改仓库、构建镜像或部署。",
+      "expected_output": "不执行完整升级技能；仅回答版本查询或要求使用适合的版本查询流程。",
+      "expectations": [
+        "不执行 Git push、Docker build 或生产部署。",
+        "不把普通版本查询扩大为发布流程。"
+      ]
+    },
+    {
+      "id": "boundary-plan-only",
+      "prompt": "为这次 Sub2API ARM64 升级生成部署计划，但现在不要上传镜像，也不要改生产。",
+      "expected_output": "触发技能但停在 plan-only；创建或读取 manifest，执行本地检查和计划，明确未发生生产写入。",
+      "expectations": [
+        "不使用 --apply，不执行生产服务切换或镜像上传。",
+        "报告版本、架构、origin 同步和计划中的保留服务。",
+        "把缺失的前置证据列为阻断，而不是推测通过。"
+      ]
+    },
+    {
+      "id": "transport-uncertainty-recovery",
+      "prompt": "apply 期间 SSH 断了，不确定生产是否已经切换。",
+      "expected_output": "先读取同一 release manifest，执行 status 或 recover，基于远端镜像和健康证据分类 success、not_switched 或 uncertain，不直接重跑 apply。",
+      "expectations": [
+        "恢复检查不依赖本地 Docker daemon。",
+        "健康旧镜像不能被描述为已确认回滚。",
+        "没有完整证据时必须保留 uncertain 状态。"
+      ]
+    },
+    {
+      "id": "existing-skill-upgrade-boundary",
+      "prompt": "改进现有的 sub2api-arm64-upgrade 技能，加入最近一次网络故障的修复。",
+      "expected_output": "不创建第二个同名技能；将请求识别为现有技能升级，并转交 run-history-skill-upgrader。",
+      "expectations": [
+        "区分新技能构建和已有技能升级。",
+        "不覆盖现有技能包。"
+      ]
+    }
+  ]
+}

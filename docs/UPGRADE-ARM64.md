@@ -1,9 +1,6 @@
 # ARM64 Upgrade and Release
 
-This repository keeps the source merge and the production release as separate
-steps. The merge can contain semantic conflicts because local custom features
-and intentional deletions must be reviewed by a human. The repeatable network,
-build, push, upload, and deployment steps are scripted.
+This repository separates source maintenance from production release. Semantic merge conflicts remain a human review gate. The repeatable build, Git synchronization, deployment, health verification, and recovery steps are driven by `workspace.json` and a release manifest.
 
 ## 1. Prepare the official source
 
@@ -14,54 +11,91 @@ bash tools/upgrade-arm64.sh
 bash tools/upgrade-arm64.sh --merge
 ```
 
-Resolve conflicts deliberately. Keep the local custom behavior and confirm the
-source `backend/cmd/server/VERSION` matches the verified version in
-`workspace.json`. Run the relevant tests, then commit the merge. The script
-never guesses through semantic conflicts.
+Resolve conflicts deliberately. Preserve local custom behavior and intentional deletions. Confirm `backend/cmd/server/VERSION` matches the verified source version in `workspace.json`, run relevant tests, and commit the result. The script never guesses through semantic conflicts.
 
-## 2. Release and deploy
+## 2. Create a release manifest
 
-The release script verifies the remote URL, branch, clean tree, version gate,
-ARM64 builder, image architecture, and GitHub synchronization. It retries
-network-sensitive Git operations and delegates image construction and deployment
-to the existing checked scripts.
+The staged release entry point is `tools/sub2api-release.sh`. It records source commit, version, image, stage results, logs, remote observations, and recovery state in:
 
-Set one release name and reuse it for the plan and apply steps:
+```text
+deploy-artifacts/<release>/release.json
+```
 
+Choose one release name and reuse it for every later command:
+
+```bash
 version=$(tr -d '\r\n' < backend/cmd/server/VERSION)
 tag="sub2api-custom:preflight-v${version}-arm64"
 release="${version}-arm64-$(date -u +%Y%m%d-%H%M%S)"
-
-Plan only:
-
-```bash
-RETRY_ATTEMPTS=5 RETRY_DELAY_SECONDS=8 \
-  bash tools/release-arm64.sh --tag "$tag" --release "$release"
 ```
 
-Apply the same reviewed release:
+Create the manifest and bind it to the clean source commit:
 
 ```bash
-RETRY_ATTEMPTS=5 RETRY_DELAY_SECONDS=8 \
-  bash tools/release-arm64.sh --tag "$tag" --release "$release" --apply
+bash tools/sub2api-release.sh prepare --release "$release" --tag "$tag"
 ```
 
-`--apply` only recreates the configured `sub2api` service. PostgreSQL, Redis,
-leaderboard, and their configured data mounts are not recreated. The deploy
-script uploads a checksum-verified image, checks the remote architecture, waits
-for the application health check, and restores the previous application
-configuration if the switch or public `/health` check fails.
+`prepare` is idempotent only when the existing manifest has the same image tag, source commit, and source version. Changing the source requires a new release name.
 
-## Network retry policy
+## 3. Run staged checks
 
-The scripts use exponential backoff for Git fetch/push, Docker image builds,
-SSH preflight, SCP upload, public health checks, and rollback health checks. Tune
-these environment variables when the network is unstable:
+Run these stages in order:
+
+```bash
+bash tools/sub2api-release.sh verify --release "$release"
+bash tools/sub2api-release.sh build --release "$release"
+bash tools/sub2api-release.sh publish --release "$release"
+bash tools/sub2api-release.sh plan --release "$release"
+```
+
+The gates are:
+
+- `verify`: clean `main`, configured remotes, verified source version, `origin/main` not ahead, remote ARM64/Docker access, application health, preserved services, mount evidence, and public health.
+- `build`: local image exists or is built through the configured Buildx path and is verified as `linux/arm64`.
+- `publish`: only the configured `origin/main` is pushed, then compared with local `HEAD`.
+- `plan`: records the deployment plan and does not upload an image or modify production.
+
+The compatibility entry point remains available:
+
+```bash
+bash tools/release-arm64.sh --tag "$tag" --release "$release"
+```
+
+It forwards to `sub2api-release.sh run`, which executes `prepare`, `verify`, `build`, `publish`, and `plan`. Add `--apply` only after reviewing the manifest and plan.
+
+## 4. Apply production
+
+Apply only the reviewed manifest:
+
+```bash
+bash tools/sub2api-release.sh apply --release "$release"
+```
+
+The underlying deploy script uploads and checksum-verifies the image, validates the remote architecture, resolves relative Compose files below the configured deployment root, and recreates only `sub2api`. PostgreSQL, Redis, `sub2api-leaderboard`, and their data directories are not stopped, recreated, or included in rollback commands.
+
+A successful apply records `success_verified`. If the command exits after possibly reaching the server, the tool checks the actual remote image and health before deciding the result. It records `uncertain` when evidence is incomplete and never blindly repeats the complete service switch.
+
+## 5. Inspect and recover
+
+Both commands require an existing manifest and do not require a local Docker daemon:
+
+```bash
+bash tools/sub2api-release.sh status --release "$release"
+bash tools/sub2api-release.sh recover --release "$release"
+```
+
+Use `status` after an SSH or transport interruption. Use `recover` to classify the observed state as `success`, `not_switched`, or `uncertain`. A `not_switched` result is not an authorization to retry blindly; review the manifest and plan first.
+
+## Retry policy
+
+Bounded exponential backoff is used only for idempotent Git operations, Docker builds, SSH preflight, image upload, and health checks:
 
 - `RETRY_ATTEMPTS`, default `4`
 - `RETRY_DELAY_SECONDS`, default `5`
 - `RETRY_MAX_DELAY_SECONDS`, default `30`
 
-A complete remote deployment command is intentionally not blindly retried after
-it may have reached the server. The script checks and reports the remote state
-instead of risking a second uncontrolled service switch.
+A complete remote service switch is intentionally not blindly retried after an uncertain transport result. Inspect the manifest and production state first.
+
+## Production boundary
+
+All target, remote, service, Compose, image, and health values come from `workspace.json`. The production SSH path uses the configured non-interactive `sudo` authorization only. Version, source, architecture, Docker permission, preserved-service, and health gates must pass before any production write.
