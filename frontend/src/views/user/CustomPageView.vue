@@ -9,12 +9,10 @@
           isMarkdownMode ? 'guide-page-host' : '',
         ]"
       >
-        <div v-if="loading" class="flex h-full items-center justify-center py-12">
-          <div
-            class="h-8 w-8 animate-spin rounded-full border-2 border-primary-500 border-t-transparent"
-          ></div>
+        <div v-if="loading" class="custom-page-loading" role="status" aria-live="polite">
+          <div class="custom-page-loading-spinner" aria-hidden="true"></div>
+          <span class="sr-only">{{ t('common.loading') }}</span>
         </div>
-
         <div
           v-else-if="!menuItem"
           class="flex h-full items-center justify-center p-10 text-center"
@@ -531,6 +529,29 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+.custom-page-loading {
+  @apply flex h-full items-center justify-center py-12;
+  background: var(--signal-surface, #ffffff);
+  color: var(--signal-muted, #737379);
+}
+
+.custom-page-loading-spinner {
+  width: 2rem;
+  height: 2rem;
+  border: 2px solid var(--signal-line, #e3e3e6);
+  border-top-color: var(--signal-accent, #52525b);
+  border-radius: 999px;
+  animation: custom-page-spin 0.8s linear infinite;
+}
+
+@keyframes custom-page-spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .custom-page-loading-spinner { animation: none; }
+}
+
 .custom-page-layout {
   @apply flex flex-col;
   height: calc(100vh - 64px - 4rem);

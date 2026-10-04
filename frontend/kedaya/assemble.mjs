@@ -156,12 +156,24 @@ export function assemble({ homeDir, outputDir = homeDir }) {
     <link rel="icon" type="image/png" href="/logo.png?v=20260715" />
     <title>Sub2API - AI API Gateway</title>
     <style>
-      html, body { min-height: 100%; margin: 0; }
-      #startup-loading { position: fixed; inset: 0; z-index: 2147483647; display: grid; place-content: center; justify-items: center; gap: 12px; background: #f9fafb; color: #4b5563; font: 14px system-ui, sans-serif; }
-      #startup-loading-indicator { width: 24px; height: 24px; border: 2px solid #d1d5db; border-top-color: #15803d; border-radius: 50%; animation: startup-spin .8s linear infinite; }
+      html, body { min-height: 100%; margin: 0; background: var(--startup-bg); }
+      :root { color-scheme: light; --startup-bg: #fafafa; --startup-text: #737379; --startup-line: #e3e3e6; --startup-accent: #52525b; }
+      :root.dark { color-scheme: dark; --startup-bg: #0b0f14; --startup-text: #98a5b4; --startup-line: #27313d; --startup-accent: #82a7ff; }
+      #startup-loading { position: fixed; inset: 0; z-index: 2147483647; display: grid; place-content: center; justify-items: center; gap: 12px; background: var(--startup-bg); color: var(--startup-text); font: 14px system-ui, sans-serif; }
+      #startup-loading-indicator { width: 24px; height: 24px; border: 2px solid var(--startup-line); border-top-color: var(--startup-accent); border-radius: 50%; animation: startup-spin .8s linear infinite; }
       @keyframes startup-spin { to { transform: rotate(360deg); } }
       @media (prefers-reduced-motion: reduce) { #startup-loading-indicator { animation: none; } }
     </style>
+    <script nonce="__CSP_NONCE_VALUE__">
+      (() => {
+        let theme = 'light'
+        try { theme = localStorage.getItem('theme') === 'dark' ? 'dark' : 'light' } catch {}
+        const root = document.documentElement
+        root.classList.toggle('dark', theme === 'dark')
+        root.dataset.theme = theme
+        root.style.colorScheme = theme
+      })()
+    </script>
     <script type="module" src="${releasePrefix}/bootstrap.js"></script>
   </head>
   <body>

@@ -992,9 +992,40 @@ router.beforeEach(async (to, _from, next) => {
 /**
  * Navigation guard: End loading and trigger prefetch
  */
+const CHUNK_RELOAD_KEY = 'chunk_reload_attempted'
+let chunkReloadAttemptedInMemory = false
+
+function clearChunkReloadAttempt() {
+  chunkReloadAttemptedInMemory = false
+  try {
+    sessionStorage.removeItem(CHUNK_RELOAD_KEY)
+  } catch {
+    // Storage may be unavailable in privacy-restricted browser contexts.
+  }
+}
+
+function hasChunkReloadAttempted(): boolean {
+  if (chunkReloadAttemptedInMemory) return true
+  try {
+    return sessionStorage.getItem(CHUNK_RELOAD_KEY) !== null
+  } catch {
+    return false
+  }
+}
+
+function markChunkReloadAttempt() {
+  chunkReloadAttemptedInMemory = true
+  try {
+    sessionStorage.setItem(CHUNK_RELOAD_KEY, Date.now().toString())
+  } catch {
+    // The in-memory marker still prevents a reload loop for this module instance.
+  }
+}
+
 router.afterEach((to) => {
   // 结束导航加载状态
   navigationLoading.endNavigation()
+  clearChunkReloadAttempt()
 
   // 懒初始化预加载（首次导航时创建，传入 router 实例）
   if (!routePrefetch) {
@@ -1006,33 +1037,28 @@ router.afterEach((to) => {
 
 /**
  * Navigation guard: Error handling
- * Handles dynamic import failures caused by deployment updates
+ * Handles dynamic import failures caused by deployment updates.
+ * A reload is a last-resort recovery and is attempted at most once until a
+ * navigation succeeds, preventing persistent failures from causing a loop.
  */
 router.onError((error) => {
   console.error('Router error:', error)
 
-  // Check if this is a dynamic import failure (chunk loading error)
   const isChunkLoadError =
     error.message?.includes('Failed to fetch dynamically imported module') ||
     error.message?.includes('Loading chunk') ||
     error.message?.includes('Loading CSS chunk') ||
     error.name === 'ChunkLoadError'
 
-  if (isChunkLoadError) {
-    // Avoid infinite reload loop by checking sessionStorage
-    const reloadKey = 'chunk_reload_attempted'
-    const lastReload = sessionStorage.getItem(reloadKey)
-    const now = Date.now()
-
-    // Allow reload if never attempted or more than 10 seconds ago
-    if (!lastReload || now - parseInt(lastReload) > 10000) {
-      sessionStorage.setItem(reloadKey, now.toString())
-      console.warn('Chunk load error detected, reloading page to fetch latest version...')
-      window.location.reload()
-    } else {
-      console.error('Chunk load error persists after reload. Please clear browser cache.')
-    }
+  if (!isChunkLoadError) return
+  if (hasChunkReloadAttempted()) {
+    console.error('Chunk load error persists after one recovery attempt.')
+    return
   }
+
+  markChunkReloadAttempt()
+  console.warn('Chunk load error detected, reloading once to fetch the current release...')
+  window.location.reload()
 })
 
 export default router

@@ -1,4 +1,4 @@
-/** @file @brief Keep the homepage, custom pages, and console in their intended application documents. */
+/** @file @brief Keep the homepage separate while letting the native console own internal routes. */
 
 /** @brief Identify the original homepage entry, including root aliases.
  * @param pathname Absolute URL pathname. @return Whether the homepage runtime owns it.
@@ -7,13 +7,13 @@ export function isHomePath(pathname) {
   return ['/', '/home', '/home/', '/index.html'].includes(pathname);
 }
 
-/** @brief Select the application that implements a route, preserving site-specific features.
- * @param pathname Absolute URL pathname. @return Homepage, native feature, or Kedaya console entry.
+/** @brief Select the application that implements a route.
+ * @param pathname Absolute URL pathname. @return Homepage or the native console entry.
  */
 export function runtimeForPath(pathname) {
   if (isHomePath(pathname)) return 'home';
-  if (pathname.startsWith('/custom/')) return 'native';
-  return 'console';
+  // The native bundle contains both the console router and custom-page views.
+  return 'native';
 }
 
 /** @brief Install full navigation when crossing application entry boundaries.

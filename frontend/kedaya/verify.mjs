@@ -29,7 +29,7 @@ test('Kedaya assets match the pinned release except for documented API adaptatio
   }
 });
 
-test('homepage transitions reload the document and console transitions remain client-side', () => {
+test('homepage transitions reload the document and native console transitions remain client-side', () => {
   const calls = [], listeners = {};
   const win = { location: { origin: 'https://api.zhouz.online', href: 'https://api.zhouz.online/dashboard', pathname: '/dashboard', assign: url => calls.push(['assign', url]), replace: url => calls.push(['replace', url]), reload: () => calls.push(['reload']) }, history: { pushState: (...args) => calls.push(['pushState', ...args]), replaceState() {} }, addEventListener: (name, callback) => { listeners[name] = callback; }, document: { addEventListener() {} } };
   installNavigation(win);
@@ -42,28 +42,33 @@ test('homepage transitions reload the document and console transitions remain cl
   assert.deepEqual(calls[2], ['reload']);
 });
 
-test('production entry has isolated styles and no preview account initialization', () => {
+test('production entry has a themed startup shell and no preview account initialization', () => {
   assert.ok(!manifest.entries.home.styles.some(style => manifest.entries.console.styles.includes(style)));
   const html = fs.readFileSync(path.join(output, 'index.html'), 'utf8');
   assert.ok(html.includes(manifest.releasePrefix + '/bootstrap.js'));
+  assert.ok(html.includes('localStorage.getItem(\'theme\')'));
+  assert.ok(html.includes('color-scheme: dark'));
+  assert.ok(html.includes('startup-loading'));
+  assert.ok(html.includes('__CSP_NONCE_VALUE__'));
   assert.ok(!html.includes('preview/session'));
   assert.ok(!html.includes('auth_token'));
   assert.ok(!html.includes('__APP_CONFIG__='));
 });
 
-test('custom pages use the native implementation while application routes use the console', () => {
-  for (const route of ['/custom/cc-switch-guide', '/custom/usage-leaderboard']) assert.equal(runtimeForPath(route), 'native', route);
+test('custom pages and application routes share the native runtime without reloads', () => {
+  for (const route of ['/custom/cc-switch-guide', '/custom/usage-leaderboard', '/dashboard', '/admin/users']) {
+    assert.equal(runtimeForPath(route), 'native', route);
+  }
   assert.equal(runtimeForPath('/home'), 'home');
-  assert.equal(runtimeForPath('/dashboard'), 'console');
-  assert.equal(runtimeForPath('/admin/users'), 'console');
   assert.equal(manifest.entries.native.script, manifest.entries.home.script);
   const calls = [];
   const win = { location: { origin: 'https://api.zhouz.online', href: 'https://api.zhouz.online/dashboard', pathname: '/dashboard', assign: url => calls.push(['assign', url]) }, history: { pushState: (...args) => calls.push(['pushState', ...args]), replaceState() {} }, addEventListener() {}, document: { addEventListener() {} } };
   installNavigation(win);
   win.history.pushState({}, '', '/admin/users');
   win.history.pushState({}, '', '/custom/cc-switch-guide');
+  assert.equal(calls.length, 2);
   assert.equal(calls[0][0], 'pushState');
-  assert.deepEqual(calls[1], ['assign', 'https://api.zhouz.online/custom/cc-switch-guide']);
+  assert.equal(calls[1][0], 'pushState');
 });
 
 test('Kedaya admin sidebar follows subscription settings', () => {
