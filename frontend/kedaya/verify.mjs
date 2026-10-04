@@ -49,6 +49,9 @@ test('production entry has a themed startup shell and no preview account initial
   assert.ok(html.includes('localStorage.getItem(\'theme\')'));
   assert.ok(html.includes('color-scheme: dark'));
   assert.ok(html.includes('startup-loading'));
+  assert.ok(html.includes('startup-loading-brand'));
+  assert.ok(html.includes('startup-loading-label'));
+  assert.ok(html.includes('window.__APP_CONFIG__'));
   assert.ok(html.includes('__CSP_NONCE_VALUE__'));
   assert.ok(!html.includes('preview/session'));
   assert.ok(!html.includes('auth_token'));

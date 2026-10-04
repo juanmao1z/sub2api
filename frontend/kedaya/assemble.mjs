@@ -160,6 +160,9 @@ export function assemble({ homeDir, outputDir = homeDir }) {
       :root { color-scheme: light; --startup-bg: #fafafa; --startup-text: #737379; --startup-line: #e3e3e6; --startup-accent: #52525b; }
       :root.dark { color-scheme: dark; --startup-bg: #0b0f14; --startup-text: #98a5b4; --startup-line: #27313d; --startup-accent: #82a7ff; }
       #startup-loading { position: fixed; inset: 0; z-index: 2147483647; display: grid; place-content: center; justify-items: center; gap: 12px; background: var(--startup-bg); color: var(--startup-text); font: 14px system-ui, sans-serif; }
+      #startup-loading-brand { display: flex; align-items: center; gap: 8px; min-height: 32px; font-weight: 600; }
+      #startup-loading-brand:empty { display: none; }
+      #startup-loading-logo { width: 32px; height: 32px; object-fit: contain; }
       #startup-loading-indicator { width: 24px; height: 24px; border: 2px solid var(--startup-line); border-top-color: var(--startup-accent); border-radius: 50%; animation: startup-spin .8s linear infinite; }
       @keyframes startup-spin { to { transform: rotate(360deg); } }
       @media (prefers-reduced-motion: reduce) { #startup-loading-indicator { animation: none; } }
@@ -179,9 +182,28 @@ export function assemble({ homeDir, outputDir = homeDir }) {
   <body>
     <div id="app"></div>
     <div id="startup-loading" role="status" aria-live="polite">
+      <div id="startup-loading-brand" aria-hidden="true"></div>
       <span id="startup-loading-indicator" aria-hidden="true"></span>
-      <span>正在加载页面</span>
+      <span id="startup-loading-label">正在加载页面</span>
     </div>
+    <script nonce="__CSP_NONCE_VALUE__">
+      (() => {
+        const config = window.__APP_CONFIG__
+        const name = typeof config?.site_name === 'string' ? config.site_name.trim() : ''
+        const logo = typeof config?.site_logo === 'string' ? config.site_logo.trim() : ''
+        const brand = document.getElementById('startup-loading-brand')
+        const label = document.getElementById('startup-loading-label')
+        if (name && brand) brand.textContent = name
+        if (name && label) label.textContent = '正在加载 ' + name
+        if (brand && /^(?:\/(?!\/)|data:image\/|https?:\/\/)/i.test(logo)) {
+          const image = document.createElement('img')
+          image.id = 'startup-loading-logo'
+          image.alt = ''
+          image.src = logo
+          brand.prepend(image)
+        }
+      })()
+    </script>
   </body>
 </html>
 `, 'utf8');
