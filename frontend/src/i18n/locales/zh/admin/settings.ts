@@ -170,8 +170,8 @@ export default {
         passwordReset: '忘记密码',
         passwordResetHint: '允许用户通过邮箱重置密码',
         frontendUrl: '前端地址',
-        frontendUrlPlaceholder: 'https://example.com',
-        frontendUrlHint: '用于生成邮件中的密码重置链接，例如 https://example.com',
+        frontendUrlPlaceholder: 'https://api.zhouz.online',
+        frontendUrlHint: '请填写站点根地址，例如 https://api.zhouz.online；不要填写 /api、/login 或 /reset-password，系统会自动拼接重置路径和 token 参数。',
         totp: '双因素认证 (2FA)',
         totpHint: '允许用户使用 Google Authenticator 等应用进行二次验证',
         totpKeyNotConfigured:

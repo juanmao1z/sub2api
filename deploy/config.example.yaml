@@ -24,9 +24,10 @@ server:
   # Return Server-Timing for authenticated requests made by the Admin web UI
   # 为管理端 Web 页面发出的已认证请求返回 Server-Timing
   enable_server_timing: false
-  # Frontend base URL used to generate external links in emails (e.g. password reset)
-  # 用于生成邮件中的外部链接（例如：重置密码链接）的前端基础地址
-  # Example: "https://example.com"
+  # Frontend base URL used to generate external links in emails (for example, password reset)
+  # 密码找回邮件中的前端基础地址。请填写站点根地址，不要填写 /api、/login 或 /reset-password。
+  # Production example / 生产示例: "https://api.zhouz.online"
+  # SMTP 配置、邮箱验证和密码重置开关在管理员设置中保存；先启用邮箱验证并配置 SMTP，再启用密码重置。
   frontend_url: ""
   # Maximum time to receive complete request headers. Does not limit response streams.
   # 完整读取请求头的最大时间；不限制响应流持续时间。

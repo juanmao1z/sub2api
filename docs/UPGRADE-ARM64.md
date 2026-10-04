@@ -111,3 +111,24 @@ A complete remote service switch is intentionally not blindly retried after an u
 ## Production boundary
 
 All target, remote, service, Compose, image, and health values come from `workspace.json`. The production SSH path uses the configured non-interactive `sudo` authorization only. Version, source, architecture, Docker permission, preserved-service, and health gates must pass before any production write.
+
+## Password reset setup
+
+The public authentication routes are `/forgot-password` and `/reset-password`. In production, set the frontend base URL to the site root:
+
+```text
+https://api.zhouz.online
+```
+
+Do not enter `/api`, `/login`, or `/reset-password`; the application appends `/reset-password` and the email/token query parameters automatically.
+
+In Admin Settings, enable email verification, configure and test SMTP, enable password reset, set **Frontend URL** to `https://api.zhouz.online`, and save the settings. SMTP credentials and the email verification/password reset switches are stored in Admin Settings; do not commit passwords or tokens.
+
+The server configuration can provide the same frontend URL as a fallback:
+
+```yaml
+server:
+  frontend_url: "https://api.zhouz.online"
+```
+
+The database value saved from Admin Settings takes precedence over the configuration-file fallback. Changing the server configuration requires restarting `sub2api`; this documentation change does not perform a production restart or deployment.

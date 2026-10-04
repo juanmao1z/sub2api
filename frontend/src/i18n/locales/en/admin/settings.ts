@@ -170,8 +170,8 @@ export default {
         passwordReset: 'Password Reset',
         passwordResetHint: 'Allow users to reset their password via email',
         frontendUrl: 'Frontend URL',
-        frontendUrlPlaceholder: 'https://example.com',
-        frontendUrlHint: 'Used to generate password reset links in emails. Example: https://example.com',
+        frontendUrlPlaceholder: 'https://api.zhouz.online',
+        frontendUrlHint: 'Enter the site root, for example https://api.zhouz.online. Do not add /api, /login, or /reset-password; the reset path and token query are appended automatically.',
         totp: 'Two-Factor Authentication (2FA)',
         totpHint: 'Allow users to use authenticator apps like Google Authenticator',
         totpKeyNotConfigured:

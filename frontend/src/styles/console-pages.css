@@ -142,3 +142,64 @@
   .console-signal .signal-dashboard .signal-trend .h-48 { height: 210px; }
   .console-signal .signal-profile [data-testid='profile-overview-hero'] h2 { white-space: normal; overflow-wrap: anywhere; font-size: 20px; }
 }
+/* Operations monitoring uses the same restrained console surface system as the other admin pages. */
+:is(.console-signal.signal-ops, .console-signal .signal-ops) .signal-ops-content {
+  color: var(--signal-text);
+}
+:is(.console-signal.signal-ops, .console-signal .signal-ops) .signal-ops-content :is(.card, section.rounded-2xl, .rounded-3xl, .rounded-2xl) {
+  border-color: var(--signal-line) !important;
+  border-radius: 8px !important;
+  background: var(--signal-surface) !important;
+  box-shadow: none !important;
+}
+:is(.console-signal.signal-ops, .console-signal .signal-ops) .signal-ops-content :is(.bg-gray-50, [class*="dark:bg-dark-900/30"], [class*="dark:bg-dark-800/70"]) {
+  background: var(--signal-bg) !important;
+}
+:is(.console-signal.signal-ops, .console-signal .signal-ops) .signal-ops-content :is(.border-gray-100, .border-gray-200, [class*="dark:border-dark-700"], [class*="dark:border-dark-800"]) {
+  border-color: var(--signal-line) !important;
+}
+:is(.console-signal.signal-ops, .console-signal .signal-ops) .signal-ops-content :is(.text-gray-900, .text-gray-800, .text-gray-700, [class*="dark:text-white"], [class*="dark:text-gray-100"], [class*="dark:text-gray-200"]) {
+  color: var(--signal-text) !important;
+}
+:is(.console-signal.signal-ops, .console-signal .signal-ops) .signal-ops-content :is(.text-gray-500, .text-gray-600, .text-gray-400, [class*="dark:text-gray-400"], [class*="dark:text-gray-300"]) {
+  color: var(--signal-muted) !important;
+}
+:is(.console-signal.signal-ops, .console-signal .signal-ops) .signal-ops-content :is(.btn, .input, .select-trigger) {
+  border-radius: 6px;
+}
+:is(.console-signal.signal-ops, .console-signal .signal-ops) .signal-ops-content .btn-primary {
+  border-color: transparent;
+  background: var(--signal-accent);
+  color: var(--signal-on-accent);
+}
+:is(.console-signal.signal-ops, .console-signal .signal-ops) .signal-ops-content .btn-secondary {
+  border-color: var(--signal-control-line);
+  background: var(--signal-surface);
+  color: var(--signal-text);
+}
+:is(.console-signal.signal-ops, .console-signal .signal-ops) .signal-ops-content :is(.btn-secondary, .btn-ghost):hover:not(:disabled) {
+  background: var(--signal-hover);
+  color: var(--signal-text);
+}
+:is(.console-signal.signal-ops, .console-signal .signal-ops) .signal-ops-content .input {
+  border-color: var(--signal-control-line);
+  background: var(--signal-surface);
+  color: var(--signal-text);
+}
+:is(.console-signal.signal-ops, .console-signal .signal-ops) .signal-ops-content :is(table, .overflow-auto) {
+  scrollbar-color: var(--signal-control-line) transparent;
+}
+:is(.console-signal.signal-ops, .console-signal .signal-ops) .signal-ops-content table thead {
+  background: var(--signal-bg) !important;
+}
+:is(.console-signal.signal-ops, .console-signal .signal-ops) .signal-ops-content table tbody tr:hover {
+  background: var(--signal-hover) !important;
+}
+@media (max-width: 639px) {
+  :is(.console-signal.signal-ops, .console-signal .signal-ops) .signal-ops-content {
+    overflow-x: hidden;
+  }
+  :is(.console-signal.signal-ops, .console-signal .signal-ops) .signal-ops-content :is(.flex, .grid) {
+    min-width: 0;
+  }
+}
