@@ -11,7 +11,9 @@ bash tools/upgrade-arm64.sh
 bash tools/upgrade-arm64.sh --merge
 ```
 
-Resolve conflicts deliberately. Preserve local custom behavior and intentional deletions. Confirm `backend/cmd/server/VERSION` matches the verified source version in `workspace.json`, run relevant tests, and commit the result. The script never guesses through semantic conflicts.
+Resolve conflicts deliberately. Preserve local custom behavior and intentional deletions. Confirm `backend/cmd/server/VERSION` matches `versionVerification.projectVersion` in `workspace.json`, run relevant tests, and commit the result. The script never guesses through semantic conflicts.
+
+The default source is the verified release tag, not moving `upstream/main`. Its peeled commit and original VERSION must match `workspace.json`. Official `v0.2.15` points to `f2669c8cf62555cd92389b3f55920e9e6e7c6ff2`, but its VERSION file still says `0.2.14`. The workspace records that original value in `verifiedSourceVersionFile` and the custom release value `0.2.15` in `projectVersion`. The build passes VERSION explicitly; this mismatch is not treated as unverified source.
 
 ## 2. Create a release manifest
 
@@ -62,10 +64,11 @@ bash tools/sub2api-release.sh plan --release "$release"
 The gates are:
 
 - `verify`: clean `main`, configured remotes, verified source version, `origin/main` not ahead, remote ARM64/Docker access, application health, preserved services, mount evidence, and public health.
-- `build`: local image exists or is built through the configured Buildx path and is verified as `linux/arm64`.
+- `build`: reuses an image only when architecture, OCI version and source revision match the manifest; otherwise rebuilds it through the current Buildx path. Dirty local validation images cannot be published or deployed as committed releases.
 - `publish`: pushes only the configured `origin/main` and the exact manifest tag to `origin`, then verifies both resolve to the expected commit. It never pushes `upstream`.
 - To validate the remote tag after publishing, run `git ls-remote origin "refs/tags/${git_tag}^{}"` and compare its commit ID with `git rev-parse HEAD`.
 - `plan`: records the deployment plan and does not upload an image or modify production.
+- `upload`: an explicit remote write, available after a reviewed plan. It checks the server and Compose configuration before uploading, then verifies SHA256, image ID, ARM64 architecture, version and revision after loading. It never recreates a service.
 
 The compatibility entry point remains available:
 
@@ -75,6 +78,14 @@ bash tools/release-arm64.sh --tag "$tag" --release "$release" --git-tag "$git_ta
 
 The wrapper accepts `--git-tag`; when omitted, it deterministically generates `release-${version}-${release}` and passes that value to `run`. `run` performs the same tag creation and validation before the staged checks. Add `--apply` only after reviewing the manifest and plan.
 
+To stage the image separately without switching the application:
+
+```bash
+bash tools/sub2api-release.sh upload --release "$release"
+```
+
+`run` does not implicitly upload an image. Standalone diagnostics can use `bash tools/deploy-arm64.sh --tag "$tag" --release "$release"` for a read-only plan, or explicitly add `--upload-only` for staging. Both `--upload-only` and `--apply` reject dirty or unfinished merges before any remote write.
+
 ## 4. Apply production
 
 Apply only the reviewed manifest:
@@ -83,7 +94,7 @@ Apply only the reviewed manifest:
 bash tools/sub2api-release.sh apply --release "$release"
 ```
 
-The underlying deploy script uploads and checksum-verifies the image, validates the remote architecture, resolves relative Compose files below the configured deployment root, and recreates only `sub2api`. PostgreSQL, Redis, `sub2api-leaderboard`, and their data directories are not stopped, recreated, or included in rollback commands.
+The underlying deploy script performs the same verified upload, then writes only the dedicated `production.releaseComposeFile` (`docker-compose.release.json`). It does not rewrite existing YAML or copy resolved configuration containing secrets into artifacts. Compose commands include this file last and use `up -d --no-deps --pull never sub2api`. Preserved-service container IDs and running states are checked after the switch. Rollback restores or removes only the dedicated override and restarts only the application.
 
 A successful apply records `success_verified`. If the command exits after possibly reaching the server, the tool checks the actual remote image and health before deciding the result. It records `uncertain` when evidence is incomplete and never blindly repeats the complete service switch.
 
@@ -111,6 +122,18 @@ A complete remote service switch is intentionally not blindly retried after an u
 ## Production boundary
 
 All target, remote, service, Compose, image, and health values come from `workspace.json`. The production SSH path uses the configured non-interactive `sudo` authorization only. Version, source, architecture, Docker permission, preserved-service, and health gates must pass before any production write.
+
+## Local validation and prerequisites
+
+```bash
+node --test deploy/tests/release.test.mjs
+bash -n tools/*.sh tools/lib/*.sh
+bash tools/build-arm64.sh --print
+```
+
+Plans require Bash, Git, jq and the configured official tag locally. Builds additionally require a reachable Docker daemon and a Buildx builder advertising `linux/arm64`. Actual upload/apply requires SSH/SCP, curl, gzip, sha256sum, the configured SSH alias/key, non-interactive remote sudo, readable production Compose files and a healthy application. `NPM_CONFIG_REGISTRY`, Go module settings and proxy variables are forwarded only when provided by the current environment; no machine-specific endpoint or credential belongs in workspace.json. Native frontend checks require pnpm 9, or the already-installed `frontend/node_modules/.bin` tools.
+
+After a successful deployment, manual Compose operations must also append `-f docker-compose.release.json` after the configured base files, otherwise they may restore the old base image. The release script always includes this override automatically.
 
 ## Password reset setup
 

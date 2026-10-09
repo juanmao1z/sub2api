@@ -7,6 +7,8 @@ WORKSPACE_ROOT=$(CDPATH= cd -- "$REPO_ROOT/.." && pwd)
 CONFIG="$WORKSPACE_ROOT/workspace.json"
 # shellcheck source=tools/lib/retry.sh
 source "$SCRIPT_DIR/lib/retry.sh"
+# shellcheck source=tools/lib/release-checks.sh
+source "$SCRIPT_DIR/lib/release-checks.sh"
 
 usage() {
   cat <<'USAGE'
@@ -39,6 +41,7 @@ target_platform=$(jq -er '.target.platform' "$CONFIG")
 default_tag=$(jq -er '.projects[] | select(.id == "sub2api-custom") | .build.defaultTag' "$CONFIG")
 [ -n "$tag" ] || tag=$default_tag
 [ "$target_platform" = 'linux/arm64' ] || { echo "unsupported target platform: $target_platform" >&2; exit 1; }
+verify_release_source
 
 context=$(docker context show 2>/dev/null) || { echo 'cannot read the active Docker context' >&2; exit 1; }
 [ -n "$context" ] || { echo 'active Docker context is empty' >&2; exit 1; }
@@ -55,17 +58,14 @@ if [ -z "$builder" ]; then
   builder=$(printf '%s\n' "$builder_info" | sed -n 's/^Name:[[:space:]]*//p' | head -n 1)
 fi
 platforms=$(printf '%s\n' "$builder_info" | sed -n 's/^[[:space:]]*Platforms:[[:space:]]*//p' | head -n 1)
-platforms_csv=$(printf '%s' "$platforms" | tr -d '[:space:]')
+platforms_csv=$(printf '%s' "$platforms" | tr -d '[:space:]*')
 case ",$platforms_csv," in
   *,"$target_platform",*) : ;;
   *) echo "active Buildx builder does not advertise $target_platform: ${platforms:-unknown}" >&2; exit 1 ;;
 esac
 
 version=$(tr -d '\r\n' < "$REPO_ROOT/backend/cmd/server/VERSION")
-commit=$(git -C "$REPO_ROOT" rev-parse HEAD)
-if [ -n "$(git -C "$REPO_ROOT" status --porcelain --untracked-files=normal)" ]; then
-  commit="$commit-dirty"
-fi
+commit=$(image_revision)
 date=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 
 args=(buildx bake)
@@ -80,7 +80,7 @@ args+=(--file "$REPO_ROOT/docker-bake.hcl"
   --set "app.labels.org.opencontainers.image.revision=$commit"
   --set "app.labels.org.opencontainers.image.created=$date")
 
-for proxy_name in HTTP_PROXY HTTPS_PROXY NO_PROXY http_proxy https_proxy no_proxy GOPROXY GOSUMDB; do
+for proxy_name in HTTP_PROXY HTTPS_PROXY NO_PROXY http_proxy https_proxy no_proxy GOPROXY GOSUMDB NPM_CONFIG_REGISTRY; do
   proxy_value=${!proxy_name-}
   [ -n "$proxy_value" ] && args+=(--set "app.args.$proxy_name=$proxy_value")
 done
@@ -99,4 +99,5 @@ if [ "$print_only" -eq 0 ]; then
     exit 1
   }
   printf 'image=%s\narchitecture=%s\n' "$tag" "$image_arch"
+  verify_release_image "$tag" "$commit"
 fi

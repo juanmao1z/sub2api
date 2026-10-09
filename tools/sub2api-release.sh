@@ -7,6 +7,8 @@ WORKSPACE_ROOT=$(CDPATH= cd -- "$REPO_ROOT/.." && pwd)
 CONFIG="$WORKSPACE_ROOT/workspace.json"
 # shellcheck source=tools/lib/retry.sh
 source "$SCRIPT_DIR/lib/retry.sh"
+# shellcheck source=tools/lib/release-checks.sh
+source "$SCRIPT_DIR/lib/release-checks.sh"
 
 usage() {
   cat <<'USAGE'
@@ -16,6 +18,7 @@ Usage:
   tools/sub2api-release.sh build --release RELEASE
   tools/sub2api-release.sh publish --release RELEASE
   tools/sub2api-release.sh plan --release RELEASE
+  tools/sub2api-release.sh upload --release RELEASE
   tools/sub2api-release.sh apply --release RELEASE
   tools/sub2api-release.sh status --release RELEASE
   tools/sub2api-release.sh recover --release RELEASE
@@ -212,10 +215,11 @@ repo_preflight() {
     echo 'workspace version verification is not enabled' >&2
     return 1
   }
-  [ "$repo_version" = "$expected_version" ] && [ "$repo_version" = "$verified_source_version" ] || {
+  [ "$repo_version" = "$expected_version" ] || {
     echo "VERSION=$repo_version expected=$expected_version verified=$verified_source_version" >&2
     return 1
   }
+  verify_release_source
 }
 
 fetch_origin() {
@@ -399,17 +403,20 @@ verify() {
 build() {
   require_manifest
   ensure_manifest_source
+  repo_preflight
   verify_manifest_git_tag
   local source_tag
   source_tag=$(jq -er '.artifact.source_tag' "$manifest")
   local arch image_id
-  if ! arch=$(docker image inspect "$source_tag" --format '{{.Os}}/{{.Architecture}}' 2>/dev/null); then
+  if ! verify_release_image "$source_tag" "$(jq -er '.source.commit' "$manifest")"; then
     (cd "$REPO_ROOT" && bash "$SCRIPT_DIR/build-arm64.sh" --tag "$source_tag")
     arch=$(docker image inspect "$source_tag" --format '{{.Os}}/{{.Architecture}}')
   else
+    arch=$(docker image inspect "$source_tag" --format '{{.Os}}/{{.Architecture}}')
     echo "existing_image=$source_tag architecture=$arch"
   fi
   [ "$arch" = 'linux/arm64' ] || { echo "image architecture=$arch expected=linux/arm64" >&2; stage_set build blocked "$(jq -cn --arg arch "$arch" '{architecture:$arch}')"; return 1; }
+  verify_release_image "$source_tag" "$(jq -er '.source.commit' "$manifest")"
   image_id=$(docker image inspect "$source_tag" --format '{{.Id}}')
   manifest_write --arg id "$image_id" --arg arch "$arch" --arg at "$(now)" \
     '.artifact.image_id = $id | .artifact.architecture = $arch | .updated_at = $at'
@@ -420,6 +427,7 @@ build() {
 publish() {
   require_manifest
   ensure_manifest_source
+  repo_preflight
   verify_manifest_git_tag
   local manifest_tag
   manifest_tag=$(jq -er '.source.git_tag' "$manifest")
@@ -468,9 +476,36 @@ plan() {
   echo "plan=passed release_image=$release_image"
 }
 
+upload() {
+  require_manifest
+  repo_preflight
+  ensure_manifest_source
+  verify_manifest_git_tag
+  [ "$(jq -r '.stages.plan.status // ""' "$manifest")" = passed ] || { echo 'plan stage must pass before upload' >&2; return 1; }
+  local source_tag log status
+  source_tag=$(jq -er '.artifact.source_tag' "$manifest")
+  verify_release_image "$source_tag" "$(jq -er '.source.commit' "$manifest")"
+  [ "$(docker image inspect "$source_tag" --format '{{.Id}}')" = "$(jq -er '.artifact.image_id' "$manifest")" ] || { echo 'image changed after build verification' >&2; return 1; }
+  log="$release_dir/upload.log"
+  set +e
+  bash "$SCRIPT_DIR/deploy-arm64.sh" --tag "$source_tag" --release "$release" --upload-only 2>&1 | tee "$log"
+  status=${PIPESTATUS[0]}
+  set -e
+  if [ "$status" -ne 0 ]; then
+    stage_set upload blocked "$(jq -cn --arg log "$log" --argjson status "$status" '{log:$log,exit_code:$status}')"
+    return "$status"
+  fi
+  stage_set upload passed "$(jq -cn --arg log "$log" '{log:$log}')"
+  echo 'upload=passed; application was not switched'
+}
+
 apply_release() {
   require_manifest
   ensure_manifest_source
+  repo_preflight
+  [ "$(jq -r '.stages.publish.status // ""' "$manifest")" = passed ] || { echo 'publish stage must pass before apply' >&2; return 1; }
+  verify_release_image "$(jq -er '.artifact.source_tag' "$manifest")" "$(jq -er '.source.commit' "$manifest")"
+  [ "$(docker image inspect "$(jq -er '.artifact.source_tag' "$manifest")" --format '{{.Id}}')" = "$(jq -er '.artifact.image_id' "$manifest")" ] || { echo 'image changed after build verification' >&2; return 1; }
   verify_manifest_git_tag
   [ "$(jq -r '.stages.plan.status // ""' "$manifest")" = passed ] || { echo 'plan stage must pass before apply' >&2; return 1; }
   local source_tag log status
@@ -583,6 +618,7 @@ case "$command_name" in
   build) build ;;
   publish) publish ;;
   plan) plan ;;
+  upload) upload ;;
   apply) apply_release ;;
   status) status_command ;;
   recover) recover ;;

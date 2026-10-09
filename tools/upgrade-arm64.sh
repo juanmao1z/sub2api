@@ -12,14 +12,14 @@ usage() {
   cat <<'USAGE'
 Usage: tools/upgrade-arm64.sh [--source REF] [--merge]
 
-Fetches the configured official source with retries and verifies its VERSION.
+Fetches the configured official release tag and verifies its commit and VERSION.
 With --merge, starts a normal no-commit merge. Conflict resolution remains
 manual because this repository intentionally keeps custom deletions and local
 features; the script never guesses through semantic conflicts.
 USAGE
 }
 
-source_ref='upstream/main'
+source_ref=''
 merge=0
 while [ "$#" -gt 0 ]; do
   case "$1" in
@@ -47,12 +47,16 @@ actual_upstream=$(git -C "$REPO_ROOT" remote get-url upstream)
   echo "upstream URL mismatch: $actual_upstream" >&2
   exit 1
 }
-expected_version=$(jq -er '.versionVerification.expectedTagVersion' "$CONFIG")
+official_tag=$(jq -er '.versionVerification.latestVerifiedTag' "$CONFIG")
+expected_commit=$(jq -er '.versionVerification.latestVerifiedCommit' "$CONFIG")
+expected_version=$(jq -er '.versionVerification.verifiedSourceVersionFile' "$CONFIG")
+[ -n "$source_ref" ] || source_ref="refs/tags/$official_tag"
 
-retry_with_backoff "fetch official source" \
-  git -C "$REPO_ROOT" fetch --tags upstream main
+retry_with_backoff "fetch official release" \
+  git -C "$REPO_ROOT" fetch upstream "refs/tags/$official_tag:refs/tags/$official_tag"
 
-source_commit=$(git -C "$REPO_ROOT" rev-parse "$source_ref")
+source_commit=$(git -C "$REPO_ROOT" rev-parse "$source_ref^{commit}")
+[ "$source_commit" = "$expected_commit" ] || { echo "source commit=$source_commit expected=$expected_commit" >&2; exit 1; }
 source_version=$(git -C "$REPO_ROOT" show "$source_ref:backend/cmd/server/VERSION" | tr -d '\r\n')
 [ "$source_version" = "$expected_version" ] || {
   echo "official source VERSION $source_version does not match expected $expected_version" >&2
