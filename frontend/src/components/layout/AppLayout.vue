@@ -1,6 +1,6 @@
 <template>
   <div class="app-shell console-signal min-h-screen bg-gray-50 dark:bg-dark-950"
-    :class="{ 'signal-nav-collapsed': sidebarCollapsed }">
+    :class="{ 'signal-nav-collapsed': sidebarCollapsed, 'kedaya-console-shell': useFusionShell }">
 
     <!-- Sidebar -->
     <AppSidebar />
@@ -24,11 +24,15 @@
 <script setup lang="ts">
 import '@/styles/console-theme.css'
 import '@/styles/console-pages.css'
+import '@/styles/kedaya-console.css'
 import { computed } from 'vue'
 import { useAppStore } from '@/stores'
+import { useRoute } from 'vue-router'
 import AppSidebar from './AppSidebar.vue'
 import AppHeader from './AppHeader.vue'
 
 const appStore = useAppStore()
 const sidebarCollapsed = computed(() => appStore.sidebarCollapsed)
+const route = useRoute()
+const useFusionShell = computed(() => !route.path.startsWith('/payment/'))
 </script>

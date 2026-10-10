@@ -1,8 +1,8 @@
 <template>
   <AppLayout>
-    <TablePageLayout>
+    <TablePageLayout class="kedaya-admin-page kedaya-admin-affiliates">
       <template #filters>
-        <div class="flex flex-wrap items-center gap-3">
+        <div class="kedaya-admin-toolbar flex flex-wrap items-center gap-3">
           <div class="relative w-full md:w-80">
             <Icon name="search" size="md" class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
             <input v-model="filters.search" type="text" class="input pl-10" :placeholder="t('admin.affiliates.records.searchPlaceholder')" @input="debounceLoad" />
@@ -446,3 +446,5 @@ onMounted(() => {
   void loadRecords()
 })
 </script>
+
+<style src="@/styles/kedaya-admin-pages.css"></style>

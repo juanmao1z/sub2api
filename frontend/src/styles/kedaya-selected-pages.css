@@ -1,0 +1,86 @@
+/* Local presentation scopes, including the agreement dialog teleported to body. */
+:is(.kedaya-model-plaza,.kedaya-key-usage,.kedaya-legal-page,.kedaya-security-controls,.kedaya-agreement) {
+  --kdya-surface: #fff;
+  --kdya-bg: #f8f9fb;
+  --kdya-text: #25262b;
+  --kdya-muted: #646874;
+  --kdya-border: #e2e4e9;
+  --kdya-hover: #eef0f4;
+  --kdya-accent: #515461;
+  --kdya-on-accent: #fff;
+  font-size: 14px;
+}
+.dark :is(.kedaya-model-plaza,.kedaya-key-usage,.kedaya-legal-page,.kedaya-security-controls,.kedaya-agreement) {
+  --kdya-surface: #1d1f24;
+  --kdya-bg: #17181c;
+  --kdya-text: #e8e9ed;
+  --kdya-muted: #adb1bd;
+  --kdya-border: #353840;
+  --kdya-hover: #292c33;
+  --kdya-accent: #d7dbe5;
+  --kdya-on-accent: #17181c;
+}
+:is(.kedaya-model-plaza,.kedaya-key-usage,.kedaya-legal-page) {
+  background: var(--kdya-bg);
+  color: var(--kdya-text);
+  line-height: 1.5;
+}
+:is(.kedaya-model-plaza,.kedaya-key-usage,.kedaya-legal-page,.kedaya-agreement) :is(h1,h2,h3,th,.tabular-nums) { letter-spacing: 0; }
+:is(.kedaya-model-plaza,.kedaya-key-usage,.kedaya-legal-page) > header {
+  background: var(--kdya-surface);
+  border-bottom: 1px solid var(--kdya-border);
+}
+:is(.kedaya-model-plaza,.kedaya-key-usage,.kedaya-legal-page) :is(input,select,button,.btn) { border-radius: 6px; }
+:is(.kedaya-model-plaza,.kedaya-key-usage,.kedaya-legal-page) :is(.rounded-2xl,.rounded-xl) { border-radius: 6px; box-shadow: none; }
+:is(.kedaya-model-plaza,.kedaya-key-usage,.kedaya-legal-page) :is(.bg-white,.dark\:bg-dark-900,.dark\:bg-dark-800\/50) { background-color: var(--kdya-surface); }
+.kedaya-model-plaza main { max-width: 1280px; }
+.kedaya-model-plaza main h1 { font-size: 24px; font-weight: 600; }
+.kedaya-model-plaza .plaza-description { border-radius: 0; background: transparent; box-shadow: none; padding-inline: 0; border: 0; }
+.kedaya-model-plaza section { border-radius: 6px; box-shadow: none; }
+.kedaya-model-plaza .plaza-pricing-table { max-width: 100%; }
+.kedaya-model-plaza .plaza-pricing-table :is(th,td) { font-size: 13px; }
+.kedaya-key-usage main { padding-block: 32px; }
+.kedaya-key-usage main > .text-center { text-align: left; margin-bottom: 24px; }
+.kedaya-key-usage main h1 { font-size: 24px; font-weight: 600; }
+.kedaya-key-usage main > .text-center p { margin-left: 0; font-size: 14px; }
+.kedaya-key-usage main > .max-w-xl { max-width: none; margin-bottom: 32px; }
+.kedaya-key-usage main > .max-w-xl > .flex > .relative { min-width: 0; }
+.kedaya-key-usage .input-ring { border-color: var(--kdya-border); background: var(--kdya-surface); color: var(--kdya-text); }
+.kedaya-key-usage .input-ring:focus { border-color: var(--kdya-accent); box-shadow: 0 0 0 3px #7772; }
+.kedaya-key-usage main > .max-w-xl > .flex > button { padding-inline: 20px; background: var(--kdya-accent); color: var(--kdya-on-accent); }
+.kedaya-key-usage main > .max-w-xl > .flex > button:active { transform: none; }
+.kedaya-legal-page main { max-width: 840px; }
+.kedaya-legal-page article { max-width: 720px; margin-inline: auto; }
+.kedaya-legal-page article > div:first-child { border-color: var(--kdya-border); }
+.kedaya-legal-page article h1 { font-size: 28px; font-weight: 600; }
+.kedaya-legal-page .legal-document-content { line-height: 1.8; }
+.kedaya-legal-page .legal-document-content h2 { font-size: 22px; font-weight: 600; }
+.kedaya-legal-page .legal-document-content h3 { font-size: 18px; }
+/* Security page containers and validation remain untouched. */
+.kedaya-security-controls :is(.input,.btn) { border-radius: 6px; box-shadow: none; }
+.kedaya-security-controls .input:not(.input-error):not(:disabled) { border-color: var(--kdya-border); background: var(--kdya-surface); color: var(--kdya-text); }
+.kedaya-security-controls .input:focus { box-shadow: 0 0 0 3px #7772; }
+.kedaya-security-controls .btn-primary { background: var(--kdya-accent); color: var(--kdya-on-accent); background-image: none; }
+.kedaya-security-controls .btn:active:not(:disabled) { transform: none; }
+.kedaya-agreement > div { border-radius: 6px; background: var(--kdya-surface); color: var(--kdya-text); border: 1px solid var(--kdya-border); }
+.kedaya-agreement > div > div { background: var(--kdya-surface); border-color: var(--kdya-border); padding: 20px; }
+.kedaya-agreement h2 { font-size: 20px; font-weight: 600; }
+.kedaya-agreement :is(button,a) { border-radius: 6px; box-shadow: none; }
+.kedaya-agreement a:hover { transform: none; }
+.kedaya-agreement button:last-child { background: var(--kdya-accent); color: var(--kdya-on-accent); }
+.kedaya-agreement button:first-child { background: var(--kdya-hover); color: var(--kdya-text); border-color: var(--kdya-border); }
+@media (max-width: 639px) {
+  :is(.kedaya-model-plaza,.kedaya-key-usage,.kedaya-legal-page) main { padding: 20px 16px; min-width: 0; }
+  .kedaya-key-usage > header { padding: 16px; }
+  .kedaya-key-usage > header nav { gap: 12px; }
+  .kedaya-key-usage > header nav > a { min-width: 0; }
+  .kedaya-key-usage > header nav > a span { overflow-wrap: anywhere; font-size: 14px; }
+  .kedaya-key-usage > header nav > div { flex-shrink: 0; }
+  .kedaya-key-usage main > .max-w-xl > .flex { flex-wrap: wrap; }
+  .kedaya-key-usage main > .max-w-xl > .flex > .relative { flex-basis: 100%; }
+  .kedaya-key-usage main > .max-w-xl > .flex > button { width: 100%; justify-content: center; }
+  .kedaya-agreement > div > div { padding: 16px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  :is(.kedaya-key-usage,.kedaya-agreement) * { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}

@@ -1,8 +1,8 @@
 <template>
   <AppLayout>
-    <TablePageLayout>
+    <TablePageLayout class="kedaya-admin-page kedaya-admin-accounts">
       <template #filters>
-        <div class="flex flex-wrap-reverse items-start justify-between gap-3">
+        <div class="kedaya-admin-toolbar flex flex-wrap-reverse items-start justify-between gap-3">
           <AccountTableFilters
             class="lg:w-auto lg:flex-1"
             v-model:searchQuery="params.search"
@@ -2597,3 +2597,5 @@ onUnmounted(() => {
   @apply inline-flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-md;
 }
 </style>
+
+<style src="@/styles/kedaya-admin-pages.css"></style>

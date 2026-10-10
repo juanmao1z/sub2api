@@ -1,9 +1,9 @@
 <template>
   <AppLayout>
-    <TablePageLayout>
+    <TablePageLayout class="kedaya-admin-page kedaya-admin-audit">
       <!-- Filters -->
       <template #filters>
-        <div class="card p-4 sm:p-6">
+        <div class="kedaya-admin-toolbar card p-4 sm:p-6">
           <div class="flex flex-wrap items-end justify-between gap-4">
             <!-- Left: filter fields -->
             <div class="flex flex-1 flex-wrap items-end gap-4">
@@ -683,3 +683,5 @@ function statusDotClass(status: number): string {
 
 onMounted(fetchLogs)
 </script>
+
+<style src="@/styles/kedaya-admin-pages.css"></style>

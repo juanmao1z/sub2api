@@ -1,0 +1,376 @@
+/* Admin-only presentation, based on public assets and the local Kedaya review. */
+:is(html[data-ui-fusion="console"], .console-signal) .kedaya-admin-page {
+  --signal-accent: #52525b;
+  --signal-accent-soft: #ececee;
+  --signal-on-accent: #ffffff;
+  min-width: 0;
+  max-width: 100%;
+  color: var(--signal-text, #232326);
+  font-size: 14px;
+  line-height: 1.5;
+  letter-spacing: 0;
+}
+
+.dark :is(html[data-ui-fusion="console"], .console-signal) .kedaya-admin-page,
+html.dark[data-ui-fusion="console"] .kedaya-admin-page {
+  --signal-accent: #d4d4d8;
+  --signal-accent-soft: #303137;
+  --signal-on-accent: #111315;
+}
+
+:is(html[data-ui-fusion="console"], .console-signal) .kedaya-admin-page :is(button, input, select, textarea, h1, h2, h3, .tracking-wide) {
+  letter-spacing: 0;
+}
+
+:is(html[data-ui-fusion="console"], .console-signal) .kedaya-admin-page.space-y-6 > :not([hidden]) ~ :not([hidden]),
+:is(html[data-ui-fusion="console"], .console-signal) .kedaya-admin-page .space-y-6 > :not([hidden]) ~ :not([hidden]) {
+  margin-top: 16px;
+}
+
+:is(html[data-ui-fusion="console"], .console-signal) .kedaya-admin-page.table-page-layout,
+:is(html[data-ui-fusion="console"], .console-signal) .kedaya-admin-page .table-page-layout {
+  gap: 12px;
+}
+
+:is(html[data-ui-fusion="console"], .console-signal) .kedaya-admin-page :is(.grid, .layout-section-fixed, .layout-section-scrollable, .table-wrapper) {
+  min-width: 0;
+}
+
+:is(html[data-ui-fusion="console"], .console-signal) .kedaya-admin-page :is(.btn, .input, .select-trigger) {
+  min-height: 36px;
+  border-radius: 6px;
+  font-size: 14px;
+  box-shadow: none;
+}
+
+:is(html[data-ui-fusion="console"], .console-signal) .kedaya-admin-page .btn {
+  gap: 6px;
+  padding-block: 7px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+:is(html[data-ui-fusion="console"], .console-signal) .kedaya-admin-page .btn > svg {
+  flex-shrink: 0;
+}
+
+:is(html[data-ui-fusion="console"], .console-signal) .kedaya-admin-page :is(.rounded-lg, .rounded-xl, .rounded-2xl, .rounded-3xl) {
+  border-radius: 6px;
+}
+
+:is(html[data-ui-fusion="console"], .console-signal) .kedaya-admin-page .card {
+  border-inline: 0;
+  border-block: 1px solid var(--signal-line, #e3e3e6);
+  border-radius: 0;
+  background: var(--signal-surface, #ffffff);
+  box-shadow: none;
+}
+
+:is(html[data-ui-fusion="console"], .console-signal) .kedaya-admin-page .card > :is(.p-6, .px-6) {
+  padding-inline: 16px;
+}
+
+:is(html[data-ui-fusion="console"], .console-signal) .kedaya-admin-page .card > .p-6 {
+  padding-block: 16px;
+}
+
+:is(html[data-ui-fusion="console"], .console-signal) .kedaya-admin-page :is(.kedaya-admin-heading, .kedaya-admin-toolbar) {
+  min-width: 0;
+  gap: 8px 12px;
+  margin-bottom: 0;
+  padding: 10px 0;
+  border: 0;
+  border-bottom: 1px solid var(--signal-line, #e3e3e6);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  --tw-ring-shadow: 0 0 #0000;
+}
+
+:is(html[data-ui-fusion="console"], .console-signal) .kedaya-admin-page .kedaya-admin-heading {
+  padding-top: 0;
+  padding-bottom: 12px;
+}
+
+:is(html[data-ui-fusion="console"], .console-signal) .kedaya-admin-page :is(.kedaya-admin-heading h1, .kedaya-admin-heading h2, .kedaya-admin-ops-header h1) {
+  max-width: 100%;
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+:is(html[data-ui-fusion="console"], .console-signal) .kedaya-admin-page :is(.card h2, .card h3) {
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+:is(html[data-ui-fusion="console"], .console-signal) .kedaya-admin-page .kedaya-admin-toolbar :is(.flex-wrap, .gap-3, .gap-4) {
+  gap: 8px;
+}
+
+:is(html[data-ui-fusion="console"], .console-signal) .kedaya-admin-page .kedaya-admin-toolbar > * {
+  min-width: 0;
+  max-width: 100%;
+}
+
+:is(html[data-ui-fusion="console"], .console-signal) .kedaya-admin-page .input-label {
+  margin-bottom: 4px;
+  color: var(--signal-muted, #737379);
+  font-size: 12px;
+}
+
+:is(html[data-ui-fusion="console"], .console-signal) .kedaya-admin-page .table-scroll-container {
+  border-inline: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+:is(html[data-ui-fusion="console"], .console-signal) .kedaya-admin-page :is(.table-wrapper, .table-container) {
+  max-width: 100%;
+  border-radius: 0;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+:is(html[data-ui-fusion="console"], .console-signal) .kedaya-admin-page :is(th, td) {
+  padding: 10px 14px;
+  font-size: 14px;
+}
+
+:is(html[data-ui-fusion="console"], .console-signal) .kedaya-admin-page th {
+  padding-block: 9px;
+  color: var(--signal-muted, #737379);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+:is(html[data-ui-fusion="console"], .console-signal) .kedaya-admin-page .table-pagination {
+  padding-block: 10px;
+  background: transparent;
+}
+
+:is(html[data-ui-fusion="console"], .console-signal) .kedaya-admin-page .kedaya-admin-metrics {
+  gap: 0;
+  border-block: 1px solid var(--signal-line, #e3e3e6);
+}
+
+:is(html[data-ui-fusion="console"], .console-signal) .kedaya-admin-page .kedaya-admin-metrics > div {
+  min-width: 0;
+  padding: 14px;
+  border: 0;
+  border-right: 1px solid var(--signal-line, #e3e3e6);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+:is(html[data-ui-fusion="console"], .console-signal) .kedaya-admin-page .kedaya-admin-metrics > div:last-child {
+  border-right: 0;
+}
+
+:is(html[data-ui-fusion="console"], .console-signal) .kedaya-admin-page .kedaya-admin-metrics :is(.dashboard-icon, .rounded-lg.p-2, .h-9.w-9) {
+  flex-shrink: 0;
+  padding: 4px;
+  color: var(--signal-muted, #737379);
+  background: transparent;
+}
+
+:is(html[data-ui-fusion="console"], .console-signal) .kedaya-admin-page .kedaya-admin-metrics .flex > div:not(:first-child) {
+  min-width: 0;
+}
+
+:is(html[data-ui-fusion="console"], .console-signal) .kedaya-admin-page .kedaya-admin-metrics .text-xl {
+  font-size: 22px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+:is(html[data-ui-fusion="console"], .console-signal) .kedaya-admin-page :is(.kedaya-admin-chart-grid, .kedaya-admin-ops > .grid) {
+  gap: 16px;
+}
+
+:is(html[data-ui-fusion="console"], .console-signal) .kedaya-admin-page .kedaya-admin-chart-grid > .card {
+  min-width: 0;
+  padding: 14px 0;
+  border: 0;
+  background: transparent;
+}
+
+:is(html[data-ui-fusion="console"], .console-signal) .kedaya-admin-page .kedaya-admin-ledger {
+  border-inline: 0;
+  border-radius: 0;
+}
+
+:is(html[data-ui-fusion="console"], .console-signal) .kedaya-admin-dashboard .dashboard-actions {
+  padding-block: 12px;
+  border-bottom: 1px solid var(--signal-line, #e3e3e6);
+}
+
+:is(html[data-ui-fusion="console"], .console-signal) .kedaya-admin-dashboard .dashboard-action {
+  min-width: 0;
+  border: 1px solid var(--signal-line, #e3e3e6);
+  background: var(--signal-surface, #ffffff);
+  box-shadow: none;
+}
+
+:is(html[data-ui-fusion="console"], .console-signal) .kedaya-admin-dashboard .dashboard-action:hover {
+  background: var(--signal-hover, #f0f0f2);
+}
+
+:is(html[data-ui-fusion="console"], .console-signal) .kedaya-admin-settings .settings-tabs-shell {
+  margin-inline: 0;
+  padding: 0;
+  border: 0;
+  border-bottom: 1px solid var(--signal-line, #e3e3e6);
+  border-radius: 0;
+  background: var(--signal-surface, #ffffff);
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+:is(html[data-ui-fusion="console"], .console-signal) .kedaya-admin-settings .settings-tab {
+  height: auto;
+  min-height: 40px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  color: var(--signal-muted, #737379);
+  background: transparent;
+  box-shadow: none;
+}
+
+:is(html[data-ui-fusion="console"], .console-signal) .kedaya-admin-settings .settings-tab-active {
+  border-bottom-color: var(--signal-accent);
+  color: var(--signal-text, #232326);
+  background: var(--signal-hover, #f0f0f2);
+}
+
+:is(html[data-ui-fusion="console"], .console-signal) .kedaya-admin-settings .settings-tab::before,
+:is(html[data-ui-fusion="console"], .console-signal) .kedaya-admin-settings .settings-tab::after {
+  content: none;
+}
+
+:is(html[data-ui-fusion="console"], .console-signal) .kedaya-admin-settings .settings-tab-icon {
+  color: inherit;
+  background: transparent;
+}
+
+:is(html[data-ui-fusion="console"], .console-signal) .kedaya-admin-plugins article.card {
+  border: 1px solid var(--signal-line, #e3e3e6);
+  border-radius: 6px;
+}
+
+:is(html[data-ui-fusion="console"], .console-signal) .kedaya-admin-ops .rounded-3xl,
+:is(html[data-ui-fusion="console"], .console-signal) .kedaya-admin-ops > section.rounded-2xl {
+  min-width: 0;
+  padding: 16px;
+  border: 0;
+  border-top: 1px solid var(--signal-line, #e3e3e6);
+  border-radius: 0;
+  background: var(--signal-surface, #ffffff);
+  box-shadow: none;
+  --tw-ring-shadow: 0 0 #0000;
+}
+
+:is(html[data-ui-fusion="console"], .console-signal) .kedaya-admin-ops-header > .grid {
+  gap: 12px;
+}
+
+:is(html[data-ui-fusion="console"], .console-signal) .kedaya-admin-ops-header .rounded-2xl.bg-gray-50 {
+  border: 0;
+  border-left: 1px solid var(--signal-line, #e3e3e6);
+  border-radius: 0;
+  background: transparent;
+}
+
+:is(html[data-ui-fusion="console"], .console-signal) .kedaya-admin-prompt > .kedaya-admin-ledger {
+  padding-inline: 0;
+}
+
+:is(html[data-ui-fusion="console"], .console-signal) .kedaya-admin-savebar {
+  background: var(--signal-surface, #ffffff);
+  border-color: var(--signal-line, #e3e3e6);
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+@media (min-width: 1024px) {
+  .console-signal.signal-nav-collapsed .kedaya-admin-savebar {
+    left: 72px;
+  }
+
+  :is(html[data-ui-fusion="console"], .console-signal) .kedaya-admin-page .kedaya-admin-chart-grid > .card + .card {
+    padding-left: 16px;
+    border-left: 1px solid var(--signal-line, #e3e3e6);
+  }
+}
+
+@media (max-width: 1023px) {
+  :is(html[data-ui-fusion="console"], .console-signal) .kedaya-admin-page.table-page-layout,
+  :is(html[data-ui-fusion="console"], .console-signal) .kedaya-admin-page .table-page-layout {
+    height: auto;
+  }
+
+  :is(html[data-ui-fusion="console"], .console-signal) .kedaya-admin-page .kedaya-admin-metrics > div:nth-child(2n) {
+    border-right: 0;
+  }
+
+  :is(html[data-ui-fusion="console"], .console-signal) .kedaya-admin-page .kedaya-admin-metrics > div:nth-child(n + 3) {
+    border-top: 1px solid var(--signal-line, #e3e3e6);
+  }
+}
+
+@media (max-width: 639px) {
+  :is(html[data-ui-fusion="console"], .console-signal) .kedaya-admin-page :is(.btn, .input, .select-trigger) {
+    min-height: 40px;
+  }
+
+  :is(html[data-ui-fusion="console"], .console-signal) .kedaya-admin-page .kedaya-admin-toolbar .ml-auto {
+    margin-left: 0;
+  }
+
+  :is(html[data-ui-fusion="console"], .console-signal) .kedaya-admin-page .kedaya-admin-toolbar :is(.flex-1, .sm\:max-w-64) {
+    flex-basis: 100%;
+  }
+
+  :is(html[data-ui-fusion="console"], .console-signal) .kedaya-admin-page .kedaya-admin-metrics > div {
+    padding: 12px 8px;
+  }
+
+  :is(html[data-ui-fusion="console"], .console-signal) .kedaya-admin-page .kedaya-admin-metrics .text-xl {
+    font-size: 19px;
+  }
+
+  :is(html[data-ui-fusion="console"], .console-signal) .kedaya-admin-risk .kedaya-admin-metrics > div {
+    border-right: 0;
+  }
+
+  :is(html[data-ui-fusion="console"], .console-signal) .kedaya-admin-risk .kedaya-admin-metrics > div + div {
+    border-top: 1px solid var(--signal-line, #e3e3e6);
+  }
+
+  :is(html[data-ui-fusion="console"], .console-signal) .kedaya-admin-page .kedaya-admin-toolbar :is(.w-36, .w-40, .w-44, .w-48) {
+    width: 100%;
+  }
+
+  :is(html[data-ui-fusion="console"], .console-signal) .kedaya-admin-page .kedaya-admin-heading > div {
+    min-width: 0;
+  }
+
+  :is(html[data-ui-fusion="console"], .console-signal) .kedaya-admin-prompt.pb-28 {
+    padding-bottom: 260px;
+  }
+
+  :is(html[data-ui-fusion="console"], .console-signal) .kedaya-admin-savebar > div > div:last-child {
+    width: 100%;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  :is(html[data-ui-fusion="console"], .console-signal) .kedaya-admin-savebar > div > div:last-child > span {
+    flex: 1 1 100%;
+  }
+}

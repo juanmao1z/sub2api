@@ -1,9 +1,9 @@
 <template>
   <AppLayout>
-    <TablePageLayout>
+    <TablePageLayout class="kedaya-admin-page kedaya-admin-groups">
       <template #filters>
         <div
-          class="flex flex-col justify-between gap-4 lg:flex-row lg:items-start"
+          class="kedaya-admin-toolbar flex flex-col justify-between gap-4 lg:flex-row lg:items-start"
         >
           <!-- Left: fuzzy search + filters (can wrap to multiple lines) -->
           <div class="flex flex-1 flex-wrap items-center gap-3">
@@ -6881,3 +6881,5 @@ onUnmounted(() => {
   clearAllAccountSearchState();
 });
 </script>
+
+<style src="@/styles/kedaya-admin-pages.css"></style>

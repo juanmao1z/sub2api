@@ -1,6 +1,9 @@
 <template>
   <AppLayout>
-    <TablePageLayout>
+    <TablePageLayout class="signal-available-channels">
+      <template #actions>
+        <header class="signal-workspace-heading"><h1>{{ t('nav.availableChannels') }}</h1></header>
+      </template>
       <template #filters>
         <div class="flex flex-col justify-between gap-4 lg:flex-row lg:items-start">
           <div class="flex flex-1 flex-wrap items-center gap-3">

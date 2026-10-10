@@ -143,7 +143,8 @@ export function assemble({ homeDir, outputDir = homeDir }) {
   if (nativeLayoutStyles.length !== 1) throw new Error('Expected the original console layout stylesheet');
   entries.native = {
     script: entries.home.script,
-    styles: [...entries.home.styles, ...nativeLayoutStyles, ...entries.console.styles, releasePrefix + '/assets/ConsoleAtmosphere-M5YVlMLF.css', releasePrefix + '/console.css'],
+    styles: [...entries.home.styles, ...nativeLayoutStyles],
+    legacyStyles: [...entries.console.styles, releasePrefix + '/assets/ConsoleAtmosphere-M5YVlMLF.css', releasePrefix + '/console.css'],
   };
   entries.console.styles.push(releasePrefix + '/console.css');
   fs.writeFileSync(path.join(integration, 'entries.js'), `/** @brief Generated application entry descriptors. */\nexport const entries = ${JSON.stringify(entries, null, 2)};\n`, 'utf8');
@@ -195,7 +196,7 @@ export function assemble({ homeDir, outputDir = homeDir }) {
         const label = document.getElementById('startup-loading-label')
         if (name && brand) brand.textContent = name
         if (name && label) label.textContent = '正在加载 ' + name
-        if (brand && /^(?:\/(?!\/)|data:image\/|https?:\/\/)/i.test(logo)) {
+        if (brand && /^(?:\\/(?!\\/)|data:image\\/|https?:\\/\\/)/i.test(logo)) {
           const image = document.createElement('img')
           image.id = 'startup-loading-logo'
           image.alt = ''

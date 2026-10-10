@@ -11,6 +11,7 @@ import { getSetupStatus } from '@/api/setup'
 import { updateFavicon } from '@/utils/branding'
 import { FeatureFlags, isFeatureFlagEnabled } from '@/utils/featureFlags'
 import { resolveSiteBillingMode } from '@/utils/siteBillingMode'
+import { getUiFusionScope, usesLegacyPageStyles } from '@/utils/uiFusion'
 
 const router = useRouter()
 const route = useRoute()
@@ -20,6 +21,12 @@ const subscriptionStore = useSubscriptionStore()
 const announcementStore = useAnnouncementStore()
 const adminComplianceStore = useAdminComplianceStore()
 const adminSettingsStore = useAdminSettingsStore()
+
+watch(() => route.path, (path) => {
+  const scope = getUiFusionScope(path)
+  document.documentElement.dataset.uiFusion = scope
+  document.documentElement.dataset.uiLegacyStyles = String(usesLegacyPageStyles(scope))
+}, { immediate: true, flush: 'sync' })
 
 function updateDocumentTitle() {
   const customMenuItems = [

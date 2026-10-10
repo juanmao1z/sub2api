@@ -1,9 +1,9 @@
 <template>
   <AppLayout>
-    <TablePageLayout>
+    <TablePageLayout class="kedaya-admin-page kedaya-admin-subscriptions">
       <template #filters>
         <!-- Top Toolbar: Left (search + filters) / Right (actions) -->
-        <div class="flex flex-wrap items-start justify-between gap-4">
+        <div class="kedaya-admin-toolbar flex flex-wrap items-start justify-between gap-4">
           <!-- Left: Fuzzy user search + filters (wrap to multiple lines) -->
           <div class="flex flex-1 flex-wrap items-center gap-3">
             <!-- User Search -->
@@ -1642,3 +1642,5 @@ onUnmounted(() => {
   @apply flex items-center gap-1 pl-12 text-[10px] text-blue-600 dark:text-blue-400;
 }
 </style>
+
+<style src="@/styles/kedaya-admin-pages.css"></style>

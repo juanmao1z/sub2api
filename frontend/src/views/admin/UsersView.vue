@@ -1,9 +1,9 @@
 <template>
   <AppLayout>
-    <TablePageLayout>
+    <TablePageLayout class="kedaya-admin-page kedaya-admin-users">
       <!-- Single Row: Search, Filters, and Actions -->
       <template #filters>
-        <div class="flex flex-wrap items-center gap-3">
+        <div class="kedaya-admin-toolbar flex flex-wrap items-center gap-3">
           <!-- Left: Search + Active Filters -->
           <div class="flex flex-1 flex-wrap items-center gap-3">
             <!-- Search Box -->
@@ -1910,3 +1910,5 @@ onUnmounted(() => {
   abortController?.abort()
 })
 </script>
+
+<style src="@/styles/kedaya-admin-pages.css"></style>

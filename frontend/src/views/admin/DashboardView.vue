@@ -1,6 +1,6 @@
 <template>
   <AppLayout>
-    <div class="admin-dashboard dashboard-page space-y-6">
+    <div class="kedaya-admin-page kedaya-admin-dashboard admin-dashboard dashboard-page space-y-6">
       <!-- Loading State -->
       <div v-if="loading" class="flex items-center justify-center py-12">
         <LoadingSpinner />
@@ -8,7 +8,7 @@
 
       <template v-else-if="stats">
         <!-- Row 1: Core Stats -->
-        <div class="grid grid-cols-2 gap-5 lg:grid-cols-4">
+        <div class="kedaya-admin-metrics grid grid-cols-2 gap-5 lg:grid-cols-4">
           <!-- Total API Keys -->
           <div class="dashboard-card card p-5">
             <div class="flex items-center gap-3">
@@ -96,7 +96,7 @@
         </div>
 
         <!-- Row 2: Token Stats -->
-        <div class="grid grid-cols-2 gap-5 lg:grid-cols-4">
+        <div class="kedaya-admin-metrics grid grid-cols-2 gap-5 lg:grid-cols-4">
           <!-- Today Tokens -->
           <div class="dashboard-card card p-5">
             <div class="flex items-center gap-3">
@@ -872,3 +872,5 @@ onMounted(() => {
   }
 }
 </style>
+
+<style src="@/styles/kedaya-admin-pages.css"></style>

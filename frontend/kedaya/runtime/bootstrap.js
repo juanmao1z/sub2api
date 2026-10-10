@@ -9,15 +9,29 @@ document.documentElement.dataset.frontend = kind;
 /** @brief Load one stylesheet before application mount to avoid a flash of unstyled content.
  * @param href Same-origin CSS path. @return Promise resolved once the sheet is ready.
  */
-function stylesheet(href) {
+function stylesheet(href, legacy = false) {
   return new Promise((resolve, reject) => {
     const link = document.createElement('link');
     link.rel = 'stylesheet';
     link.href = href;
-    link.onload = resolve;
+    if (legacy) link.dataset.legacyUi = 'true';
+    link.onload = () => {
+      if (legacy) link.disabled = document.documentElement.dataset.uiLegacyStyles === 'false';
+      resolve();
+    };
     link.onerror = () => reject(new Error(`Unable to load stylesheet: ${href}`));
     document.head.append(link);
   });
+}
+
+// Keep protected pages' original cascade, including after client-side navigation.
+if (kind === 'native') {
+  const observer = new MutationObserver(() => {
+    for (const link of document.querySelectorAll('link[data-legacy-ui]')) {
+      link.disabled = document.documentElement.dataset.uiLegacyStyles === 'false';
+    }
+  });
+  observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-ui-legacy-styles'] });
 }
 
 let stopWatchingApp;
@@ -40,7 +54,10 @@ try {
   });
 
   await Promise.all([
-    Promise.all(entries[kind].styles.map(stylesheet)),
+    Promise.all([
+      ...entries[kind].styles.map(href => stylesheet(href)),
+      ...(entries[kind].legacyStyles || []).map(href => stylesheet(href, true)),
+    ]),
     import(entries[kind].script),
     appMounted,
   ]);

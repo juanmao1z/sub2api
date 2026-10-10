@@ -1,8 +1,8 @@
 <template>
   <AppLayout>
-    <div class="space-y-6">
+    <div class="kedaya-admin-page kedaya-admin-payment-dashboard space-y-6">
       <!-- Header with Day Switcher -->
-      <div class="flex items-center justify-end">
+      <div class="kedaya-admin-toolbar flex items-center justify-end">
         <div class="flex items-center gap-2">
           <div class="flex rounded-lg border border-gray-200 dark:border-dark-600">
             <button
@@ -29,9 +29,9 @@
         <LoadingSpinner />
       </div>
       <template v-else-if="stats">
-        <OrderStatsCards :stats="stats" />
+        <OrderStatsCards class="kedaya-admin-metrics" :stats="stats" />
         <DailyRevenueChart :data="stats.daily_series || []" :loading="loading" />
-        <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <div class="kedaya-admin-chart-grid grid grid-cols-1 gap-6 lg:grid-cols-2">
           <div class="card p-4">
             <h3 class="mb-4 text-sm font-semibold text-gray-900 dark:text-white">{{ t('payment.admin.paymentDistribution') }}</h3>
             <div v-if="!stats.payment_methods?.length" class="flex h-32 items-center justify-center text-sm text-gray-500 dark:text-gray-400">{{ t('payment.admin.noData') }}</div>
@@ -138,3 +138,5 @@ async function loadDashboard() {
 watch(days, () => loadDashboard())
 onMounted(() => loadDashboard())
 </script>
+
+<style src="@/styles/kedaya-admin-pages.css"></style>

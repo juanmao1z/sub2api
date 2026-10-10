@@ -6,6 +6,25 @@ import path from 'node:path';
 import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { installNavigation, runtimeForPath } from './runtime/navigation.js';
+import { Script } from 'node:vm';
+
+test('native source styles and legacy snapshot styles stay separate', () => {
+  const native = manifest.entries.native;
+  assert.ok(native.legacyStyles.length > 0);
+  assert.ok(!native.styles.some(style => native.legacyStyles.includes(style)));
+  for (const style of native.legacyStyles) assert.ok(fs.existsSync(path.join(output, style)), style);
+  const bootstrap = fs.readFileSync(path.join(output, manifest.releasePrefix, 'bootstrap.js'), 'utf8');
+  assert.ok(bootstrap.includes('data-ui-legacy-styles'));
+  assert.ok(bootstrap.includes('link.disabled'));
+  assert.ok(bootstrap.includes('MutationObserver'));
+});
+
+test('generated inline startup scripts are valid JavaScript', () => {
+  const html = fs.readFileSync(path.join(output, 'index.html'), 'utf8');
+  const scripts = [...html.matchAll(/<script nonce="[^"]*">([\s\S]*?)<\/script>/g)];
+  assert.equal(scripts.length, 2);
+  for (const [, code] of scripts) assert.doesNotThrow(() => new Script(code));
+});
 
 const root = path.dirname(fileURLToPath(import.meta.url));
 const output = path.resolve(root, '../../backend/internal/web/dist');
@@ -78,8 +97,8 @@ test('Kedaya admin sidebar follows subscription settings', () => {
   const layout = manifest.publishedAssets.find(asset => asset.file.endsWith('/AppLayout.vue_vue_type_script_setup_true_lang-D-wpKinR.js'));
   assert.ok(layout, 'published admin layout asset is present');
   const consoleLayout = fs.readFileSync(path.join(output, layout.file), 'utf8');
-  const pluginIndex = consoleLayout.indexOf('path:"/admin/plugins"');
-  const announcementIndex = consoleLayout.indexOf('path:"/admin/announcements"', pluginIndex);
+  const pluginIndex = consoleLayout.indexOf('path:\"/admin/plugins\"');
+  const announcementIndex = consoleLayout.indexOf('path:\"/admin/announcements\"', pluginIndex);
 
   assert.ok(pluginIndex >= 0);
   assert.ok(announcementIndex > pluginIndex);
@@ -96,5 +115,5 @@ test('published console imports and styles use an immutable release directory', 
   }
   for (const entry of Object.values(manifest.entries)) for (const style of entry.styles) assert.ok(fs.existsSync(path.join(output, style)), style);
   const consoleCode = fs.readFileSync(path.join(output, manifest.entries.console.script), 'utf8');
-  assert.ok(consoleCode.includes(`Va=function(e){return"${manifest.releasePrefix}/"+e}`));
+  assert.ok(consoleCode.includes(`Va=function(e){return\"${manifest.releasePrefix}/\"+e}`));
 });

@@ -1,8 +1,8 @@
 <template>
   <AppLayout>
-    <div class="space-y-4">
+    <div class="kedaya-admin-page kedaya-admin-payment-plans space-y-4">
       <!-- Actions -->
-      <div class="flex items-center justify-end gap-2">
+      <div class="kedaya-admin-toolbar flex items-center justify-end gap-2">
         <button @click="loadPlans" :disabled="plansLoading" class="btn btn-secondary" :title="t('common.refresh')">
           <Icon name="refresh" size="md" :class="plansLoading ? 'animate-spin' : ''" />
         </button>
@@ -200,3 +200,5 @@ onMounted(() => {
   loadPlans()
 })
 </script>
+
+<style src="@/styles/kedaya-admin-pages.css"></style>

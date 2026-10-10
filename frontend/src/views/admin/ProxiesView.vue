@@ -1,8 +1,8 @@
 <template>
   <AppLayout>
-    <TablePageLayout>
+    <TablePageLayout class="kedaya-admin-page kedaya-admin-proxies">
       <template #filters>
-        <div class="flex flex-wrap items-center gap-3">
+        <div class="kedaya-admin-toolbar flex flex-wrap items-center gap-3">
           <!-- Left: Search + Filters -->
           <div class="relative w-full sm:w-64">
             <Icon
@@ -2087,3 +2087,5 @@ onUnmounted(() => {
   document.removeEventListener('click', closeCopyMenu)
 })
 </script>
+
+<style src="@/styles/kedaya-admin-pages.css"></style>

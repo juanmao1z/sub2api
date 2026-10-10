@@ -1,8 +1,8 @@
 <template>
   <AppLayout>
-    <div class="space-y-6">
+    <div class="kedaya-admin-page kedaya-admin-plugins space-y-6">
       <section
-        class="flex flex-col gap-4 border-b border-gray-200 pb-5 dark:border-dark-700 sm:flex-row sm:items-end sm:justify-between"
+        class="kedaya-admin-heading flex flex-col gap-4 border-b border-gray-200 pb-5 dark:border-dark-700 sm:flex-row sm:items-end sm:justify-between"
       >
         <div class="min-w-0">
           <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
@@ -732,3 +732,5 @@ onBeforeUnmount(() => {
   closeConfiguration();
 });
 </script>
+
+<style src="@/styles/kedaya-admin-pages.css"></style>

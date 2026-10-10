@@ -1,6 +1,6 @@
 <template>
   <AppLayout>
-    <div class="mx-auto max-w-6xl space-y-6">
+    <div class="kedaya-admin-page kedaya-admin-settings mx-auto max-w-6xl space-y-6">
       <!-- Loading State -->
       <div v-if="loading" class="flex items-center justify-center py-12">
         <div
@@ -13428,3 +13428,5 @@ watch(
     0 1px 0 rgb(255 255 255 / 0.08) inset;
 }
 </style>
+
+<style src="@/styles/kedaya-admin-pages.css"></style>

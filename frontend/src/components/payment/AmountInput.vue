@@ -1,11 +1,11 @@
 <template>
-  <div class="payment-amount-input space-y-4">
+  <div class="payment-amount-input kedaya-amount-controls space-y-4">
     <!-- Quick Amount Buttons -->
     <div>
       <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
         {{ t('payment.quickAmounts') }}
       </label>
-      <div class="grid grid-cols-3 gap-x-4 gap-y-4 pt-2">
+      <div class="kedaya-amount-grid grid grid-cols-3 gap-x-4 gap-y-4 pt-2">
         <button
           v-for="amt in filteredAmounts"
           :key="amt"

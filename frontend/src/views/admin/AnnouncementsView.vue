@@ -1,8 +1,8 @@
 <template>
   <AppLayout>
-    <TablePageLayout>
+    <TablePageLayout class="kedaya-admin-page kedaya-admin-announcements">
       <template #filters>
-        <div class="flex flex-wrap items-center gap-3">
+        <div class="kedaya-admin-toolbar flex flex-wrap items-center gap-3">
           <!-- Left: Search + Filters -->
           <div class="flex-1 sm:max-w-64">
             <input
@@ -623,3 +623,5 @@ onUnmounted(() => {
   currentController?.abort()
 })
 </script>
+
+<style src="@/styles/kedaya-admin-pages.css"></style>

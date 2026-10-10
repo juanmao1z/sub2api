@@ -1,6 +1,7 @@
 <template>
   <AppLayout>
-    <div class="space-y-6">
+    <div class="signal-account-page signal-subscriptions space-y-6">
+      <header class="signal-account-heading"><h1>{{ t('nav.mySubscriptions') }}</h1></header>
       <!-- Loading State -->
       <div v-if="loading" class="flex justify-center py-12">
         <div
@@ -28,7 +29,7 @@
         <div
           v-for="subscription in subscriptions"
           :key="subscription.id"
-          class="overflow-hidden rounded-2xl border bg-white dark:bg-dark-800"
+          class="signal-subscription-item overflow-hidden rounded-2xl border bg-white dark:bg-dark-800"
           :class="platformBorderClass(subscription.group?.platform || '')"
         >
           <!-- Header -->
