@@ -63,6 +63,10 @@ func ProvideSchedulerCache(rdb *redis.Client, cfg *config.Config) service.Schedu
 	return newSchedulerCacheWithChunkSizes(rdb, mgetChunkSize, writeChunkSize)
 }
 
+func ProvideTicketRepository(db *sql.DB) service.TicketRepository {
+	return NewTicketRepository(db)
+}
+
 // ProviderSet is the Wire provider set for all repositories
 var ProviderSet = wire.NewSet(
 	NewUserRepository,
@@ -103,6 +107,7 @@ var ProviderSet = wire.NewSet(
 	NewChannelMonitorV2Repository,
 	NewChannelMonitorRequestTemplateRepository,
 	NewContentModerationRepository,
+	ProvideTicketRepository,
 	NewAffiliateRepository,
 	NewUserPlatformQuotaRepository,     // T14: user × platform quota
 	NewUserPlatformQuotaServiceAdapter, // T14: adapter → service.UserPlatformQuotaRepository

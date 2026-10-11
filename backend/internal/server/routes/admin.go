@@ -38,6 +38,7 @@ func RegisterAdminRoutes(
 
 		// 部署与运营合规确认
 		registerAdminComplianceRoutes(admin, h)
+		registerTicketRoutes(admin, h)
 
 		// 仪表盘
 		registerDashboardRoutes(admin, h)
@@ -169,6 +170,21 @@ func registerAdminComplianceRoutes(admin *gin.RouterGroup, h *handler.Handlers) 
 	{
 		compliance.GET("", h.Admin.Compliance.GetStatus)
 		compliance.POST("/accept", h.Admin.Compliance.Accept)
+	}
+}
+
+func registerTicketRoutes(admin *gin.RouterGroup, h *handler.Handlers) {
+	tickets := admin.Group("/tickets")
+	{
+		tickets.GET("", h.Admin.Ticket.List)
+		tickets.GET("/stats", h.Admin.Ticket.Stats)
+		tickets.GET("/tags", h.Admin.Ticket.ListTags)
+		tickets.GET("/:id", h.Admin.Ticket.GetByID)
+		tickets.POST("/:id/replies", h.Admin.Ticket.Reply)
+		tickets.POST("/:id/internal-notes", h.Admin.Ticket.AddInternalNote)
+		tickets.PATCH("/:id", h.Admin.Ticket.Update)
+		tickets.POST("/:id/read", h.Admin.Ticket.MarkRead)
+		tickets.PUT("/:id/tags", h.Admin.Ticket.ReplaceTags)
 	}
 }
 
