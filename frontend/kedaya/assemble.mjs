@@ -1,142 +1,142 @@
-/** @file @brief Assemble the pinned Sub2API review UI with production runtime adapters. */
+/** @file @brief Build Sub2API from the synchronized Kedaya review base. */
 import fs from 'node:fs';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 
 const root = path.dirname(fileURLToPath(import.meta.url));
+const frontendRoot = path.resolve(root, '..');
+const baseDir = path.join(root, 'base');
+const publicDir = path.join(frontendRoot, 'public');
+const sourceManifestPath = path.join(root, 'base-manifest.json');
 
-/** @brief Calculate a file digest. */
 function hash(file) {
   return createHash('sha256').update(fs.readFileSync(file)).digest('hex');
 }
 
-/** @brief Read the pinned Vite entry and global styles. */
 function readEntry(directory) {
   const html = fs.readFileSync(path.join(directory, 'index.html'), 'utf8');
   const script = html.match(/<script[^>]+type="module"[^>]+src="([^"]+)"/)?.[1];
   const styles = [...html.matchAll(/<link[^>]+rel="stylesheet"[^>]+href="([^"]+)"/g)].map(match => match[1]);
-  if (!script || !styles.length) throw new Error(`Expected a pinned review build in ${directory}`);
+  if (!script || !styles.length) throw new Error(`Expected a compiled review base in ${directory}`);
   return { script, styles };
 }
 
-/** @brief Assemble the review asset graph and patch only production contract differences. */
-export function assemble({ homeDir, outputDir = homeDir }) {
-  homeDir = path.resolve(homeDir);
-  outputDir = path.resolve(outputDir);
-  const reference = path.join(root, 'vendor');
-  const referenceManifest = JSON.parse(fs.readFileSync(path.join(root, 'reference-manifest.json'), 'utf8'));
-  const referenceEntry = readEntry(reference);
-  const entries = { review: referenceEntry };
-  const changes = [];
-  const copied = new Map();
-
-  for (const asset of referenceManifest.assets.filter(item => item.path.startsWith('/assets/') || item.path.startsWith('/canvas/'))) {
-    const file = path.join(reference, asset.path.slice(1));
-    if (!fs.existsSync(file) || hash(file) !== asset.sha256) throw new Error(`Vendor checksum mismatch: ${asset.path}`);
-  }
-
-  /** @brief Copy a tree while detecting conflicting generated assets. */
-  function copyTree(source, destination) {
-    for (const entry of fs.readdirSync(source, { withFileTypes: true })) {
-      const from = path.join(source, entry.name);
-      const to = path.join(destination, entry.name);
-      if (entry.isDirectory()) {
-        fs.mkdirSync(to, { recursive: true });
-        copyTree(from, to);
-        continue;
-      }
-      const digest = hash(from);
-      if (copied.has(to) && copied.get(to) !== digest) throw new Error(`Asset collision: ${to}`);
-      fs.mkdirSync(path.dirname(to), { recursive: true });
-      if (from !== to) fs.copyFileSync(from, to);
-      copied.set(to, digest);
+function copyTree(source, destination, copied = new Map()) {
+  if (!fs.existsSync(source)) return copied;
+  fs.mkdirSync(destination, { recursive: true });
+  for (const entry of fs.readdirSync(source, { withFileTypes: true })) {
+    const from = path.join(source, entry.name);
+    const to = path.join(destination, entry.name);
+    if (entry.isDirectory()) {
+      copyTree(from, to, copied);
+      continue;
     }
+    const digest = hash(from);
+    if (copied.has(to) && copied.get(to) !== digest) throw new Error(`Asset collision: ${to}`);
+    fs.mkdirSync(path.dirname(to), { recursive: true });
+    fs.copyFileSync(from, to);
+    copied.set(to, digest);
+  }
+  return copied;
+}
+
+function patch(outputDir, changes, file, before, after, reason) {
+  const target = path.join(outputDir, file);
+  const source = fs.readFileSync(target, 'utf8');
+  if (source.split(before).length !== 2) throw new Error(`Expected one patch anchor in ${file}`);
+  const originalHash = hash(target);
+  fs.writeFileSync(target, source.replace(before, after), 'utf8');
+  changes.push({ file, reason, originalHash, adaptedHash: hash(target) });
+}
+
+function replaceAll(outputDir, changes, file, before, after, reason) {
+  const target = path.join(outputDir, file);
+  const source = fs.readFileSync(target, 'utf8');
+  const count = source.split(before).length - 1;
+  if (!count) throw new Error(`Expected captured-site text in ${file}: ${before}`);
+  const originalHash = hash(target);
+  fs.writeFileSync(target, source.split(before).join(after), 'utf8');
+  changes.push({ file, reason: `${reason} (${count} replacements)`, originalHash, adaptedHash: hash(target) });
+}
+
+export function assemble({ outputDir = path.resolve(root, '../../backend/internal/web/dist') } = {}) {
+  outputDir = path.resolve(outputDir);
+  const sourceManifest = JSON.parse(fs.readFileSync(sourceManifestPath, 'utf8'));
+  const baseEntry = readEntry(baseDir);
+  const compiledAssets = sourceManifest.assets.filter(item => item.path.startsWith('/assets/') || item.path.startsWith('/canvas/'));
+  const copied = new Map();
+  const changes = [];
+
+  for (const asset of compiledAssets) {
+    const file = path.join(baseDir, asset.path.slice(1));
+    if (!fs.existsSync(file) || hash(file) !== asset.sha256) throw new Error(`Base checksum mismatch: ${asset.path}`);
   }
 
-  /** @brief Replace one exact fragment and record the production adaptation. */
-  function patch(file, before, after, reason) {
-    const target = path.join(outputDir, file);
-    const source = fs.readFileSync(target, 'utf8');
-    if (source.split(before).length !== 2) throw new Error(`Expected one patch anchor in ${file}`);
-    const originalHash = hash(target);
-    fs.writeFileSync(target, source.replace(before, after), 'utf8');
-    changes.push({ file, reason, originalHash, adaptedHash: hash(target) });
-  }
+  fs.rmSync(outputDir, { recursive: true, force: true });
+  fs.mkdirSync(outputDir, { recursive: true });
+  copyTree(publicDir, outputDir, copied);
+  copyTree(path.join(baseDir, 'assets'), path.join(outputDir, 'assets'), copied);
+  if (fs.existsSync(path.join(baseDir, 'canvas'))) copyTree(path.join(baseDir, 'canvas'), path.join(outputDir, 'canvas'), copied);
+  fs.writeFileSync(path.join(outputDir, 'index.html'), fs.readFileSync(path.join(baseDir, 'index.html')));
 
-  /** @brief Replace all occurrences of a known captured-site string. */
-  function replaceAll(file, before, after, reason) {
-    const target = path.join(outputDir, file);
-    const source = fs.readFileSync(target, 'utf8');
-    const count = source.split(before).length - 1;
-    if (!count) throw new Error(`Expected captured-site text in ${file}: ${before}`);
-    const originalHash = hash(target);
-    fs.writeFileSync(target, source.split(before).join(after), 'utf8');
-    changes.push({ file, reason: `${reason} (${count} replacements)`, originalHash, adaptedHash: hash(target) });
-  }
-
-  // Keep the formal Vite output for public branding files, then replace its compiled app graph.
-  copyTree(homeDir, outputDir);
-  fs.rmSync(path.join(outputDir, 'assets'), { recursive: true, force: true });
-  fs.rmSync(path.join(outputDir, 'canvas'), { recursive: true, force: true });
-  copyTree(path.join(reference, 'assets'), path.join(outputDir, 'assets'));
-  if (fs.existsSync(path.join(reference, 'canvas'))) copyTree(path.join(reference, 'canvas'), path.join(outputDir, 'canvas'));
-
-  patch('assets/index-CHmaXGoD.js',
+  patch(outputDir, changes, 'assets/index-CHmaXGoD.js',
     'function Aa(E){const S=(E==null?void 0:E.trim())||"";return/^data:image\\//i.test(S)?"/site-logo":S}',
     'function Aa(E){return(E==null?void 0:E.trim())||"/logo.png?v=20260715"}',
     'Use the formal Sub2API logo fallback; the backend does not expose a /site-logo endpoint.');
-  patch('assets/index-CHmaXGoD.js',
+  patch(outputDir, changes, 'assets/index-CHmaXGoD.js',
     'Fa=function(e){return"/"+e}',
     'Fa=function(e){return"/integration/__RELEASE_PREFIX__/"+e}',
     'Resolve lazy review chunks inside the immutable production release directory.');
-  patch('assets/KeysView-C1R_JMh0.js',
+  patch(outputDir, changes, 'assets/KeysView-C1R_JMh0.js',
     'async function Za(){const{data:y}=await Da.get("/user/custom-endpoints");return y}',
     'async function Za(){const{data:y}=await Da.get("/settings/public");return y.custom_endpoints||[]}',
     'Use the existing public-settings contract for custom endpoints.');
-  patch('assets/AppLayout.vue_vue_type_script_setup_true_lang-C4ysyc_b.js',
+  patch(outputDir, changes, 'assets/AppLayout.vue_vue_type_script_setup_true_lang-C4ysyc_b.js',
     '{path:"/admin/subscriptions",label:s("nav.subscriptions"),icon:J,hideInSimpleMode:!0}',
     '{path:"/admin/subscriptions",label:s("nav.subscriptions"),icon:J,hideInSimpleMode:!0,featureFlag:()=>{var U;return((U=x.cachedPublicSettings)==null?void 0:U.subscription_enabled)!==false}}',
     'Keep administrator subscription navigation aligned with public feature settings.');
-  patch('assets/providerConfig-wYxXJe_k.js',
+  patch(outputDir, changes, 'assets/providerConfig-wYxXJe_k.js',
     'defaultValue:"https://ep.kedaya.xyz"',
     'defaultValue:""',
     'Remove the captured-site payment gateway default; administrators must configure the real provider endpoint.');
-  replaceAll('assets/catalog-D1qxTQrs.js', 'kedaya.ai', 'Sub2API', 'Replace captured-site domain in legal fallback content.');
-  replaceAll('assets/AppLayout.vue_vue_type_script_setup_true_lang-C4ysyc_b.js', 'ghcr.io/kiss-kedaya/sub2api', 'ghcr.io/wei-shaw/sub2api', 'Use the formal Sub2API container repository in the version panel.');
-  replaceAll('assets/AppLayout.vue_vue_type_script_setup_true_lang-C4ysyc_b.js', 'kiss-kedaya/sub2api', 'Wei-Shaw/sub2api', 'Use the formal Sub2API source repository in the version panel.');
+  replaceAll(outputDir, changes, 'assets/catalog-D1qxTQrs.js', 'kedaya.ai', 'Sub2API', 'Replace captured-site domain in legal fallback content.');
+  replaceAll(outputDir, changes, 'assets/AppLayout.vue_vue_type_script_setup_true_lang-C4ysyc_b.js', 'ghcr.io/kiss-kedaya/sub2api', 'ghcr.io/wei-shaw/sub2api', 'Use the formal Sub2API container repository in the version panel.');
+  replaceAll(outputDir, changes, 'assets/AppLayout.vue_vue_type_script_setup_true_lang-C4ysyc_b.js', 'kiss-kedaya/sub2api', 'Wei-Shaw/sub2api', 'Use the formal Sub2API source repository in the version panel.');
 
-  const integration = path.join(outputDir, 'integration');
-  fs.rmSync(integration, { recursive: true, force: true });
-  fs.mkdirSync(integration, { recursive: true });
-  copyTree(path.join(root, 'runtime'), integration);
-
-  const revision = createHash('sha256')
+  const releaseDigest = createHash('sha256')
     .update(hash(fileURLToPath(import.meta.url)))
-    .update(JSON.stringify({ entries, changes }))
+    .update(JSON.stringify(sourceManifest))
+    .update(JSON.stringify(changes))
     .update(fs.readdirSync(path.join(root, 'runtime')).sort().map(file => hash(path.join(root, 'runtime', file))).join(''))
     .digest('hex').slice(0, 12);
-  const releasePrefix = `/integration/${revision}`;
+  const releasePrefix = `/integration/${releaseDigest}`;
+  const integration = path.join(outputDir, 'integration');
   const releaseDirectory = path.join(outputDir, releasePrefix);
+  fs.mkdirSync(integration, { recursive: true });
   fs.mkdirSync(releaseDirectory, { recursive: true });
-  copyTree(path.join(root, 'runtime'), releaseDirectory);
+  copyTree(path.join(root, 'runtime'), integration, copied);
+  copyTree(path.join(root, 'runtime'), releaseDirectory, copied);
 
-  const entryFile = path.join(outputDir, entries.review.script);
+  const entryFile = path.join(outputDir, baseEntry.script);
   const entryCode = fs.readFileSync(entryFile, 'utf8').replace('/integration/__RELEASE_PREFIX__/', `${releasePrefix}/`);
   fs.writeFileSync(entryFile, entryCode, 'utf8');
 
   const publishedAssets = [];
-  for (const asset of referenceManifest.assets.filter(item => item.path.startsWith('/assets/') || item.path.startsWith('/canvas/'))) {
+  for (const asset of compiledAssets) {
     const target = path.join(releaseDirectory, asset.path.slice(1));
     fs.mkdirSync(path.dirname(target), { recursive: true });
     fs.copyFileSync(path.join(outputDir, asset.path.slice(1)), target);
     publishedAssets.push({ file: releasePrefix + asset.path, sha256: hash(target) });
   }
 
-  entries.review.script = releasePrefix + entries.review.script;
-  entries.review.styles = entries.review.styles.map(file => releasePrefix + file);
-  entries.review.styles.push(releasePrefix + '/console.css');
-  fs.writeFileSync(path.join(integration, 'entries.js'), `/** @brief Generated production application entry descriptors. */\nexport const entries = ${JSON.stringify(entries, null, 2)};\n`, 'utf8');
+  const entries = {
+    review: {
+      script: releasePrefix + baseEntry.script,
+      styles: baseEntry.styles.map(file => releasePrefix + file).concat(`${releasePrefix}/console.css`),
+    },
+  };
+  fs.writeFileSync(path.join(integration, 'entries.js'), `/** @brief Generated production application entry descriptors. */\nexport const entries = ${JSON.stringify(entries, null, 2)};\n`);
   fs.copyFileSync(path.join(integration, 'entries.js'), path.join(releaseDirectory, 'entries.js'));
 
   fs.writeFileSync(path.join(outputDir, 'index.html'), `<!doctype html>
@@ -201,18 +201,18 @@ export function assemble({ homeDir, outputDir = homeDir }) {
 
   const manifest = {
     builtAt: new Date().toISOString(),
+    source: 'kedaya-review/public',
     releasePrefix,
     entries,
     homeAssets: ['logo.png', 'logo.svg'].filter(file => fs.existsSync(path.join(outputDir, file))).map(file => ({ file: '/' + file, sha256: hash(path.join(outputDir, file)) })),
     changes,
     publishedAssets,
   };
-  fs.writeFileSync(path.join(integration, 'build-manifest.json'), JSON.stringify(manifest, null, 2), 'utf8');
+  fs.writeFileSync(path.join(integration, 'build-manifest.json'), JSON.stringify(manifest, null, 2));
   return manifest;
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  const output = path.resolve(root, '../../backend/internal/web/dist');
-  const result = assemble({ homeDir: output });
-  console.log(`Sub2API review UI adaptation: ${result.publishedAssets.length} compiled assets; ${result.changes.length} production patches; ${output}`);
+  const result = assemble();
+  console.log(`Kedaya review base: ${result.publishedAssets.length} compiled assets; ${result.changes.length} production patches; ${path.resolve(root, '../../backend/internal/web/dist')}`);
 }
