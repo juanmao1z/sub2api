@@ -374,3 +374,128 @@ html.dark[data-ui-fusion="console"] .kedaya-admin-page {
     flex: 1 1 100%;
   }
 }
+/* Dashboard-specific composition: match the Kedaya overview reference while keeping live data and controls. */
+:is(html[data-ui-fusion="console"], .console-signal) .kedaya-admin-page.kedaya-admin-dashboard {
+  --dashboard-card-line: color-mix(in srgb, var(--signal-line) 88%, var(--signal-text) 12%);
+}
+
+:is(html[data-ui-fusion="console"], .console-signal) .kedaya-admin-dashboard .kedaya-admin-dashboard-masthead {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+  min-width: 0;
+  padding: 8px 0 18px;
+  border-bottom: 1px solid var(--signal-line);
+}
+
+:is(html[data-ui-fusion="console"], .console-signal) .kedaya-admin-dashboard .kedaya-admin-dashboard-identity {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+:is(html[data-ui-fusion="console"], .console-signal) .kedaya-admin-dashboard .kedaya-admin-dashboard-mark {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  flex: 0 0 auto;
+  place-items: center;
+  color: var(--signal-accent);
+  border: 1px solid var(--dashboard-card-line);
+  border-radius: 8px;
+  background: var(--signal-accent-soft);
+}
+
+:is(html[data-ui-fusion="console"], .console-signal) .kedaya-admin-dashboard .kedaya-admin-dashboard-overline {
+  margin: 0 0 5px;
+  color: var(--signal-muted);
+  font: 11px/1.3 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  letter-spacing: .04em;
+}
+
+:is(html[data-ui-fusion="console"], .console-signal) .kedaya-admin-dashboard .kedaya-admin-dashboard-masthead h1 {
+  margin: 0;
+  color: var(--signal-text);
+  font-size: 28px;
+  font-weight: 650;
+  line-height: 1.25;
+}
+
+:is(html[data-ui-fusion="console"], .console-signal) .kedaya-admin-dashboard .kedaya-admin-dashboard-refresh {
+  min-height: 38px;
+  flex: 0 0 auto;
+  padding-inline: 12px;
+}
+
+:is(html[data-ui-fusion="console"], .console-signal) .kedaya-admin-dashboard .kedaya-admin-metrics {
+  gap: 16px;
+  border: 0;
+}
+
+:is(html[data-ui-fusion="console"], .console-signal) .kedaya-admin-page.kedaya-admin-dashboard .kedaya-admin-metrics > div {
+  min-width: 0;
+  padding: 20px !important;
+  border: 1px solid var(--dashboard-card-line) !important;
+  border-radius: 8px !important;
+  background: var(--signal-surface) !important;
+  box-shadow: inset 0 1px color-mix(in srgb, var(--signal-text) 6%, transparent) !important;
+}
+
+:is(html[data-ui-fusion="console"], .console-signal) .kedaya-admin-dashboard .kedaya-admin-metrics > div:last-child {
+  border-right: 1px solid var(--dashboard-card-line) !important;
+}
+
+:is(html[data-ui-fusion="console"], .console-signal) .kedaya-admin-page.kedaya-admin-dashboard .kedaya-admin-metrics .dashboard-icon {
+  width: 40px;
+  height: 40px;
+  padding: 8px !important;
+  border-radius: 8px;
+}
+
+:is(html[data-ui-fusion="console"], .console-signal) .kedaya-admin-dashboard .dashboard-icon.bg-blue-100 { background: #dbeafe !important; color: #2563eb !important; }
+:is(html[data-ui-fusion="console"], .console-signal) .kedaya-admin-dashboard .dashboard-icon.bg-purple-100 { background: #f3e8ff !important; color: #9333ea !important; }
+:is(html[data-ui-fusion="console"], .console-signal) .kedaya-admin-dashboard .dashboard-icon.bg-green-100 { background: #dcfce7 !important; color: #16a34a !important; }
+:is(html[data-ui-fusion="console"], .console-signal) .kedaya-admin-dashboard .dashboard-icon.bg-emerald-100 { background: #d1fae5 !important; color: #059669 !important; }
+:is(html[data-ui-fusion="console"], .console-signal) .kedaya-admin-dashboard .dashboard-icon.bg-amber-100 { background: #fef3c7 !important; color: #d97706 !important; }
+:is(html[data-ui-fusion="console"], .console-signal) .kedaya-admin-dashboard .dashboard-icon.bg-indigo-100 { background: #e0e7ff !important; color: #4f46e5 !important; }
+:is(html[data-ui-fusion="console"], .console-signal) .kedaya-admin-dashboard .dashboard-icon.bg-violet-100 { background: #ede9fe !important; color: #7c3aed !important; }
+:is(html[data-ui-fusion="console"], .console-signal) .kedaya-admin-dashboard .dashboard-icon.bg-rose-100 { background: #ffe4e6 !important; color: #e11d48 !important; }
+
+.dark :is(html[data-ui-fusion="console"], .console-signal) .kedaya-admin-dashboard .dashboard-icon.bg-blue-100 { background: rgb(30 64 175 / .35) !important; color: #93c5fd !important; }
+.dark :is(html[data-ui-fusion="console"], .console-signal) .kedaya-admin-dashboard .dashboard-icon.bg-purple-100 { background: rgb(126 34 206 / .35) !important; color: #d8b4fe !important; }
+.dark :is(html[data-ui-fusion="console"], .console-signal) .kedaya-admin-dashboard .dashboard-icon.bg-green-100 { background: rgb(22 101 52 / .35) !important; color: #86efac !important; }
+.dark :is(html[data-ui-fusion="console"], .console-signal) .kedaya-admin-dashboard .dashboard-icon.bg-emerald-100 { background: rgb(4 120 87 / .35) !important; color: #6ee7b7 !important; }
+.dark :is(html[data-ui-fusion="console"], .console-signal) .kedaya-admin-dashboard .dashboard-icon.bg-amber-100 { background: rgb(146 64 14 / .35) !important; color: #fcd34d !important; }
+.dark :is(html[data-ui-fusion="console"], .console-signal) .kedaya-admin-dashboard .dashboard-icon.bg-indigo-100 { background: rgb(55 48 163 / .35) !important; color: #a5b4fc !important; }
+.dark :is(html[data-ui-fusion="console"], .console-signal) .kedaya-admin-dashboard .dashboard-icon.bg-violet-100 { background: rgb(91 33 182 / .35) !important; color: #c4b5fd !important; }
+.dark :is(html[data-ui-fusion="console"], .console-signal) .kedaya-admin-dashboard .dashboard-icon.bg-rose-100 { background: rgb(159 18 57 / .35) !important; color: #fda4af !important; }
+
+:is(html[data-ui-fusion="console"], .console-signal) .kedaya-admin-dashboard .kedaya-admin-chart-grid {
+  gap: 16px;
+}
+
+:is(html[data-ui-fusion="console"], .console-signal) .kedaya-admin-page.kedaya-admin-dashboard .kedaya-admin-chart-grid > .card {
+  min-width: 0;
+  padding: 16px !important;
+  border: 1px solid var(--dashboard-card-line) !important;
+  border-radius: 8px !important;
+  background: var(--signal-surface) !important;
+  box-shadow: inset 0 1px color-mix(in srgb, var(--signal-text) 5%, transparent) !important;
+}
+
+@media (max-width: 639px) {
+  :is(html[data-ui-fusion="console"], .console-signal) .kedaya-admin-dashboard .kedaya-admin-dashboard-masthead {
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  :is(html[data-ui-fusion="console"], .console-signal) .kedaya-admin-dashboard .kedaya-admin-dashboard-masthead h1 {
+    font-size: 24px;
+  }
+
+  :is(html[data-ui-fusion="console"], .console-signal) .kedaya-admin-page.kedaya-admin-dashboard .kedaya-admin-metrics > div {
+    padding: 16px !important;
+  }
+}

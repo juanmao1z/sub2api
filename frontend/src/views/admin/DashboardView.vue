@@ -1,6 +1,29 @@
 <template>
   <AppLayout>
     <div class="kedaya-admin-page kedaya-admin-dashboard admin-dashboard dashboard-page space-y-6">
+      <div class="kedaya-admin-dashboard-masthead">
+        <div class="kedaya-admin-dashboard-identity">
+          <span class="kedaya-admin-dashboard-mark" aria-hidden="true">
+            <Icon name="chart" size="md" />
+          </span>
+          <div>
+            <p class="kedaya-admin-dashboard-overline">OVERVIEW</p>
+            <h1>{{ t('admin.dashboard.title') }}</h1>
+          </div>
+        </div>
+        <button
+          type="button"
+          class="btn btn-secondary kedaya-admin-dashboard-refresh"
+          :disabled="loading || chartsLoading"
+          :title="t('common.refresh')"
+          :aria-label="t('common.refresh')"
+          @click="loadDashboardStats"
+        >
+          <Icon name="refresh" size="sm" :class="{ 'animate-spin': loading || chartsLoading }" />
+          <span class="hidden sm:inline">{{ t('common.refresh') }}</span>
+        </button>
+      </div>
+
       <!-- Loading State -->
       <div v-if="loading" class="flex items-center justify-center py-12">
         <LoadingSpinner />
@@ -279,16 +302,6 @@
                   @change="onDateRangeChange"
                 />
               </div>
-              <button
-                type="button"
-                @click="loadDashboardStats"
-                :disabled="chartsLoading"
-                :title="t('common.refresh')"
-                :aria-label="t('common.refresh')"
-                class="btn btn-secondary h-10 w-10 flex-shrink-0 !rounded-lg !p-0"
-              >
-                <Icon name="refresh" size="sm" :class="{ 'animate-spin': chartsLoading }" />
-              </button>
               <div class="ml-auto flex items-center gap-2">
                 <span class="text-sm font-medium text-gray-700 dark:text-gray-300"
                   >{{ t('admin.dashboard.granularity') }}:</span
@@ -305,7 +318,7 @@
           </div>
 
           <!-- Charts Grid -->
-          <div class="grid grid-cols-1 gap-5 lg:grid-cols-2">
+          <div class="kedaya-admin-chart-grid grid grid-cols-1 gap-5 lg:grid-cols-2">
             <ModelDistributionChart
               :model-stats="modelStats"
               :enable-ranking-view="true"
