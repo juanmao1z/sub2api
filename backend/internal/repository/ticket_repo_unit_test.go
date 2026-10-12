@@ -63,6 +63,12 @@ func TestTicketStatsQueryQualifiesStatusAfterUsersJoin(t *testing.T) {
 	require.Empty(t, args)
 }
 
+func TestTicketUnreadStatsConditionUsesCountAsBoolean(t *testing.T) {
+	query := `SELECT COUNT(*) FROM support_tickets t WHERE t.user_id = t.user_id AND (` + unreadSQL(true, "$1") + `) > 0`
+
+	require.Contains(t, query, ") > 0")
+}
+
 func TestScanTicketIncludesLastMessageAtColumn(t *testing.T) {
 	called := false
 	_, err := scanTicket(ticketScannerFunc(func(dest ...any) error {

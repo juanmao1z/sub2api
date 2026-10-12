@@ -158,7 +158,7 @@ func (r *TicketRepository) Stats(ctx context.Context, viewerID int64, admin bool
 	if !admin {
 		unreadWhere = `t.user_id = $1`
 	}
-	unreadQuery := `SELECT COUNT(*) FROM support_tickets t WHERE ` + unreadWhere + ` AND ` + unreadSQL(admin, "$1")
+	unreadQuery := `SELECT COUNT(*) FROM support_tickets t WHERE ` + unreadWhere + ` AND (` + unreadSQL(admin, "$1") + `) > 0`
 	if err := r.db.QueryRowContext(ctx, unreadQuery, unreadArgs...).Scan(&stats.Unread); err != nil {
 		return service.TicketStats{}, err
 	}
@@ -483,7 +483,7 @@ func (r *TicketRepository) messages(ctx context.Context, ticketID int64, admin b
 		args = append(args, beforeID)
 		condition += ` AND m.id < $2`
 	}
-	query := `SELECT m.id, m.ticket_id, m.kind, m.sender_type, COALESCE(u.username, ''), m.body, m.event_type, m.event_data, m.created_at FROM support_ticket_messages m LEFT JOIN users u ON u.id = m.sender_id WHERE ` + condition + ` ORDER BY m.id DESC LIMIT 51`
+	query := `SELECT m.id, m.ticket_id, m.kind, m.sender_type, COALESCE(u.username, ''), m.body, COALESCE(m.event_type, ''), COALESCE(m.event_data, '{}'::jsonb), m.created_at FROM support_ticket_messages m LEFT JOIN users u ON u.id = m.sender_id WHERE ` + condition + ` ORDER BY m.id DESC LIMIT 51`
 	rows, err := r.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, false, err
