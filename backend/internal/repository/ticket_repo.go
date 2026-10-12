@@ -424,6 +424,23 @@ func (r *TicketRepository) ReplaceTags(ctx context.Context, id int64, tagIDs []i
 	return tx.Commit()
 }
 
+func (r *TicketRepository) ListAssignees(ctx context.Context) ([]service.TicketAssignee, error) {
+	rows, err := r.db.QueryContext(ctx, `SELECT id, COALESCE(username, ''), email FROM users WHERE role = 'admin' AND status = 'active' ORDER BY COALESCE(NULLIF(username, ''), email), id`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	result := make([]service.TicketAssignee, 0)
+	for rows.Next() {
+		var assignee service.TicketAssignee
+		if err := rows.Scan(&assignee.ID, &assignee.Username, &assignee.Email); err != nil {
+			return nil, err
+		}
+		result = append(result, assignee)
+	}
+	return result, rows.Err()
+}
+
 func (r *TicketRepository) ListTags(ctx context.Context) ([]service.TicketTag, error) {
 	rows, err := r.db.QueryContext(ctx, `SELECT id, name, slug FROM support_ticket_tags ORDER BY name`)
 	if err != nil {

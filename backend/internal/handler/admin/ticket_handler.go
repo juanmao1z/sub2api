@@ -200,6 +200,15 @@ func (h *TicketHandler) ListTags(c *gin.Context) {
 	response.Success(c, gin.H{"items": result})
 }
 
+func (h *TicketHandler) ListAssignees(c *gin.Context) {
+	result, err := h.ticketService.ListAssignees(c.Request.Context())
+	if err != nil {
+		response.ErrorFrom(c, err)
+		return
+	}
+	response.Success(c, gin.H{"items": result})
+}
+
 func (h *TicketHandler) ReplaceTags(c *gin.Context) {
 	subject, ok := middleware.GetAuthSubjectFromContext(c)
 	if !ok {

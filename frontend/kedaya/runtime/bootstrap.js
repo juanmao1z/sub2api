@@ -1,5 +1,6 @@
 /** @file @brief Load the production Sub2API review UI entry. */
 import { runtimeForPath, installNavigation } from './navigation.js';
+import { installTicketAdminTools } from './ticket-admin.js';
 import { entries } from './entries.js';
 
 installNavigation(window);
@@ -41,6 +42,7 @@ try {
     appMounted,
   ]);
   document.getElementById('startup-loading')?.remove();
+  installTicketAdminTools();
 } catch (error) {
   stopWatchingApp?.();
   document.getElementById('startup-loading')?.remove();

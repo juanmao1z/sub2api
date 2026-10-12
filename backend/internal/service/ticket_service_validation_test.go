@@ -55,4 +55,7 @@ func (*ticketValidationRepository) UpdateTicket(context.Context, int64, int64, b
 }
 func (*ticketValidationRepository) MarkRead(context.Context, int64, int64, int64) error { return nil }
 func (*ticketValidationRepository) ReplaceTags(context.Context, int64, []int64) error   { return nil }
-func (*ticketValidationRepository) ListTags(context.Context) ([]TicketTag, error)       { return nil, nil }
+func (*ticketValidationRepository) ListAssignees(context.Context) ([]TicketAssignee, error) {
+	return nil, nil
+}
+func (*ticketValidationRepository) ListTags(context.Context) ([]TicketTag, error) { return nil, nil }

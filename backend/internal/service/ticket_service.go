@@ -139,6 +139,11 @@ type TicketTag struct {
 	Slug string `json:"slug"`
 }
 
+type TicketAssignee struct {
+	ID       int64  `json:"id"`
+	Username string `json:"username,omitempty"`
+	Email    string `json:"email"`
+}
 type TicketRepository interface {
 	CreateTicket(context.Context, int64, TicketCreateInput) (Ticket, error)
 	ListTickets(context.Context, int64, bool, TicketListFilter) (TicketPage, error)
@@ -146,6 +151,7 @@ type TicketRepository interface {
 	GetTicket(context.Context, int64, int64, bool, int64) (TicketDetail, error)
 	AddMessage(context.Context, int64, int64, string, string, string, bool) (TicketDetail, error)
 	UpdateTicket(context.Context, int64, int64, bool, TicketUpdateInput) (TicketDetail, error)
+	ListAssignees(context.Context) ([]TicketAssignee, error)
 	MarkRead(context.Context, int64, int64, int64) error
 	ReplaceTags(context.Context, int64, []int64) error
 	ListTags(context.Context) ([]TicketTag, error)
@@ -302,6 +308,9 @@ func (s *TicketService) ListTags(ctx context.Context) ([]TicketTag, error) {
 	return s.repo.ListTags(ctx)
 }
 
+func (s *TicketService) ListAssignees(ctx context.Context) ([]TicketAssignee, error) {
+	return s.repo.ListAssignees(ctx)
+}
 func (s *TicketService) ensureVisible(ctx context.Context, id, userID int64, admin bool) error {
 	_, err := s.repo.GetTicket(ctx, id, userID, admin, -1)
 	return err

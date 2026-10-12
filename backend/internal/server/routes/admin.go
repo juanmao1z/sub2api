@@ -178,6 +178,7 @@ func registerTicketRoutes(admin *gin.RouterGroup, h *handler.Handlers) {
 	{
 		tickets.GET("", h.Admin.Ticket.List)
 		tickets.GET("/stats", h.Admin.Ticket.Stats)
+		tickets.GET("/assignees", h.Admin.Ticket.ListAssignees)
 		tickets.GET("/tags", h.Admin.Ticket.ListTags)
 		tickets.GET("/:id", h.Admin.Ticket.GetByID)
 		tickets.POST("/:id/replies", h.Admin.Ticket.Reply)
