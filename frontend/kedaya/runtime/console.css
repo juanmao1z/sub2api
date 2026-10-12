@@ -100,11 +100,11 @@ html[data-frontend="console"] .signal-admin .usage-table .zhouz-usage-endpoint >
 }
 /** @brief Administrator ticket workflow controls share the production console theme. */
 html:is([data-frontend="review"], [data-frontend="console"]) .zhouz-ticket-admin-tools {
-  --ticket-admin-surface: var(--signal-surface, #20262a);
-  --ticket-admin-background: var(--signal-background, #171b1d);
-  --ticket-admin-line: var(--signal-line, #3a464d);
-  --ticket-admin-text: var(--signal-text, #e6edf0);
-  --ticket-admin-muted: var(--signal-muted, #9aa8af);
+  --ticket-admin-surface: #20262a;
+  --ticket-admin-background: #171b1d;
+  --ticket-admin-line: #3a464d;
+  --ticket-admin-text: #e6edf0;
+  --ticket-admin-muted: #9aa8af;
   margin: 0 0 1rem;
   padding: 1rem;
   border: 1px solid var(--ticket-admin-line);
