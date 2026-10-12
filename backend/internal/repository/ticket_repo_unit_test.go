@@ -48,3 +48,29 @@ func TestSLADueUsesPriorityTiers(t *testing.T) {
 	require.Equal(t, 8*time.Hour, first.Sub(now))
 	require.Equal(t, 72*time.Hour, resolution.Sub(now))
 }
+
+type ticketScannerFunc func(...any) error
+
+func (f ticketScannerFunc) Scan(dest ...any) error {
+	return f(dest...)
+}
+
+func TestTicketStatsQueryQualifiesStatusAfterUsersJoin(t *testing.T) {
+	query, args := ticketStatsQuery(42, true)
+
+	require.Contains(t, query, "SELECT t.status")
+	require.Contains(t, query, "GROUP BY t.status")
+	require.Empty(t, args)
+}
+
+func TestScanTicketIncludesLastMessageAtColumn(t *testing.T) {
+	called := false
+	_, err := scanTicket(ticketScannerFunc(func(dest ...any) error {
+		called = true
+		require.Len(t, dest, 20)
+		return nil
+	}))
+
+	require.NoError(t, err)
+	require.True(t, called)
+}

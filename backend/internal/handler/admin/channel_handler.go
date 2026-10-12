@@ -196,7 +196,7 @@ func channelToResponse(ch *service.Channel) *channelResponse {
 		ID:             ch.ID,
 		Name:           ch.Name,
 		Description:    ch.Description,
-		Status:         ch.Status,
+		Status:         strings.TrimSpace(ch.Status),
 		RestrictModels: ch.RestrictModels,
 		Features:       ch.Features,
 		FeaturesConfig: ch.FeaturesConfig,
@@ -206,6 +206,9 @@ func channelToResponse(ch *service.Channel) *channelResponse {
 		UpdatedAt:      ch.UpdatedAt.Format("2006-01-02T15:04:05Z"),
 	}
 	resp.BillingModelSource = ch.BillingModelSource
+	if resp.Status == "" {
+		resp.Status = service.StatusActive
+	}
 	if resp.GroupIDs == nil {
 		resp.GroupIDs = []int64{}
 	}

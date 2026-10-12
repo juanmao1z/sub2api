@@ -117,9 +117,13 @@ func (r *TicketRepository) ListTickets(ctx context.Context, viewerID int64, admi
 	return service.TicketPage{Items: items, Total: total, Page: filter.Page, PageSize: filter.PageSize, Pages: pages}, nil
 }
 
-func (r *TicketRepository) Stats(ctx context.Context, viewerID int64, admin bool) (service.TicketStats, error) {
+func ticketStatsQuery(viewerID int64, admin bool) (string, []any) {
 	where, args := ticketWhere(viewerID, admin, service.TicketListFilter{})
-	query := `SELECT status, COUNT(*) FROM support_tickets t JOIN users u ON u.id = t.user_id WHERE ` + where + ` GROUP BY status`
+	return `SELECT t.status, COUNT(*) FROM support_tickets t JOIN users u ON u.id = t.user_id WHERE ` + where + ` GROUP BY t.status`, args
+}
+
+func (r *TicketRepository) Stats(ctx context.Context, viewerID int64, admin bool) (service.TicketStats, error) {
+	query, args := ticketStatsQuery(viewerID, admin)
 	rows, err := r.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return service.TicketStats{}, err
@@ -190,14 +194,7 @@ func (r *TicketRepository) GetTicket(ctx context.Context, id, viewerID int64, ad
 			COALESCE(u.username, ''), u.email, t.created_at, t.updated_at
 		FROM support_tickets t JOIN users u ON u.id = t.user_id WHERE ` + where
 	var detail service.TicketDetail
-	var err error
-	var ticket service.Ticket
-	err = r.db.QueryRowContext(ctx, query, args...).Scan(
-		&ticket.ID, &ticket.UserID, &ticket.Subject, &ticket.Description, &ticket.Contact, &ticket.Category, &ticket.Priority,
-		&ticket.Status, &ticket.OrderID, &ticket.AssignedTo, &ticket.FirstResponseDueAt, &ticket.ResolutionDueAt,
-		&ticket.LastMessageID, &ticket.LastMessagePreview, &ticket.UnreadCount, &ticket.UserName, &ticket.UserEmail,
-		&ticket.CreatedAt, &ticket.UpdatedAt,
-	)
+	ticket, err := scanTicket(r.db.QueryRowContext(ctx, query, args...))
 	if err == sql.ErrNoRows {
 		return service.TicketDetail{}, notFoundTicket()
 	}
