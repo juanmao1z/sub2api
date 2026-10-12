@@ -20,14 +20,16 @@ function ticketID() {
 }
 
 async function request(path, options = {}) {
-  const response = await fetch(`/api/v1${path}`, {
-    credentials: 'include',
-    headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
-    ...options,
-  });
-  const payload = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(payload.message || `Request failed (${response.status})`);
-  return payload.data ?? payload;
+	const token = window.localStorage.getItem('auth_token');
+	const authorization = token ? { Authorization: `Bearer ${token}` } : {};
+	const response = await fetch(`/api/v1${path}`, {
+		credentials: 'include',
+		headers: { 'Content-Type': 'application/json', ...authorization, ...(options.headers || {}) },
+		...options,
+	});
+	const payload = await response.json().catch(() => ({}));
+	if (!response.ok) throw new Error(payload.message || `Request failed (${response.status})`);
+	return payload.data ?? payload;
 }
 
 function option(value, label) {
