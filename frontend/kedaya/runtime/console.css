@@ -98,23 +98,55 @@ html[data-frontend="console"] .signal-admin .usage-table .zhouz-usage-endpoint >
   white-space: nowrap;
   overflow-wrap: normal;
 }
-/** @brief Administrator ticket workflow controls added by the production runtime adapter. */
-html[data-frontend="review"] .zhouz-ticket-admin-tools { margin: 0 0 1rem; padding: 1rem; border: 1px solid var(--signal-line, #d9dde5); border-radius: 8px; background: var(--signal-surface, #fff); color: var(--signal-text, #1f2937); }
-html[data-frontend="review"] .zhouz-ticket-admin-heading, html[data-frontend="review"] .zhouz-ticket-admin-actions { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
-html[data-frontend="review"] .zhouz-ticket-admin-heading h3 { margin: 0; font-size: 0.95rem; }
-html[data-frontend="review"] .zhouz-ticket-admin-heading p { margin: 0.25rem 0 0; color: var(--signal-muted, #667085); font-size: 0.8rem; }
-html[data-frontend="review"] .zhouz-ticket-admin-state { color: var(--signal-muted, #667085); font-size: 0.8rem; white-space: nowrap; }
-html[data-frontend="review"] .zhouz-ticket-admin-state[data-error="true"] { color: #b42318; }
-html[data-frontend="review"] .zhouz-ticket-admin-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(12rem, 1fr); gap: 1rem; margin-top: 1rem; }
-html[data-frontend="review"] .zhouz-ticket-admin-controls { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.75rem; }
-html[data-frontend="review"] .zhouz-ticket-admin-field, html[data-frontend="review"] .zhouz-ticket-admin-note { display: grid; gap: 0.35rem; color: var(--signal-muted, #667085); font-size: 0.78rem; }
-html[data-frontend="review"] .zhouz-ticket-admin-select, html[data-frontend="review"] .zhouz-ticket-admin-note textarea { box-sizing: border-box; width: 100%; min-height: 2.35rem; padding: 0.5rem 0.65rem; border: 1px solid var(--signal-line, #d9dde5); border-radius: 6px; background: var(--signal-background, #fff); color: var(--signal-text, #1f2937); font: inherit; }
-html[data-frontend="review"] .zhouz-ticket-admin-note { margin-top: 1rem; }
-html[data-frontend="review"] .zhouz-ticket-admin-note textarea { resize: vertical; min-height: 4.5rem; }
-html[data-frontend="review"] .zhouz-ticket-admin-label { display: block; margin-bottom: 0.45rem; color: var(--signal-muted, #667085); font-size: 0.78rem; }
-html[data-frontend="review"] .zhouz-ticket-admin-tag-list { display: flex; flex-wrap: wrap; gap: 0.4rem; }
-html[data-frontend="review"] .zhouz-ticket-admin-tag { display: inline-flex; align-items: center; gap: 0.35rem; min-height: 2rem; padding: 0.3rem 0.55rem; border: 1px solid var(--signal-line, #d9dde5); border-radius: 999px; color: var(--signal-text, #1f2937); font-size: 0.78rem; }
-html[data-frontend="review"] .zhouz-ticket-admin-button { min-height: 2.35rem; padding: 0.45rem 0.75rem; border: 1px solid var(--signal-line, #d9dde5); border-radius: 6px; background: var(--signal-background, #fff); color: var(--signal-text, #1f2937); cursor: pointer; font: inherit; }
-html[data-frontend="review"] .zhouz-ticket-admin-button.is-primary { border-color: #2563eb; background: #2563eb; color: #fff; }
-html[data-frontend="review"] .zhouz-ticket-admin-button:disabled { cursor: wait; opacity: 0.6; }
-@media (max-width: 760px) { html[data-frontend="review"] .zhouz-ticket-admin-grid, html[data-frontend="review"] .zhouz-ticket-admin-controls { grid-template-columns: 1fr; } html[data-frontend="review"] .zhouz-ticket-admin-heading { align-items: flex-start; flex-direction: column; } }
+/** @brief Administrator ticket workflow controls share the production console theme. */
+html:is([data-frontend="review"], [data-frontend="console"]) .zhouz-ticket-admin-tools {
+  --ticket-admin-surface: var(--signal-surface, #20262a);
+  --ticket-admin-background: var(--signal-background, #171b1d);
+  --ticket-admin-line: var(--signal-line, #3a464d);
+  --ticket-admin-text: var(--signal-text, #e6edf0);
+  --ticket-admin-muted: var(--signal-muted, #9aa8af);
+  margin: 0 0 1rem;
+  padding: 1rem;
+  border: 1px solid var(--ticket-admin-line);
+  border-radius: 8px;
+  background: var(--ticket-admin-surface);
+  color: var(--ticket-admin-text);
+}
+html:is([data-frontend="review"], [data-frontend="console"]) .zhouz-ticket-admin-heading,
+html:is([data-frontend="review"], [data-frontend="console"]) .zhouz-ticket-admin-actions { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+html:is([data-frontend="review"], [data-frontend="console"]) .zhouz-ticket-admin-heading h3 { margin: 0; font-size: 0.95rem; }
+html:is([data-frontend="review"], [data-frontend="console"]) .zhouz-ticket-admin-heading p { margin: 0.25rem 0 0; color: var(--ticket-admin-muted); font-size: 0.8rem; }
+html:is([data-frontend="review"], [data-frontend="console"]) .zhouz-ticket-admin-state { color: var(--ticket-admin-muted); font-size: 0.8rem; white-space: nowrap; }
+html:is([data-frontend="review"], [data-frontend="console"]) .zhouz-ticket-admin-state[data-error="true"] { color: #f97066; }
+html:is([data-frontend="review"], [data-frontend="console"]) .zhouz-ticket-admin-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(12rem, 1fr); gap: 1rem; margin-top: 1rem; }
+html:is([data-frontend="review"], [data-frontend="console"]) .zhouz-ticket-admin-controls { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.75rem; }
+html:is([data-frontend="review"], [data-frontend="console"]) .zhouz-ticket-admin-field,
+html:is([data-frontend="review"], [data-frontend="console"]) .zhouz-ticket-admin-note { display: grid; gap: 0.35rem; color: var(--ticket-admin-muted); font-size: 0.78rem; }
+html:is([data-frontend="review"], [data-frontend="console"]) .zhouz-ticket-admin-select,
+html:is([data-frontend="review"], [data-frontend="console"]) .zhouz-ticket-admin-note textarea {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 2.35rem;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid var(--ticket-admin-line);
+  border-radius: 6px;
+  background: var(--ticket-admin-background);
+  color: var(--ticket-admin-text);
+  color-scheme: dark;
+  font: inherit;
+}
+html:is([data-frontend="review"], [data-frontend="console"]) .zhouz-ticket-admin-select option { background: var(--ticket-admin-background); color: var(--ticket-admin-text); }
+html:is([data-frontend="review"], [data-frontend="console"]) .zhouz-ticket-admin-select:focus,
+html:is([data-frontend="review"], [data-frontend="console"]) .zhouz-ticket-admin-note textarea:focus { border-color: #58c7f3; outline: 2px solid rgba(88, 199, 243, 0.24); outline-offset: 1px; }
+html:is([data-frontend="review"], [data-frontend="console"]) .zhouz-ticket-admin-select:disabled,
+html:is([data-frontend="review"], [data-frontend="console"]) .zhouz-ticket-admin-note textarea:disabled { cursor: not-allowed; opacity: 0.58; }
+html:is([data-frontend="review"], [data-frontend="console"]) .zhouz-ticket-admin-note { margin-top: 1rem; }
+html:is([data-frontend="review"], [data-frontend="console"]) .zhouz-ticket-admin-note textarea { resize: vertical; min-height: 4.5rem; }
+html:is([data-frontend="review"], [data-frontend="console"]) .zhouz-ticket-admin-label { display: block; margin-bottom: 0.45rem; color: var(--ticket-admin-muted); font-size: 0.78rem; }
+html:is([data-frontend="review"], [data-frontend="console"]) .zhouz-ticket-admin-tag-list { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+html:is([data-frontend="review"], [data-frontend="console"]) .zhouz-ticket-admin-tag { display: inline-flex; align-items: center; gap: 0.35rem; min-height: 2rem; padding: 0.3rem 0.55rem; border: 1px solid var(--ticket-admin-line); border-radius: 999px; background: var(--ticket-admin-background); color: var(--ticket-admin-text); font-size: 0.78rem; }
+html:is([data-frontend="review"], [data-frontend="console"]) .zhouz-ticket-admin-button { min-height: 2.35rem; padding: 0.45rem 0.75rem; border: 1px solid var(--ticket-admin-line); border-radius: 6px; background: var(--ticket-admin-background); color: var(--ticket-admin-text); cursor: pointer; font: inherit; }
+html:is([data-frontend="review"], [data-frontend="console"]) .zhouz-ticket-admin-button.is-primary { border-color: #248db5; background: #1b6f8d; color: #f4fbfd; }
+html:is([data-frontend="review"], [data-frontend="console"]) .zhouz-ticket-admin-button:hover:not(:disabled) { background: #2384a7; }
+html:is([data-frontend="review"], [data-frontend="console"]) .zhouz-ticket-admin-button:disabled { cursor: wait; opacity: 0.6; }
+@media (max-width: 760px) { html:is([data-frontend="review"], [data-frontend="console"]) .zhouz-ticket-admin-grid, html:is([data-frontend="review"], [data-frontend="console"]) .zhouz-ticket-admin-controls { grid-template-columns: 1fr; } html:is([data-frontend="review"], [data-frontend="console"]) .zhouz-ticket-admin-heading { align-items: flex-start; flex-direction: column; } }
