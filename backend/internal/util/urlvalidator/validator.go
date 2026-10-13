@@ -105,24 +105,119 @@ func ValidateHTTPSURL(raw string, opts ValidationOptions) (string, error) {
 	return ValidateHTTPURL(raw, false, opts)
 }
 
-// ValidateResolvedIP 验证 DNS 解析后的 IP 地址是否安全
-// 用于防止 DNS Rebinding 攻击：在实际 HTTP 请求时调用此函数验证解析后的 IP
+// LookupIPFunc resolves all A/AAAA records for a hostname.
+type LookupIPFunc func(context.Context, string) ([]net.IP, error)
+
+// ResolvePublicIPs resolves host and rejects the entire result set if any address
+// is outside the public address space. DNS failures and empty results fail closed.
+func ResolvePublicIPs(ctx context.Context, host string) ([]net.IP, error) {
+	return ResolvePublicIPsWithLookup(ctx, host, defaultLookupIP)
+}
+
+// ResolvePublicIPsWithLookup is the deterministic/testable form of ResolvePublicIPs.
+func ResolvePublicIPsWithLookup(ctx context.Context, host string, lookup LookupIPFunc) ([]net.IP, error) {
+	host = strings.TrimSpace(host)
+	if host == "" {
+		return nil, errors.New("host is empty")
+	}
+	if ip := net.ParseIP(host); ip != nil {
+		if isDisallowedIP(ip) {
+			return nil, fmt.Errorf("resolved ip %s is not allowed", ip.String())
+		}
+		return []net.IP{ip}, nil
+	}
+	if lookup == nil {
+		return nil, errors.New("dns resolver is nil")
+	}
+	ips, err := lookup(ctx, host)
+	if err != nil {
+		return nil, fmt.Errorf("dns resolution failed: %w", err)
+	}
+	if len(ips) == 0 {
+		return nil, fmt.Errorf("dns resolution returned no addresses for %s", host)
+	}
+	publicIPs := make([]net.IP, 0, len(ips))
+	seen := make(map[string]struct{}, len(ips))
+	for _, ip := range ips {
+		if ip == nil || isDisallowedIP(ip) {
+			if ip == nil {
+				return nil, errors.New("resolved nil ip is not allowed")
+			}
+			return nil, fmt.Errorf("resolved ip %s is not allowed", ip.String())
+		}
+		key := ip.String()
+		if _, ok := seen[key]; ok {
+			continue
+		}
+		seen[key] = struct{}{}
+		publicIPs = append(publicIPs, ip)
+	}
+	if len(publicIPs) == 0 {
+		return nil, fmt.Errorf("dns resolution returned no usable addresses for %s", host)
+	}
+	return publicIPs, nil
+}
+
+// SafeDialContext resolves a hostname immediately before dialing and uses only
+// the verified IP address for the socket. The caller retains the original host
+// for HTTP Host headers and TLS SNI.
+func SafeDialContext(ctx context.Context, network, address string) (net.Conn, error) {
+	return SafeDialContextWithLookup(ctx, network, address, defaultLookupIP, (&net.Dialer{Timeout: 10 * time.Second}).DialContext)
+}
+
+// SafeDialContextWithLookup is the deterministic/testable form of SafeDialContext.
+func SafeDialContextWithLookup(ctx context.Context, network, address string, lookup LookupIPFunc, dial func(context.Context, string, string) (net.Conn, error)) (net.Conn, error) {
+	if dial == nil {
+		return nil, errors.New("dialer is nil")
+	}
+	host, port, err := net.SplitHostPort(address)
+	if err != nil {
+		return nil, err
+	}
+	ips, err := ResolvePublicIPsWithLookup(ctx, host, lookup)
+	if err != nil {
+		return nil, err
+	}
+	var lastErr error
+	for _, ip := range ips {
+		conn, dialErr := dial(ctx, network, net.JoinHostPort(ip.String(), port))
+		if dialErr == nil {
+			return conn, nil
+		}
+		lastErr = dialErr
+	}
+	if lastErr == nil {
+		lastErr = fmt.Errorf("no usable addresses for %s", host)
+	}
+	return nil, lastErr
+}
+
+func defaultLookupIP(ctx context.Context, host string) ([]net.IP, error) {
+	return net.DefaultResolver.LookupIP(ctx, "ip", host)
+}
+
+// ValidateResolvedIP 验证 DNS 解析后的全部 IP 是否安全。
+// 用于保持原有调用方 API 兼容；实际建连应使用 SafeDialContext。
 func ValidateResolvedIP(host string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
+	_, err := ResolvePublicIPs(ctx, host)
+	return err
+}
 
-	ips, err := net.DefaultResolver.LookupIP(ctx, "ip", host)
-	if err != nil {
-		return fmt.Errorf("dns resolution failed: %w", err)
+func isDisallowedIP(ip net.IP) bool {
+	if ip == nil || ip.IsLoopback() || ip.IsPrivate() || ip.IsLinkLocalUnicast() ||
+		ip.IsLinkLocalMulticast() || ip.IsInterfaceLocalMulticast() || ip.IsMulticast() || ip.IsUnspecified() {
+		return true
 	}
-
-	for _, ip := range ips {
-		if ip.IsLoopback() || ip.IsPrivate() || ip.IsLinkLocalUnicast() ||
-			ip.IsLinkLocalMulticast() || ip.IsUnspecified() {
-			return fmt.Errorf("resolved ip %s is not allowed", ip.String())
-		}
+	if ip4 := ip.To4(); ip4 != nil {
+		return ip4[0] == 0 || ip4[0] == 10 || ip4[0] == 127 ||
+			(ip4[0] == 169 && ip4[1] == 254) ||
+			(ip4[0] == 172 && ip4[1] >= 16 && ip4[1] <= 31) ||
+			(ip4[0] == 192 && ip4[1] == 168) ||
+			(ip4[0] == 100 && ip4[1] >= 64 && ip4[1] <= 127)
 	}
-	return nil
+	return len(ip) == net.IPv6len && ip[0]&0xfe == 0xfc
 }
 
 func normalizeAllowlist(values []string) []string {
@@ -173,9 +268,7 @@ func isBlockedHost(host string) bool {
 		return true
 	}
 	if ip := net.ParseIP(host); ip != nil {
-		if ip.IsLoopback() || ip.IsPrivate() || ip.IsLinkLocalUnicast() || ip.IsLinkLocalMulticast() || ip.IsUnspecified() {
-			return true
-		}
+		return isDisallowedIP(ip)
 	}
 	return false
 }
