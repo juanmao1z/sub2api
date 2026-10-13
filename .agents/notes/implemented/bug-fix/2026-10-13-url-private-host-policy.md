@@ -48,3 +48,11 @@ HTTP 上游传输层此前只有在 `security.url_allowlist.enabled=true` 时才
 覆盖限制：REA CLI `6.4.0` 可用但 native provider 缺少 pwntools 配置；Ghidra 未安装或设置 `GHIDRA_INSTALL_DIR`，因此本次二进制检查限于 `readelf`/ELF 元数据和 REA 可用性诊断，未完成 Ghidra 反编译或漏洞规则扫描。
 
 验证：`go test ./...`、`go vet ./...`、前端 `npm run lint:check && npm run build` 通过；WebSocket 回归子集通过。
+
+## Runtime audit follow-up
+
+对 2026-10-13 部署的实际容器执行了只读运行时核验：release override 固定到 `sub2api-custom:0.2.16-arm64-20261013-security-92a35bac7`，应用端口只绑定宿主机 `127.0.0.1`，AppArmor `docker-default` 和 `no-new-privileges:true` 生效，网络不是 host 模式，健康检查通过。
+
+仍存在的运行时加固缺口是 `Config.User` 为空、`ReadonlyRootfs=false`、未配置 `CapDrop`，以及 `/app/data` 可写挂载。当前不直接加入 `user: 1000`、`read_only` 或 `cap_drop: ALL`：入口脚本需要 root 修复命名卷权限后再通过 `su-exec` 降权，备份和更新流程仍写入 `/app` 或临时路径，直接收紧会破坏现有卷、备份、更新和回滚契约。后续若要处理，应先把临时文件和备份路径迁移到明确卷，并在副本环境验证最小 capability 集合。
+
+源码 Compose 中的 `latest`、`0.0.0.0` 和宽松 URL 默认值属于非生产手工启动风险；当前生产实际由 release override 钉住镜像并使用宿主机本地反向代理。生产配置仍显式启用 `allow_private_hosts=true`，因此私网访问是已记录的管理员 opt-in 风险。
