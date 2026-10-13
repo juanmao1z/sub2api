@@ -103,6 +103,10 @@ export function assemble({ outputDir = path.resolve(root, '../../backend/interna
   replaceAll(outputDir, changes, 'assets/catalog-D1qxTQrs.js', 'kedaya.ai', 'Sub2API', 'Replace captured-site domain in legal fallback content.');
   replaceAll(outputDir, changes, 'assets/AppLayout.vue_vue_type_script_setup_true_lang-C4ysyc_b.js', 'ghcr.io/kiss-kedaya/sub2api', 'ghcr.io/wei-shaw/sub2api', 'Use the formal Sub2API container repository in the version panel.');
   replaceAll(outputDir, changes, 'assets/AppLayout.vue_vue_type_script_setup_true_lang-C4ysyc_b.js', 'kiss-kedaya/sub2api', 'Wei-Shaw/sub2api', 'Use the formal Sub2API source repository in the version panel.');
+  patch(outputDir, changes, 'assets/ChannelStatusView-DNoLdA9d.js',
+    ',_=v(()=>{var h;return((h=f.value)==null?void 0:h.metrics)??a.row.metrics}),g=v(()=>{var h;return((h=f.value)==null?void 0:h.health)??a.row.health})',
+    ',_=v(()=>a.row.metrics),g=v(()=>a.row.health)',
+    'Use selected-window aggregate metrics and health for the primary channel status card; retain latest buckets for timeline details.');
 
   const releaseDigest = createHash('sha256')
     .update(hash(fileURLToPath(import.meta.url)))

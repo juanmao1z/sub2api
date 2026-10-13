@@ -6,6 +6,8 @@ import path from 'node:path';
 import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { runtimeForPath } from './runtime/navigation.js';
+import os from 'node:os';
+import { assemble } from './assemble.mjs';
 
 const root = path.dirname(fileURLToPath(import.meta.url));
 const base = path.join(root, 'base');
@@ -80,6 +82,20 @@ test('production adaptations preserve real Sub2API contracts', () => {
   assert.ok(layout.includes('ghcr.io/wei-shaw/sub2api'));
   assert.ok(provider.includes('defaultValue:""'));
   assert.ok(!provider.includes('ep.kedaya.xyz'));
+});
+
+test('channel status card uses selected-window aggregate metrics and health', () => {
+  const temporaryOutput = fs.mkdtempSync(path.join(os.tmpdir(), 'sub2api-channel-status-'));
+  try {
+    const assembled = assemble({ outputDir: temporaryOutput });
+    const source = fs.readFileSync(path.join(temporaryOutput, 'assets/ChannelStatusView-DNoLdA9d.js'), 'utf8');
+    assert.ok(source.includes(',_=v(()=>a.row.metrics),g=v(()=>a.row.health)'));
+    assert.doesNotMatch(source, /\(\(h=f\.value\).*?a\.row\.metrics\)/);
+    assert.doesNotMatch(source, /\(\(h=f\.value\).*?a\.row\.health\)/);
+    assert.ok(assembled.changes.some(change => change.file === 'assets/ChannelStatusView-DNoLdA9d.js'));
+  } finally {
+    fs.rmSync(temporaryOutput, { recursive: true, force: true });
+  }
 });
 
 test('published assets contain no captured-site or review-only markers', () => {
