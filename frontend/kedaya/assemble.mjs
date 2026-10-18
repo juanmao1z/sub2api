@@ -78,6 +78,15 @@ export function assemble({ outputDir = path.resolve(root, '../../backend/interna
   copyTree(publicDir, outputDir, copied);
   copyTree(path.join(baseDir, 'assets'), path.join(outputDir, 'assets'), copied);
   if (fs.existsSync(path.join(baseDir, 'canvas'))) copyTree(path.join(baseDir, 'canvas'), path.join(outputDir, 'canvas'), copied);
+  // Owned source supplements missing pages without changing the pinned base.
+  const canvasFiles = ['index.html', 'canvas.js', 'canvas-core.mjs', 'canvas.css'];
+  fs.mkdirSync(path.join(outputDir, 'canvas'), { recursive: true });
+  for (const file of canvasFiles) fs.copyFileSync(path.join(root, 'canvas', file), path.join(outputDir, 'canvas', file));
+  for (const file of ['usage-guide.js', 'usage-guide.css']) {
+    const source = path.join(root, 'runtime', file);
+    if (!fs.existsSync(source)) throw new Error(`Missing guide source: ${file}`);
+    fs.copyFileSync(source, path.join(outputDir, 'assets', file));
+  }
   fs.writeFileSync(path.join(outputDir, 'index.html'), fs.readFileSync(path.join(baseDir, 'index.html')));
 
   patch(outputDir, changes, 'assets/index-CHmaXGoD.js',
@@ -107,12 +116,34 @@ export function assemble({ outputDir = path.resolve(root, '../../backend/interna
     ',_=v(()=>{var h;return((h=f.value)==null?void 0:h.metrics)??a.row.metrics}),g=v(()=>{var h;return((h=f.value)==null?void 0:h.health)??a.row.health})',
     ',_=v(()=>a.row.metrics),g=v(()=>a.row.health)',
     'Use selected-window aggregate metrics and health for the primary channel status card; retain latest buckets for timeline details.');
+  patch(outputDir, changes, 'assets/index-CHmaXGoD.js',
+    '{path:"/batch-image",name:"BatchImageGuide",',
+    '{path:"/usage-guide",alias:["/guide","/guides","/help","/docs","/usage-instructions","/custom/cc-switch-guide","/custom/cc-switch-codex"],name:"UsageGuide",component:()=>import("./usage-guide.js"),meta:{requiresAuth:!0,requiresAdmin:!1,title:"使用说明"}},{path:"/batch-image",name:"BatchImageGuide",',
+    'Register a first-party usage guide with stable legacy aliases.');
+  patch(outputDir, changes, 'assets/AppLayout.vue_vue_type_script_setup_true_lang-C4ysyc_b.js',
+    'U.push({path:"/keys",label:s("nav.apiKeys"),icon:G},',
+    'U.push({path:"/usage-guide",label:"使用说明",icon:q},{path:"/keys",label:s("nav.apiKeys"),icon:G},',
+    'Expose the first-party usage guide in the existing console navigation.');
+  patch(outputDir, changes, 'assets/AppLayout.vue_vue_type_script_setup_true_lang-C4ysyc_b.js',
+    'V.visibility==="user"&&V.id!==vr',
+    'V.visibility==="user"&&V.id!==vr&&V.id!=="cc-switch-guide"&&V.id!=="cc-switch-codex"',
+    'Replace the obsolete md:cc-switch-codex custom-menu entry with the built-in guide.');
+  patch(outputDir, changes, 'assets/StripePaymentView-BaTYfbsS.js',
+    'const a=Number(m.query.order_id),t=String(m.query.client_secret||""),o=String(m.query.method||""),p=typeof m.query.resume_token=="string"?m.query.resume_token:void 0;',
+    'const a=Number(m.query.order_id),o=String(m.query.method||""),p=typeof m.query.resume_token=="string"?m.query.resume_token:void 0,restored=ye(window.localStorage.getItem(fe),{resumeToken:p}),t=a&&restored?.orderId===a?restored.clientSecret:"";',
+    'Port v0.2.17 Stripe secret/order binding from the local recovery snapshot.');
+  for (const variable of ['M', '$']) {
+    patch(outputDir, changes, 'assets/PaymentView-Bu7KA8D-.js',
+      `client_secret:${variable}.client_secret,`, '',
+      'Keep Stripe client secrets out of payment navigation URLs.');
+  }
 
   const releaseDigest = createHash('sha256')
     .update(hash(fileURLToPath(import.meta.url)))
     .update(JSON.stringify(sourceManifest))
     .update(JSON.stringify(changes))
     .update(fs.readdirSync(path.join(root, 'runtime')).sort().map(file => hash(path.join(root, 'runtime', file))).join(''))
+    .update(canvasFiles.map(file => hash(path.join(root, 'canvas', file))).join(''))
     .digest('hex').slice(0, 12);
   const releasePrefix = `/integration/${releaseDigest}`;
   const integration = path.join(outputDir, 'integration');
@@ -133,11 +164,19 @@ export function assemble({ outputDir = path.resolve(root, '../../backend/interna
     fs.copyFileSync(path.join(outputDir, asset.path.slice(1)), target);
     publishedAssets.push({ file: releasePrefix + asset.path, sha256: hash(target) });
   }
+  for (const file of ['usage-guide.js', 'usage-guide.css']) {
+    const target = path.join(releaseDirectory, 'assets', file);
+    fs.copyFileSync(path.join(outputDir, 'assets', file), target);
+    publishedAssets.push({ file: `${releasePrefix}/assets/${file}`, sha256: hash(target) });
+  }
+  for (const file of canvasFiles) {
+    publishedAssets.push({ file: `/canvas/${file}`, sha256: hash(path.join(outputDir, 'canvas', file)) });
+  }
 
   const entries = {
     review: {
       script: releasePrefix + baseEntry.script,
-      styles: baseEntry.styles.map(file => releasePrefix + file).concat(`${releasePrefix}/console.css`),
+      styles: baseEntry.styles.map(file => releasePrefix + file).concat(`${releasePrefix}/console.css`, `${releasePrefix}/assets/usage-guide.css`),
     },
   };
   fs.writeFileSync(path.join(integration, 'entries.js'), `/** @brief Generated production application entry descriptors. */\nexport const entries = ${JSON.stringify(entries, null, 2)};\n`);

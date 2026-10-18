@@ -17,6 +17,7 @@ const mime = new Map([
   ['.css', 'text/css; charset=utf-8'],
   ['.html', 'text/html; charset=utf-8'],
   ['.js', 'text/javascript; charset=utf-8'],
+  ['.mjs', 'text/javascript; charset=utf-8'],
   ['.json', 'application/json; charset=utf-8'],
   ['.svg', 'image/svg+xml'],
   ['.png', 'image/png'],
@@ -57,7 +58,8 @@ const server = http.createServer(async (request, response) => {
     const relative = pathname === '/' ? 'index.html' : pathname.replace(/^\/+/, '');
     const file = path.resolve(output, relative);
     const inside = file === output || file.startsWith(`${output}${path.sep}`);
-    const target = inside && fs.existsSync(file) && fs.statSync(file).isFile() ? file : path.join(output, 'index.html');
+    const candidate = inside && fs.existsSync(file) && fs.statSync(file).isDirectory() ? path.join(file, 'index.html') : file;
+    const target = inside && fs.existsSync(candidate) && fs.statSync(candidate).isFile() ? candidate : path.join(output, 'index.html');
     response.writeHead(200, { 'content-type': mime.get(path.extname(target)) || 'application/octet-stream' });
     fs.createReadStream(target).pipe(response);
   } catch (error) {

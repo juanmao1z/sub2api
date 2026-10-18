@@ -150,3 +150,11 @@ html:is([data-frontend="review"], [data-frontend="console"]) .zhouz-ticket-admin
 html:is([data-frontend="review"], [data-frontend="console"]) .zhouz-ticket-admin-button:hover:not(:disabled) { background: #2384a7; }
 html:is([data-frontend="review"], [data-frontend="console"]) .zhouz-ticket-admin-button:disabled { cursor: wait; opacity: 0.6; }
 @media (max-width: 760px) { html:is([data-frontend="review"], [data-frontend="console"]) .zhouz-ticket-admin-grid, html:is([data-frontend="review"], [data-frontend="console"]) .zhouz-ticket-admin-controls { grid-template-columns: 1fr; } html:is([data-frontend="review"], [data-frontend="console"]) .zhouz-ticket-admin-heading { align-items: flex-start; flex-direction: column; } }
+
+/** @brief Keep the console header inside narrow screens while retaining primary navigation. */
+@media (max-width: 480px) {
+  html[data-frontend="review"] .signal-header .header-location { min-width: 0; flex-shrink: 1; }
+  html[data-frontend="review"] .signal-header .signal-breadcrumb { min-width: 0; overflow: hidden; }
+  html[data-frontend="review"] .signal-header .header-actions { flex-shrink: 0; }
+  html[data-frontend="review"] .signal-header :is(.console-search-trigger, .header-subscriptions) { display: none; }
+}

@@ -112,3 +112,26 @@ test('published assets contain no captured-site or review-only markers', () => {
     }
   }
 });
+
+test('guide aliases and owned canvas application are published with matching digests', () => {
+  const entry = fs.readFileSync(outputPath(review.script), 'utf8');
+  assert.ok(entry.includes('path:"/usage-guide"'));
+  assert.ok(entry.includes('"/custom/cc-switch-guide"'));
+  assert.ok(entry.includes('import("./usage-guide.js")'));
+  for (const file of ['/canvas/index.html', '/canvas/canvas.js', '/canvas/canvas-core.mjs', '/canvas/canvas.css', `${manifest.releasePrefix}/assets/usage-guide.js`]) {
+    const asset = manifest.publishedAssets.find(item => item.file === file);
+    assert.ok(asset, file);
+    assert.equal(sha256(outputPath(file)), asset.sha256, file);
+  }
+  const canvas = fs.readFileSync(outputPath('/canvas/index.html'), 'utf8');
+  assert.ok(canvas.includes('src="./canvas.js"'));
+  assert.ok(!canvas.includes('/bootstrap.js'));
+});
+
+test('Stripe payments bind secrets to the local order snapshot', () => {
+  const stripe = fs.readFileSync(outputPath(`${manifest.releasePrefix}/assets/StripePaymentView-BaTYfbsS.js`), 'utf8');
+  const payment = fs.readFileSync(outputPath(`${manifest.releasePrefix}/assets/PaymentView-Bu7KA8D-.js`), 'utf8');
+  assert.ok(stripe.includes('restored?.orderId===a?restored.clientSecret:""'));
+  assert.ok(!stripe.includes('m.query.client_secret'));
+  assert.doesNotMatch(payment, /client_secret:[M$]\.client_secret,/);
+});

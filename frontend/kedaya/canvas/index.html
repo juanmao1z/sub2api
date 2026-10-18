@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <title>Infinite Canvas</title>
+  <link rel="stylesheet" href="./canvas.css">
+  <script type="module" src="./canvas.js"></script>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand"><span class="mark" aria-hidden="true">✳</span><strong data-i18n="title">Infinite Canvas</strong><span id="save-state" class="muted" role="status" aria-live="polite"></span></div>
+      <div class="toolbar" aria-label="Canvas tools">
+        <button id="add-note" type="button" data-i18n="addNote">+ Note</button>
+        <button id="add-text" type="button" data-i18n="addText">+ Text</button>
+        <div class="segment" role="group" aria-label="Interaction mode"><button id="mode-select" type="button" aria-pressed="true" data-i18n="select">Select</button><button id="mode-pan" type="button" aria-pressed="false" data-i18n="pan">Pan</button></div>
+        <button id="delete" type="button" class="danger" disabled data-i18n="delete">Delete</button>
+        <button id="export" type="button" data-i18n="export">Export</button>
+        <button id="import" type="button" data-i18n="import">Import</button>
+        <input id="file" type="file" accept=".json,application/json" hidden>
+      </div>
+    </header>
+    <main class="layout">
+      <section class="canvas-shell" aria-label="Canvas workspace">
+        <div id="canvas" tabindex="0" aria-label="Canvas, arrow keys move selection; W A S D pan view"><div id="world"></div></div>
+        <div class="view-tools" role="group" aria-label="View controls">
+          <button type="button" data-shift="0,-80" aria-label="Pan up" title="Pan up">↑</button>
+          <div class="view-middle"><button type="button" data-shift="-80,0" aria-label="Pan left" title="Pan left">←</button><button id="home" type="button" aria-label="Center view" title="Center view">◎</button><button type="button" data-shift="80,0" aria-label="Pan right" title="Pan right">→</button></div>
+          <button type="button" data-shift="0,80" aria-label="Pan down" title="Pan down">↓</button>
+        </div>
+        <div class="zoom-tools" role="group" aria-label="Zoom controls"><button id="zoom-out" type="button" aria-label="Zoom out" title="Zoom out">−</button><output id="zoom-label">100%</output><button id="zoom-in" type="button" aria-label="Zoom in" title="Zoom in">+</button></div>
+      </section>
+      <aside class="sidebar">
+        <section class="panel" aria-labelledby="editor-heading"><h2 id="editor-heading" data-i18n="editor">Selection</h2><p id="selection-empty" class="muted" data-i18n="empty">Select a node to edit it.</p><div id="editor" hidden><label for="node-text" data-i18n="content">Content</label><textarea id="node-text" maxlength="4000" rows="6"></textarea><div class="nudges" role="group" aria-label="Move selection"><button type="button" data-nudge="0,-20" aria-label="Move node up">↑</button><button type="button" data-nudge="-20,0" aria-label="Move node left">←</button><button type="button" data-nudge="20,0" aria-label="Move node right">→</button><button type="button" data-nudge="0,20" aria-label="Move node down">↓</button></div></div></section>
+        <section class="panel" aria-labelledby="generate-heading"><h2 id="generate-heading" data-i18n="generate">Generate</h2><label for="model" data-i18n="model">Model</label><div class="model-row"><select id="model" aria-label="Model"><option value="" data-i18n="loading">Loading models...</option></select><button id="reload-models" type="button" aria-label="Reload models" title="Reload models">↻</button></div><label for="kind" data-i18n="kind">Output</label><select id="kind"><option value="text" data-i18n="text">Text</option><option value="image" data-i18n="image">Image</option></select><label for="prompt" data-i18n="prompt">Prompt</label><textarea id="prompt" maxlength="4000" rows="4" aria-label="Prompt"></textarea><div class="actions"><button id="generate" type="button" class="primary" data-i18n="generateButton">Generate</button><button id="cancel" type="button" hidden data-i18n="cancel">Cancel</button><button id="retry" type="button" hidden data-i18n="retry">Retry</button></div><p id="request-status" role="status" aria-live="polite" class="muted"></p></section>
+      </aside>
+    </main>
+  </div>
+</body>
+</html>
