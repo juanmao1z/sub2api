@@ -93,6 +93,12 @@ test('channel status card uses selected-window aggregate metrics and health', ()
     assert.doesNotMatch(source, /\(\(h=f\.value\).*?a\.row\.metrics\)/);
     assert.doesNotMatch(source, /\(\(h=f\.value\).*?a\.row\.health\)/);
     assert.ok(assembled.changes.some(change => change.file === 'assets/ChannelStatusView-DNoLdA9d.js'));
+    const statusStyles = fs.readFileSync(path.join(temporaryOutput, 'assets/ChannelStatusView-DV2xhrMN.css'), 'utf8');
+    assert.match(statusStyles, /\.health-operational\[data-v-160eba47\].*background:#16a34a/);
+    assert.match(statusStyles, /\.health-degraded\[data-v-160eba47\].*background:#eab308/);
+    assert.match(statusStyles, /\.health-failed\[data-v-160eba47\].*background:#dc2626/);
+    assert.match(statusStyles, /\.health-error\[data-v-160eba47\].*background:#dc2626/);
+    assert.match(statusStyles, /\.health-unknown\[data-v-160eba47\]\{background:#9ca3af\}/);
   } finally {
     fs.rmSync(temporaryOutput, { recursive: true, force: true });
   }
