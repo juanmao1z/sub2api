@@ -120,6 +120,18 @@ export function assemble({ outputDir = path.resolve(root, '../../backend/interna
     '.health-unknown[data-v-160eba47]{background:#9ca3af}',
     '.health-unknown[data-v-160eba47]{background:#9ca3af}.health-operational[data-v-160eba47],.health-score7[data-v-160eba47],.health-score8[data-v-160eba47],.health-score9[data-v-160eba47],.health-score10[data-v-160eba47]{background:#16a34a}.health-degraded[data-v-160eba47],.health-score4[data-v-160eba47],.health-score5[data-v-160eba47],.health-score6[data-v-160eba47]{background:#eab308}.health-failed[data-v-160eba47],.health-error[data-v-160eba47],.health-score0[data-v-160eba47],.health-score1[data-v-160eba47],.health-score2[data-v-160eba47],.health-score3[data-v-160eba47]{background:#dc2626}.health-operational[data-v-50760197],.health-score7[data-v-50760197],.health-score8[data-v-50760197],.health-score9[data-v-50760197],.health-score10[data-v-50760197]{background:#16a34a}.health-degraded[data-v-50760197],.health-score4[data-v-50760197],.health-score5[data-v-50760197],.health-score6[data-v-50760197]{background:#eab308}.health-failed[data-v-50760197],.health-error[data-v-50760197],.health-score0[data-v-50760197],.health-score1[data-v-50760197],.health-score2[data-v-50760197],.health-score3[data-v-50760197]{background:#dc2626}',
     'Match emitted channel health classes and keep status dots and matrix cells consistently green, yellow, red, or neutral.');
+  patch(outputDir, changes, 'assets/ChannelStatusView-DNoLdA9d.js',
+    'const C={healthy:{colorClass:"bg-emerald-500",heightPct:100},warning:{colorClass:"bg-amber-500",heightPct:65},critical:{colorClass:"bg-red-500",heightPct:35},unknown:{colorClass:"bg-gray-300 dark:bg-dark-600",heightPct:15}};',
+    'const C={healthy:{colorClass:"is-healthy",heightPct:100},warning:{colorClass:"is-warning",heightPct:65},critical:{colorClass:"is-critical",heightPct:35},unknown:{colorClass:"is-unknown",heightPct:15}};',
+    'Use stable semantic classes for the channel card timeline status colors.');
+  patch(outputDir, changes, 'assets/ChannelStatusView-DNoLdA9d.js',
+    'A=F==="unknown"?{...C.unknown}:{...C[F],colorClass:Pn(W)}',
+    'A=F==="unknown"?{...C.unknown}:{...C[F]}',
+    'Keep timeline colors tied to channel health instead of overriding them with availability thresholds.');
+  patch(outputDir, changes, 'assets/ChannelStatusView-DV2xhrMN.css',
+    '.v3-timeline-bars[data-v-fa54021f]{display:flex',
+    '.v3-soft-glass-bar.is-healthy[data-v-fa54021f]{background:#22c55e}.v3-soft-glass-bar.is-warning[data-v-fa54021f]{background:#eab308}.v3-soft-glass-bar.is-critical[data-v-fa54021f]{background:#ef4444}.v3-soft-glass-bar.is-unknown[data-v-fa54021f]{background:#6b7280}.v3-timeline-bars[data-v-fa54021f]{display:flex',
+    'Color card timeline bars by semantic health status: green, yellow, red, and neutral gray.');
   patch(outputDir, changes, 'assets/index-CHmaXGoD.js',
     '{path:"/batch-image",name:"BatchImageGuide",',
     '{path:"/usage-guide",alias:["/guide","/guides","/help","/docs","/usage-instructions","/custom/cc-switch-guide","/custom/cc-switch-codex"],name:"UsageGuide",component:()=>import("./usage-guide.js"),meta:{requiresAuth:!0,requiresAdmin:!1,title:"使用说明"}},{path:"/batch-image",name:"BatchImageGuide",',

@@ -99,6 +99,13 @@ test('channel status card uses selected-window aggregate metrics and health', ()
     assert.match(statusStyles, /\.health-failed\[data-v-160eba47\].*background:#dc2626/);
     assert.match(statusStyles, /\.health-error\[data-v-160eba47\].*background:#dc2626/);
     assert.match(statusStyles, /\.health-unknown\[data-v-160eba47\]\{background:#9ca3af\}/);
+    assert.ok(source.includes('const C={healthy:{colorClass:"is-healthy",heightPct:100},warning:{colorClass:"is-warning",heightPct:65},critical:{colorClass:"is-critical",heightPct:35},unknown:{colorClass:"is-unknown",heightPct:15}};'));
+    assert.ok(source.includes('A=F==="unknown"?{...C.unknown}:{...C[F]}'));
+    assert.doesNotMatch(source, /colorClass:Pn\(W\)/);
+    assert.match(statusStyles, /\.v3-soft-glass-bar\.is-healthy\[data-v-fa54021f\]\{background:#22c55e\}/);
+    assert.match(statusStyles, /\.v3-soft-glass-bar\.is-warning\[data-v-fa54021f\]\{background:#eab308\}/);
+    assert.match(statusStyles, /\.v3-soft-glass-bar\.is-critical\[data-v-fa54021f\]\{background:#ef4444\}/);
+    assert.match(statusStyles, /\.v3-soft-glass-bar\.is-unknown\[data-v-fa54021f\]\{background:#6b7280\}/);
   } finally {
     fs.rmSync(temporaryOutput, { recursive: true, force: true });
   }
