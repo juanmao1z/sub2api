@@ -89,6 +89,7 @@ tailwind.config.js
 - 新建 `src/main.ts`、`src/App.vue`、`src/router.ts`、`index.html` 和独立构建/类型配置。App 仅渲染路由与旧 Toast，并随路由、站点名称、语言更新标题；保留主题初始化、注入公开配置与 auth.checkAuth()。不引入整站公告、订阅或管理员设置 hook。
 - 新建精简 `src/stores/index.ts`、`src/api/index.ts`、`src/components/layout/index.ts`，只导出公开页使用的 app/auth、auth/passkey API 与 AuthLayout。
 - 独立 i18n 仅静态合并两种语言的 common、landing、dashboard，保留 `sub2api_locale` 和浏览器语言默认选择；dashboard 内含 profile/TOTP 翻译。语言变化由 App 响应式更新标题，无整站 router/adminSettings 动态 import。
+- `i18n-precompile.mjs` 在构建时读取可信的本地语言模块并使用现有 `@intlify/message-compiler` 预编译消息函数；Vite alias 选择 vue-i18n runtime 构建，关闭浏览器动态消息编译。语言源码保持原始摘要，兼容禁止 `unsafe-eval` 的生产 CSP；夹具测试必须使用生产 CSP 和正确 nonce 替换。
 - `src/utils/redirect.ts` 提取基线 `frontend/src/views/auth/OAuthCallbackView.vue:242-249` 的 `sanitizeRedirectPath`，补充非字符串、控制字符和反斜杠拒绝。LoginView 的密码、Passkey、2FA 三条成功路径统一调用该函数，默认仍到 `/home`，有效站内 redirect 保留 query/hash。
 - LoginView 的密码显示按钮补充本地化可读名称及 pressed 状态；TotpLoginModal 补充 dialog 角色、标题/说明关联与每位验证码输入名称，不改变样式和业务逻辑。
 - 路由仅三个路径渲染旧页面；`LegalDocument`（`/legal/:documentId`）及 Register、ForgotPassword、Dashboard、AdminDashboard 是可 resolve 的桥接名称，其余路径同样桥接。桥接使用 `window.location.assign(to.fullPath)` 交还当前前端；最终宿主必须按路径选择对应入口。已登录用户访问 `/login` 按角色跳仪表盘，`backend_mode_enabled` 非管理员例外保留；后台模式的匿名首页访问也按旧规则转登录页。
@@ -98,4 +99,4 @@ tailwind.config.js
 
 ## 验证边界
 
-本地 Vite 构建和严格 `vue-tsc` 检查可独立运行。宿主前端集成检查校验 55 个未适配源码的历史摘要、两套入口和资源路径。浏览器功能验收使用本地认证与统计接口，覆盖密码错误、TOTP、登录重定向、主题持久化、控制台 CSS 隔离、前进后退和 375px 页面；不以该验收代替真实 WebAuthn、第三方 OAuth 或验证码供应商联调。主题沿用旧 `theme` storage key、`html.dark`、`data-theme`、`sub2api-theme-change` 事件。
+本地 Vite 构建和严格 `vue-tsc` 检查可独立运行。宿主前端集成检查校验 55 个未适配源码的历史摘要、两套入口和资源路径，并拒绝公开页脚本中的动态求值。浏览器功能验收使用本地认证与统计接口及生产默认 CSP，覆盖密码错误、TOTP、登录重定向、主题持久化、控制台 CSS 隔离、前进后退和 375px 页面；不以该验收代替真实 WebAuthn、第三方 OAuth 或验证码供应商联调。主题沿用旧 `theme` storage key、`html.dark`、`data-theme`、`sub2api-theme-change` 事件。

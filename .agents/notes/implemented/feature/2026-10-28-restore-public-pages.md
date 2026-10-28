@@ -16,6 +16,8 @@ Status: implemented
 
 公开页保留旧密码、TOTP、Passkey、OAuth、验证码、协议与站点设置分支。默认登录成功到 /home，有有效站内 redirect 时保留目标；非字符串、外站、协议相对地址、控制字符和反斜杠不作为跳转目标。首页保留 home_content > compact_home_enabled > 统计首页的原优先级，不修改生产设置。独立入口避免引入整站公告和管理员初始化，精简 barrel 与 i18n 只承接公开页依赖。
 
+公开页国际化消息在 Vite 构建阶段使用已有 @intlify/message-compiler 预编译为函数，运行时使用 vue-i18n runtime 构建并关闭动态消息编译。生产 CSP 禁止 unsafe-eval，直接打包默认消息编译器会在首次翻译时触发 new Function 并导致白屏；本地预览必须携带同样禁止 unsafe-eval 的 CSP，覆盖公开页与认证边界。保留历史语言源码和摘要，不放宽生产 CSP。
+
 ## Related decisions
 
 检索活跃笔记没有已有公开页恢复决定。[画布与指南](./2026-10-19-canvas-guides-v0217.md)、[渠道矩阵颜色](../bug-fix/2026-10-19-channel-status-colors.md) 和 [时间条颜色](../bug-fix/2026-10-19-channel-card-timeline-colors.md) 继续持有控制台功能，不被本次修改替代。[v0.2.19 发布适配](../process/2026-10-28-v0219-arm64-release.md) 继续持有版本、后端和发布约束；本篇部分取代其公开页沿用固定基座的范围。来源比对也核对 frontend/docs/kedaya-fusion-scope.md 与历史融合计划中保留公开页的约定。
@@ -26,12 +28,14 @@ Status: implemented
 
 直接复用旧编译快照可以减少维护源码，但历史归档只包含原生源码与 Kedaya 编译资源，没有原定制首页和登录页的可用编译快照，因此保留必要源码与独立构建配置。首次引入 Kedaya 之前的 9 月版本也有旧 UI，但旧公开页后来一直保留并更新过主题；整体替换前的 10 月版本与既有保留约定一致，因此采用最后保留的页面版本。
 
+打开国际化 JIT 标志可以让 AST 解释器在严格 CSP 下运行，改动较少，但文案是构建时已知的静态资源，因此选择预编译，移除浏览器消息编译器并让文案语法错误在构建时报出。放宽 unsafe-eval 能立即绕过限制，但会削弱既有 CSP，因此不采用。
+
 ## Testing
 
-- 独立 Vite 构建与严格 vue-tsc 检查通过；资源清单验证 55 个未适配源码摘要、入口、懒加载、CSS/字体路径、原控制台补丁、画布和渠道颜色。前端集成、导航与画布测试共 21/21 通过。
+- 独立 Vite 构建与严格 vue-tsc 检查通过；资源清单验证 55 个未适配源码摘要、入口、懒加载、CSS/字体路径、原控制台补丁、画布和渠道颜色。前端集成、导航与画布测试共 22/22 通过，公开页产物检查拒绝 new Function/eval。
 - `go test -count=1 -tags='unit embed' ./internal/web` 通过，验证嵌入前端处理。
 - 本地浏览器使用线上公开设置及临时认证/统计接口，覆盖真实页面代码：旧首页统计、社群弹窗与 Escape、主题持久化、密码显示、密码错误不建立会话、TOTP 完成前无令牌、成功后跳转指定控制台、控制台不加载 native CSS、query/fragment 保留、浏览器后退、找回密码桥接、根地址别名。
-- 普通密码登录及拒绝外站 redirect 的浏览器检查通过。1440px 桌面、375px 手机与 812px 横屏无横向溢出；明暗主题截图已保存，测试启用 reduced-motion。完整流程没有未捕获运行时错误，排除有意测试的 401 后没有应用 console 错误。
+- 普通密码登录及拒绝外站 redirect 的浏览器检查通过。1440px 桌面、375px 手机与 812px 横屏无横向溢出；明暗主题截图已保存，测试启用 reduced-motion。完整流程在生产默认 CSP（禁止 unsafe-eval，并替换正确 nonce）下重跑通过，没有未捕获运行时错误，排除有意测试的 401 后没有应用 console 错误。
 - 浏览器不提交生产登录、OAuth、真实支付或模型请求。第三方 OAuth/验证码 SDK 与真实 WebAuthn 的供应商联调未执行；对应旧代码分支完整保留。
 
 ## Consequences

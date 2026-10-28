@@ -172,3 +172,12 @@ test('Stripe payments bind secrets to the local order snapshot', () => {
   assert.ok(!stripe.includes('m.query.client_secret'));
   assert.doesNotMatch(payment, /client_secret:[M$]\.client_secret,/);
 });
+
+test('public page scripts do not require CSP unsafe-eval', () => {
+  const scripts = manifest.publishedAssets.filter(asset => asset.file.includes('/native/') && asset.file.endsWith('.js'));
+  assert.ok(scripts.length > 0);
+  for (const asset of scripts) {
+    const source = fs.readFileSync(outputPath(asset.file), 'utf8');
+    assert.doesNotMatch(source, /\bnew\s+Function\s*\(|\beval\s*\(/, asset.file);
+  }
+});
