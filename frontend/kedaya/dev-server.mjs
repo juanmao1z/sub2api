@@ -4,6 +4,7 @@ import http from 'node:http';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { assemble } from './assemble.mjs';
+import { buildPublicPages } from '../build.mjs';
 
 const root = path.dirname(fileURLToPath(import.meta.url));
 const output = path.resolve(root, '../../backend/internal/web/dist');
@@ -11,6 +12,7 @@ const port = Number(process.env.VITE_DEV_PORT || process.env.PORT || 3000);
 const host = process.env.VITE_DEV_HOST || '0.0.0.0';
 const backendUrl = (process.env.VITE_DEV_PROXY_TARGET || 'http://localhost:8080').replace(/\/$/, '');
 
+buildPublicPages();
 assemble({ outputDir: output });
 
 const mime = new Map([

@@ -5,12 +5,12 @@
   "type": "module",
   "scripts": {
     "dev": "node kedaya/dev-server.mjs",
-    "build": "node kedaya/assemble.mjs",
+    "build": "node build.mjs",
     "sync:base": "node kedaya/sync-base.mjs",
     "preview": "node kedaya/dev-server.mjs",
-    "lint": "node --test kedaya/verify.mjs",
-    "lint:check": "node --test kedaya/verify.mjs",
-    "typecheck": "node --test kedaya/verify.mjs"
+    "lint": "node --test kedaya/verify.mjs kedaya/navigation.test.mjs",
+    "lint:check": "node --test kedaya/verify.mjs kedaya/navigation.test.mjs",
+    "typecheck": "vue-tsc --noEmit -p public-pages/tsconfig.json && node --test kedaya/verify.mjs kedaya/navigation.test.mjs"
   },
   "dependencies": {
     "@airwallex/components-sdk": "^1.30.2",

@@ -1,4 +1,4 @@
-/** @file @brief Load the production Sub2API review UI entry. */
+/** @file @brief Load the restored public pages or the production console entry. */
 import { runtimeForPath, installNavigation } from './navigation.js';
 import { installTicketAdminTools } from './ticket-admin.js';
 import { entries } from './entries.js';
@@ -42,7 +42,7 @@ try {
     appMounted,
   ]);
   document.getElementById('startup-loading')?.remove();
-  installTicketAdminTools();
+  if (kind === 'review') installTicketAdminTools();
 } catch (error) {
   stopWatchingApp?.();
   document.getElementById('startup-loading')?.remove();

@@ -1,10 +1,10 @@
 # Kedaya Review 基座开发手册
 
-本手册是以后 agent 开发 `sub2api-custom` 前端时的执行规范。当前仓库的活动前端基座是 `kedaya-review/public` 的编译版本，生产运行时通过 Sub2API 适配层接入真实后端接口。
+本手册是以后 agent 开发 `sub2api-custom` 前端时的执行规范。控制台使用 `kedaya-review/public` 的固定编译基座；`/`、`/home`、`/login` 使用恢复的原生公开页源码，均通过 Sub2API 适配层接入真实后端。
 
 ## 1. 架构边界
 
-- `frontend/kedaya/base/`：唯一的编译 UI 基座，来源为 `kedaya-review/public/`。
+- `frontend/kedaya/base/`：控制台的固定编译 UI 基座，来源为 `kedaya-review/public/`。
 - `frontend/kedaya/base-manifest.json`：基座资源哈希清单，禁止手工修改。
 - `frontend/kedaya/assemble.mjs`：从基座生成嵌入式生产前端，并应用 Sub2API 合同适配。
 - `frontend/kedaya/runtime/`：生产启动、路由和资源加载运行时。
@@ -12,6 +12,8 @@
 - `frontend/kedaya/verify.mjs`：构建后的资源、路由、适配和 review-only 标记验证。
 - `backend/internal/web/dist/`：生成目录，不提交到 Git，由 Go embed 打进后端镜像。
 - `archives/`：原始 `sub2api-custom` 代码归档，用于回滚和取回旧实现。
+- `frontend/public-pages/`：切换前的首页与登录页，源码来源、适配记录见该目录 README 与 sources.json。
+- `frontend/build.mjs`：先运行公开页 Vite 构建，再调用组装器；公开页输出 `frontend/public-pages/dist/` 不提交。
 
 `kedaya-review/server.mjs`、`fixtures.mjs`、`/review/session`、演示账号、合成数据、截图和证据文件不属于生产前端，禁止复制到 `sub2api-custom` 的运行时。
 
@@ -59,7 +61,7 @@ corepack pnpm run lint:check
 git -C .. diff --check
 ```
 
-`build` 必须输出 196 个编译资源和 8 个 Sub2API 生产适配补丁。`typecheck` 和 `lint:check` 当前运行 `kedaya/verify.mjs`，不再对已归档的旧 Vue 源码执行 Vite/Vue 类型检查。
+`build` 先编译公开页，再输出固定控制台资源及现有生产补丁，生成 `native` 与 `review` 两个入口。`typecheck` 对公开页运行 Vue 类型检查，再验证组装资源和导航契约；`lint:check` 运行同一组装与导航验证。固定控制台的原始资源继续按 `base-manifest.json` 校验，不以源码公开页替换其余控制台页面。
 
 本地开发预览：
 
@@ -68,15 +70,15 @@ cd /home/zz/workspace/sub2api_dev/sub2api-custom/frontend
 VITE_DEV_PROXY_TARGET=http://127.0.0.1:8080 corepack pnpm run dev
 ```
 
-默认地址为 `http://127.0.0.1:3000`。开发服务器会先组装基座，并将 `/api`、`/v1`、`/setup` 转发到 `VITE_DEV_PROXY_TARGET`。
+默认地址为 `http://127.0.0.1:3000`。开发服务器先编译公开页并组装基座，再将 `/api`、`/v1`、`/setup` 转发到 `VITE_DEV_PROXY_TARGET`。两套入口间跳转会完整加载文档以隔离全局样式；同入口内保留 Vue Router 导航。
 
 ## 4. 生产适配规则
 
-允许修改的生产适配必须集中在 `frontend/kedaya/assemble.mjs`，并满足：
+固定控制台编译资源的生产补丁集中在 `frontend/kedaya/assemble.mjs`；公开页修改位于 `frontend/public-pages/`，入口选择与跨入口导航位于 `frontend/kedaya/runtime/`。所有修改必须满足：
 
 - 认证、权限、feature flag、支付、账单、路由和 API 路径保持 Sub2API 现有合同。
 - 不将 captured-site 域名、默认支付网关、演示凭据或 mock API 带入输出。
-- 所有资源必须通过 `base-manifest.json` 校验。
+- 固定资源必须通过 `base-manifest.json` 校验，公开页构建资源包含在发布清单中并校验摘要。
 - 编译资源文件名变化时，先更新同步基座，再重新确认 `assemble.mjs` 的补丁锚点；禁止用模糊字符串替换。
 - 不直接修改 `backend/internal/web/dist/`，它是生成产物。
 - 不删除 PostgreSQL、Redis、leaderboard 或其他后端业务代码来解决前端构建问题。
@@ -145,7 +147,7 @@ git -c http.proxy="$PROXY" -c https.proxy="$PROXY" ls-remote --heads origin main
 一个前端基座变更只有同时满足以下条件才算完成：
 
 - 基座资源来自 `kedaya-review/public` 且 manifest 哈希全部通过。
-- 生产构建成功，输出只使用 review 应用入口。
+- 生产构建成功，`/`、`/home`、`/login` 使用 native 公开入口，其余路由使用 review 入口；跨入口导航、前进后退与登录重定向正常。
 - `corepack pnpm run typecheck` 通过。
 - `git diff --check` 通过。
 - 没有 `LOCAL_DEMO`、`review.local`、`/review/session`、`demoUser` 或 captured-site 生产标记。

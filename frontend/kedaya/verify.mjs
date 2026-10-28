@@ -35,16 +35,40 @@ test('base is sourced from the compiled review asset graph', () => {
   }
 });
 
-test('production output contains only the review application entry', () => {
+test('restored public page layout and styles retain their verified historical source', () => {
+  const directory = path.resolve(root, '../public-pages');
+  const provenance = JSON.parse(fs.readFileSync(path.join(directory, 'sources.json'), 'utf8'));
+  assert.equal(provenance.commit, manifest.publicPages.sourceCommit);
+  const adapted = new Set(['src/views/auth/LoginView.vue', 'src/components/auth/TotpLoginModal.vue']);
+  for (const source of provenance.files) {
+    if (!adapted.has(source.file)) assert.equal(sha256(path.join(directory, source.file)), source.sha256, source.file);
+  }
+  for (const file of ['src/views/HomeView.vue', 'src/components/layout/AuthLayout.vue', 'src/styles/public-pages.css', 'src/style.css']) {
+    assert.ok(provenance.files.some(source => source.file === file), file);
+  }
+});
+
+test('production output isolates the original public pages from the review console', () => {
   assert.equal(manifest.source, 'kedaya-review/public');
-  assert.deepEqual(Object.keys(manifest.entries), ['review']);
-  assert.equal(runtimeForPath('/'), 'review');
-  for (const route of ['/home', '/login', '/dashboard', '/keys', '/payment/result', '/admin', '/admin/settings', '/privacy', '/terms']) {
+  assert.deepEqual(Object.keys(manifest.entries).sort(), ['native', 'review']);
+  assert.equal(manifest.publicPages.sourceCommit, '81025b8e210e3ddb33a8e78a8aa02aba0c3abc80');
+  for (const route of ['/', '/home', '/login']) assert.equal(runtimeForPath(route), 'native', route);
+  for (const route of ['/dashboard', '/keys', '/payment/result', '/admin', '/admin/settings', '/privacy', '/terms']) {
     assert.equal(runtimeForPath(route), 'review', route);
   }
   assert.match(manifest.releasePrefix, /^\/integration\/[a-f0-9]{12}$/);
   assert.ok(review.script.startsWith(`${manifest.releasePrefix}/assets/`));
   assert.ok(review.styles.every(style => style.startsWith(`${manifest.releasePrefix}/`)));
+  assert.ok(manifest.entries.native.script.startsWith(`${manifest.releasePrefix}/native/`));
+  assert.ok(manifest.entries.native.styles.every(style => style.startsWith(`${manifest.releasePrefix}/native/`)));
+  for (const entry of Object.values(manifest.entries)) {
+    for (const file of [entry.script, ...entry.styles]) {
+      assert.ok(fs.existsSync(outputPath(file)), file);
+      const asset = manifest.publishedAssets.find(asset => asset.file === file);
+      assert.ok(asset, file);
+      assert.equal(sha256(outputPath(file)), asset.sha256, file);
+    }
+  }
 });
 
 test('generated shell is valid and has no review-only session bootstrap', () => {

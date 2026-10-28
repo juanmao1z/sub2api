@@ -170,3 +170,6 @@ issues/
 !docs/kedaya-review-agent-development.md
 !archives/
 !archives/*.tar.gz
+
+# Restored public pages are compiled from source for every release.
+/frontend/public-pages/dist/

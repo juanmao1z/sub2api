@@ -64,6 +64,11 @@ export function assemble({ outputDir = path.resolve(root, '../../backend/interna
   outputDir = path.resolve(outputDir);
   const sourceManifest = JSON.parse(fs.readFileSync(sourceManifestPath, 'utf8'));
   const baseEntry = readEntry(baseDir);
+  const nativeDir = path.join(frontendRoot, 'public-pages/dist');
+  if (!fs.existsSync(path.join(nativeDir, 'index.html'))) throw new Error('Build the public pages first: node frontend/build.mjs');
+  const nativeEntry = readEntry(nativeDir);
+  const nativeFiles = fs.readdirSync(nativeDir, { recursive: true }).filter(file => fs.statSync(path.join(nativeDir, file)).isFile()).sort();
+  const nativeAssets = nativeFiles.map(file => ({ file: file.split(path.sep).join('/'), sha256: hash(path.join(nativeDir, file)) }));
   const compiledAssets = sourceManifest.assets.filter(item => item.path.startsWith('/assets/') || item.path.startsWith('/canvas/'));
   const copied = new Map();
   const changes = [];
@@ -160,6 +165,7 @@ export function assemble({ outputDir = path.resolve(root, '../../backend/interna
     .update(JSON.stringify(changes))
     .update(fs.readdirSync(path.join(root, 'runtime')).sort().map(file => hash(path.join(root, 'runtime', file))).join(''))
     .update(canvasFiles.map(file => hash(path.join(root, 'canvas', file))).join(''))
+    .update(JSON.stringify(nativeAssets))
     .digest('hex').slice(0, 12);
   const releasePrefix = `/integration/${releaseDigest}`;
   const integration = path.join(outputDir, 'integration');
@@ -174,6 +180,12 @@ export function assemble({ outputDir = path.resolve(root, '../../backend/interna
   fs.writeFileSync(entryFile, entryCode, 'utf8');
 
   const publishedAssets = [];
+  // Guide modules are published under assets/ beside their console imports.
+  for (const file of fs.readdirSync(path.join(root, 'runtime')).filter(file => !file.startsWith('usage-guide.')).sort()) {
+    publishedAssets.push({ file: `${releasePrefix}/${file}`, sha256: hash(path.join(releaseDirectory, file)) });
+  }
+  copyTree(nativeDir, path.join(releaseDirectory, 'native'), copied);
+  for (const asset of nativeAssets) publishedAssets.push({ file: `${releasePrefix}/native/${asset.file}`, sha256: asset.sha256 });
   for (const asset of compiledAssets) {
     const target = path.join(releaseDirectory, asset.path.slice(1));
     fs.mkdirSync(path.dirname(target), { recursive: true });
@@ -194,9 +206,14 @@ export function assemble({ outputDir = path.resolve(root, '../../backend/interna
       script: releasePrefix + baseEntry.script,
       styles: baseEntry.styles.map(file => releasePrefix + file).concat(`${releasePrefix}/console.css`, `${releasePrefix}/assets/usage-guide.css`),
     },
+    native: {
+      script: `${releasePrefix}/native/${nativeEntry.script.replace(/^\.?\//, '')}`,
+      styles: nativeEntry.styles.map(file => `${releasePrefix}/native/${file.replace(/^\.?\//, '')}`),
+    },
   };
   fs.writeFileSync(path.join(integration, 'entries.js'), `/** @brief Generated production application entry descriptors. */\nexport const entries = ${JSON.stringify(entries, null, 2)};\n`);
   fs.copyFileSync(path.join(integration, 'entries.js'), path.join(releaseDirectory, 'entries.js'));
+  publishedAssets.push({ file: `${releasePrefix}/entries.js`, sha256: hash(path.join(releaseDirectory, 'entries.js')) });
 
   fs.writeFileSync(path.join(outputDir, 'index.html'), `<!doctype html>
 <html lang="zh-CN">
@@ -261,6 +278,7 @@ export function assemble({ outputDir = path.resolve(root, '../../backend/interna
   const manifest = {
     builtAt: new Date().toISOString(),
     source: 'kedaya-review/public',
+    publicPages: { sourceCommit: '81025b8e210e3ddb33a8e78a8aa02aba0c3abc80', routes: ['/', '/home', '/login'] },
     releasePrefix,
     entries,
     homeAssets: ['logo.png', 'logo.svg'].filter(file => fs.existsSync(path.join(outputDir, file))).map(file => ({ file: '/' + file, sha256: hash(path.join(outputDir, file)) })),
