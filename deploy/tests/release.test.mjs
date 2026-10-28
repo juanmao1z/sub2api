@@ -7,6 +7,10 @@ import test from 'node:test'
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..')
 const workspace = JSON.parse(readFileSync(join(repoRoot, '../workspace.json'), 'utf8'))
+const releaseVersion = workspace.versionVerification.projectVersion
+const sourceVersion = workspace.versionVerification.verifiedSourceVersionFile
+const releaseTag = workspace.versionVerification.latestVerifiedTag
+const releaseName = `${releaseVersion}-arm64-test`
 const mock = `#!/usr/bin/env node
 const fs = require('fs');
 const cp = require('child_process');
@@ -46,7 +50,7 @@ if (tool === 'ssh') {
 }
 if (tool === 'docker') {
   const metadata = {Id:'sha256:test-image',Os:'linux',Architecture:state.imageArch || 'arm64',Config:{Labels:{
-    'org.opencontainers.image.version':state.imageVersion || '0.2.15',
+    'org.opencontainers.image.version':state.imageVersion || process.env.MOCK_VERSION,
     'org.opencontainers.image.revision':state.revision
   }}};
   if (args[0] === 'version') { console.log('linux/arm64'); process.exit(0); }
@@ -102,13 +106,13 @@ function fixture(t, overrides = {}) {
   git('init', '-b', 'main')
   git('config', 'user.email', 'test@example.invalid')
   git('config', 'user.name', 'Release Test')
-  writeFileSync(join(repo, 'backend/cmd/server/VERSION'), '0.2.14\n')
+  writeFileSync(join(repo, 'backend/cmd/server/VERSION'), `${sourceVersion}\n`)
   writeFileSync(join(repo, '.gitignore'), '/deploy-artifacts/\n')
   git('add', '.')
   git('commit', '-m', 'official source')
-  git('tag', 'v0.2.15')
+  git('tag', releaseTag)
   const officialCommit = git('rev-parse', 'HEAD')
-  writeFileSync(join(repo, 'backend/cmd/server/VERSION'), '0.2.15\n')
+  writeFileSync(join(repo, 'backend/cmd/server/VERSION'), `${releaseVersion}\n`)
   git('add', '.')
   git('commit', '-m', 'custom release version')
   const revision = git('rev-parse', 'HEAD')
@@ -124,8 +128,8 @@ function fixture(t, overrides = {}) {
   const log = join(root, 'calls.log')
   writeFileSync(statePath, JSON.stringify({ revision, ...overrides }))
   writeFileSync(log, '')
-  const env = { ...process.env, PATH: `${bin}:${process.env.PATH}`, MOCK_STATE: statePath, MOCK_ROOT: root, MOCK_LOG: log, RETRY_ATTEMPTS: '1' }
-  const run = (...args) => spawnSync('bash', [join(repo, 'tools/deploy-arm64.sh'), '--tag', 'sub2api-custom:test', '--release', '0.2.15-arm64-test', ...args], { env, encoding: 'utf8' })
+  const env = { ...process.env, PATH: `${bin}:${process.env.PATH}`, MOCK_STATE: statePath, MOCK_ROOT: root, MOCK_LOG: log, MOCK_VERSION: releaseVersion, RETRY_ATTEMPTS: '1' }
+  const run = (...args) => spawnSync('bash', [join(repo, 'tools/deploy-arm64.sh'), '--tag', 'sub2api-custom:test', '--release', releaseName, ...args], { env, encoding: 'utf8' })
   const calls = () => readFileSync(log, 'utf8').trim().split('\n').filter(Boolean).map(line => JSON.parse(line))
   const state = () => JSON.parse(readFileSync(statePath))
   return { root, repo, deploy, config, run, calls, state, git, env }
@@ -143,7 +147,7 @@ test('plan has no Docker, SSH or upload side effects', t => {
 test('official tag VERSION lag is accepted only with verified release evidence', t => {
   const f = fixture(t)
   succeeds(f.run())
-  f.config.versionVerification.verifiedSourceVersionFile = '0.2.15'
+  f.config.versionVerification.verifiedSourceVersionFile = '0.0.0-wrong'
   writeFileSync(join(f.root, 'workspace.json'), JSON.stringify(f.config))
   fails(f.run(), /official source VERSION/)
   assert.deepEqual(f.calls(), [])
@@ -156,7 +160,7 @@ test('dirty sources are rejected before remote writes', t => {
   assert.deepEqual(f.calls(), [])
 })
 
-for (const [name, override] of [['architecture', { imageArch: 'amd64' }], ['version', { imageVersion: '0.2.14' }], ['revision', { revision: 'stale' }]]) {
+for (const [name, override] of [['architecture', { imageArch: 'amd64' }], ['version', { imageVersion: '0.0.0-stale' }], ['revision', { revision: 'stale' }]]) {
   test(`stale image ${name} is rejected before SSH`, t => {
     const f = fixture(t, override)
     fails(f.run('--upload-only'), /does not match/)
@@ -189,7 +193,7 @@ test('apply changes only the application through a dedicated override', t => {
   const f = fixture(t)
   succeeds(f.run('--apply'))
   const override = JSON.parse(readFileSync(join(f.deploy, f.config.production.releaseComposeFile)))
-  assert.deepEqual(override, { services: { sub2api: { image: 'sub2api-custom:0.2.15-arm64-test' } } })
+  assert.deepEqual(override, { services: { sub2api: { image: `sub2api-custom:${releaseName}` } } })
   for (const file of f.config.production.composeFiles) assert.equal(readFileSync(join(f.deploy, file), 'utf8'), 'services: {}\n')
   const up = f.calls().filter(call => call.tool === 'docker' && call.args.includes('up'))
   assert.equal(up.length, 1)

@@ -13,7 +13,15 @@ bash tools/upgrade-arm64.sh --merge
 
 Resolve conflicts deliberately. Preserve local custom behavior and intentional deletions. Confirm `backend/cmd/server/VERSION` matches `versionVerification.projectVersion` in `workspace.json`, run relevant tests, and commit the result. The script never guesses through semantic conflicts.
 
-The default source is the verified release tag, not moving `upstream/main`. Its peeled commit and original VERSION must match `workspace.json`. Official `v0.2.15` points to `f2669c8cf62555cd92389b3f55920e9e6e7c6ff2`, but its VERSION file still says `0.2.14`. The workspace records that original value in `verifiedSourceVersionFile` and the custom release value `0.2.15` in `projectVersion`. The build passes VERSION explicitly; this mismatch is not treated as unverified source.
+The default source is the verified release tag, not moving `upstream/main`. Its peeled commit and original VERSION must match `workspace.json`. Official `v0.2.19` points to `dece26153621959ccd7635814f4b2d08304e681a`, but its VERSION file still says `0.2.18`. The workspace records that original value in `verifiedSourceVersionFile` and the custom release value `0.2.19` in `projectVersion`. Both build entry points use Go 1.27.3; production builds pass VERSION explicitly.
+
+### v0.2.17 to v0.2.19 compatibility
+
+Startup applies migrations 246 (enable image generation for Gemini and Antigravity groups), 247 (scoped administrator API keys), and 248 (group image-count billing). The custom support-ticket migration 243 is retained. Take a restorable PostgreSQL backup before a production switch: automatic rollback changes the application image and Compose override, and does not undo migrations or restore database contents. Migration 246 changes existing Gemini and Antigravity groups to allow image generation, including soft-deleted groups, so review those groups after upgrading; composite groups are outside this migration.
+
+The pinned console, canvas, usage guide and channel-health colors remain in use. New official administrator-key management, Grok catalog diagnostics and image-count billing controls are not added to this fixed console. The backend includes these APIs; omitted `image_count_billing` updates preserve the value for supported image-generation groups, and the new setting defaults to false. Use the API contract in `docs/admin-api-keys.md` when managing scoped keys; this upgrade does not enable image-count billing automatically.
+
+No new mandatory production environment variable is introduced. `gateway.max_same_account_retries_gemini` defaults to 4 (0–10). Removed Gemini defaults require explicit model mappings or allowlists if an account still needs those model names. Existing database, Redis, JWT and encryption configuration remains necessary. Image staging (`upload`) does not run database migrations; only starting the new application does.
 
 ## 2. Create a release manifest
 

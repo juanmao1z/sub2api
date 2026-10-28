@@ -1,0 +1,10 @@
+{
+  "name": "sub2api-project-checks",
+  "private": true,
+  "scripts": {
+    "verify-notes": "npm run verify-note-tree && npm run verify-note-format && npm run verify-note-archive",
+    "verify-note-tree": "npm exec --yes --package=tsx@4.23.15 -- tsx ../.agents/skills/write-notes-like-deepseek/scripts/verify-agent-note-tree.ts",
+    "verify-note-format": "npm exec --yes --package=tsx@4.23.15 -- tsx ../.agents/skills/write-notes-like-deepseek/scripts/verify-agent-note-format.ts",
+    "verify-note-archive": "npm exec --yes --package=tsx@4.23.15 -- tsx ../.agents/skills/write-notes-like-deepseek/scripts/verify-archived-agent-notes.ts"
+  }
+}
