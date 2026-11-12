@@ -234,15 +234,6 @@
           <a :href="leaderboardUrl" class="home-quick-link">
             {{ t('home.navigation.leaderboard') }}
           </a>
-          <button
-            type="button"
-            class="home-quick-link"
-            aria-haspopup="dialog"
-            :aria-expanded="communityOpen"
-            @click="communityOpen = true"
-          >
-            {{ t('home.navigation.community') }}
-          </button>
         </nav>
 
         <section
@@ -279,44 +270,6 @@
     </main>
   </div>
 
-  <Teleport to="body">
-    <Transition name="community-modal">
-      <div
-        v-if="communityOpen"
-        class="fixed inset-0 z-[150] flex items-center justify-center bg-[#111315]/70 p-4 backdrop-blur-sm"
-        @click.self="closeCommunity"
-      >
-        <section
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="community-dialog-title"
-          class="flex max-h-[calc(100vh-2rem)] w-full max-w-md flex-col overflow-hidden rounded-none border border-[#dfe3e5] bg-white shadow-2xl dark:border-[#303538] dark:bg-[#191c1f]"
-        >
-          <header class="flex h-12 items-center justify-between border-b border-[#dfe3e5] px-4 dark:border-[#303538]">
-            <h2 id="community-dialog-title" class="text-sm font-semibold text-[#192322] dark:text-[#edf2ef]">
-              {{ t('home.community.title') }}
-            </h2>
-            <button
-              type="button"
-              class="home-icon-button"
-              :title="t('home.community.close')"
-              :aria-label="t('home.community.close')"
-              @click="closeCommunity"
-            >
-              <Icon name="x" size="md" />
-            </button>
-          </header>
-          <div class="min-h-0 flex-1 overflow-auto p-3">
-            <img
-              src="/community-placeholder.jpg?v=20260823-community-qr-2"
-              :alt="t('home.community.imageAlt')"
-              class="mx-auto h-auto max-h-[calc(100vh-6.5rem)] w-full rounded-none object-contain"
-            />
-          </div>
-        </section>
-      </div>
-    </Transition>
-  </Teleport>
 </template>
 
 <script setup lang="ts">
@@ -379,7 +332,6 @@ const redeemUrl = 'https://pay.ldxp.cn/shop/1WGCPCG0'
 const leaderboardUrl = 'https://api.zhouz.online/custom/usage-leaderboard'
 
 const mobileMenuOpen = ref(false)
-const communityOpen = ref(false)
 const now = ref(new Date())
 let clockTimer: ReturnType<typeof setInterval> | null = null
 
@@ -403,13 +355,6 @@ function closeMobileMenu(): void {
   mobileMenuOpen.value = false
 }
 
-function closeCommunity(): void {
-  communityOpen.value = false
-}
-
-function handleKeydown(event: KeyboardEvent): void {
-  if (event.key === 'Escape' && communityOpen.value) closeCommunity()
-}
 
 function stopClock(): void {
   if (clockTimer !== null) clearInterval(clockTimer)
@@ -430,7 +375,6 @@ watch(showDefaultHome, syncClock)
 onMounted(() => {
   authStore.checkAuth()
   syncClock(showDefaultHome.value)
-  document.addEventListener('keydown', handleKeydown)
   if (!appStore.publicSettingsLoaded) {
     void appStore.fetchPublicSettings()
   }
@@ -438,7 +382,6 @@ onMounted(() => {
 
 onUnmounted(() => {
   stopClock()
-  document.removeEventListener('keydown', handleKeydown)
 })
 </script>
 
@@ -469,13 +412,4 @@ onUnmounted(() => {
   @apply rounded-none text-[#303538] underline-offset-4 transition-colors hover:text-[#087f6a] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#087f6a] focus-visible:ring-offset-4 dark:text-[#a0aca6] dark:hover:text-[#edf2ef] dark:focus-visible:ring-[#6ce4bd] dark:focus-visible:ring-offset-[#111315];
 }
 
-.community-modal-enter-active,
-.community-modal-leave-active {
-  transition: opacity 160ms ease;
-}
-
-.community-modal-enter-from,
-.community-modal-leave-to {
-  opacity: 0;
-}
 </style>

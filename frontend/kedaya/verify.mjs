@@ -39,7 +39,7 @@ test('restored public page layout and styles retain their verified historical so
   const directory = path.resolve(root, '../public-pages');
   const provenance = JSON.parse(fs.readFileSync(path.join(directory, 'sources.json'), 'utf8'));
   assert.equal(provenance.commit, manifest.publicPages.sourceCommit);
-  const adapted = new Set(['src/views/auth/LoginView.vue', 'src/components/auth/TotpLoginModal.vue']);
+  const adapted = new Set(['src/views/HomeView.vue', 'src/views/auth/LoginView.vue', 'src/components/auth/TotpLoginModal.vue']);
   for (const source of provenance.files) {
     if (!adapted.has(source.file)) assert.equal(sha256(path.join(directory, source.file)), source.sha256, source.file);
   }

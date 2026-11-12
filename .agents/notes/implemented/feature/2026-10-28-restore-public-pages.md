@@ -8,7 +8,7 @@ Status: implemented
 
 ## Decision
 
-`frontend/public-pages/` 复用 `81025b8e210e3ddb33a8e78a8aa02aba0c3abc80` 的原生 Vue 首页与登录页。其 HomeView、LoginView、AuthLayout 和公开页 CSS 与整体切换前最后版本 `7fe6a45076d74672f2d3cdf7a77e85ce5f895934` 相同。模块的 sources.json 记录 57 个历史文件及原始 SHA256；55 个文件逐字节保留，LoginView 仅增加安全重定向及密码按钮语义，TotpLoginModal 仅补充对话框与验证码输入名称，不改变原布局或样式。
+`frontend/public-pages/` 复用 `81025b8e210e3ddb33a8e78a8aa02aba0c3abc80` 的原生 Vue 首页与登录页。其历史 HomeView、LoginView、AuthLayout 和公开页 CSS 与整体切换前最后版本 `7fe6a45076d74672f2d3cdf7a77e85ce5f895934` 相同。模块的 sources.json 记录 57 个历史文件及原始 SHA256；54 个文件逐字节保留，LoginView 增加安全重定向及密码按钮语义，TotpLoginModal 补充对话框与验证码输入名称。HomeView 按[删除社群弹窗](../simplification/2026-11-12-remove-community-dialog.md)收窄入口和交互，其余历史布局与样式保留。
 
 根地址、/home、/login（含末尾斜线）选择 native 入口，其他路由保留 review 入口。`frontend/build.mjs` 先用 Vite 编译公开页，再调用现有组装器。公开页使用相对资源 base，脚本、CSS 和字体复制到带摘要的 integration 目录；资源摘要、原始源码修订和入口描述一并写入 build-manifest.json。固定 Kedaya 基座及原始摘要不修改。开发预览和正式 Docker 构建调用相同入口，生成的 public-pages/dist 不提交。
 
@@ -32,9 +32,9 @@ Status: implemented
 
 ## Testing
 
-- 独立 Vite 构建与严格 vue-tsc 检查通过；资源清单验证 55 个未适配源码摘要、入口、懒加载、CSS/字体路径、原控制台补丁、画布和渠道颜色。前端集成、导航与画布测试共 22/22 通过，公开页产物检查拒绝 new Function/eval。
+- 独立 Vite 构建与严格 vue-tsc 检查通过；资源清单验证 54 个未适配源码摘要、入口、懒加载、CSS/字体路径、原控制台补丁、画布和渠道颜色。前端集成、导航与画布测试共 22/22 通过，公开页产物检查拒绝 new Function/eval。
 - `go test -count=1 -tags='unit embed' ./internal/web` 通过，验证嵌入前端处理。
-- 本地浏览器使用线上公开设置及临时认证/统计接口，覆盖真实页面代码：旧首页统计、社群弹窗与 Escape、主题持久化、密码显示、密码错误不建立会话、TOTP 完成前无令牌、成功后跳转指定控制台、控制台不加载 native CSS、query/fragment 保留、浏览器后退、找回密码桥接、根地址别名。
+- 本地浏览器使用线上公开设置及临时认证/统计接口，覆盖真实页面代码：旧首页统计、主题持久化、密码显示、密码错误不建立会话、TOTP 完成前无令牌、成功后跳转指定控制台、控制台不加载 native CSS、query/fragment 保留、浏览器后退、找回密码桥接、根地址别名。社群弹窗与 Escape 的历史覆盖随社群功能移除而退出，移除验收归上述裁剪笔记。
 - 普通密码登录及拒绝外站 redirect 的浏览器检查通过。1440px 桌面、375px 手机与 812px 横屏无横向溢出；明暗主题截图已保存，测试启用 reduced-motion。完整流程在生产默认 CSP（禁止 unsafe-eval，并替换正确 nonce）下重跑通过，没有未捕获运行时错误，排除有意测试的 401 后没有应用 console 错误。
 - 浏览器不提交生产登录、OAuth、真实支付或模型请求。第三方 OAuth/验证码 SDK 与真实 WebAuthn 的供应商联调未执行；对应旧代码分支完整保留。
 
