@@ -40,7 +40,7 @@ func TestV0219UpgradePreservesCustomSchemaAndData(t *testing.T) {
 
 	// Preserve every historical custom migration; only 246–248 are new.
 	baseline := fstest.MapFS{}
-	entries, err := fs.ReadDir(migrations.FS, ".")
+	entries, err := fs.ReadDir(migrationFilesThrough(t, 248), ".")
 	require.NoError(t, err)
 	for _, entry := range entries {
 		name := entry.Name()
@@ -67,7 +67,7 @@ func TestV0219UpgradePreservesCustomSchemaAndData(t *testing.T) {
 		INSERT INTO groups (name, platform, allow_image_generation, deleted_at)
 		 VALUES ('upgrade-deleted', 'gemini', false, now());`)
 	require.NoError(t, err)
-	require.NoError(t, ApplyMigrations(ctx, db))
+	require.NoError(t, applyMigrationsFS(ctx, db, migrationFilesThrough(t, 248)))
 
 	for name, enabled := range map[string]bool{
 		"upgrade-gemini": true, "upgrade-antigravity": true,
@@ -99,7 +99,7 @@ func TestV0219UpgradePreservesCustomSchemaAndData(t *testing.T) {
 
 	// Both rerunning the new migration set and checking the old set must accept
 	// the ledger. Image rollback leaves new schema and data in place.
-	require.NoError(t, ApplyMigrations(ctx, db))
+	require.NoError(t, applyMigrationsFS(ctx, db, migrationFilesThrough(t, 248)))
 	require.NoError(t, applyMigrationsFS(ctx, db, baseline))
 	var rerunCount int
 	require.NoError(t, db.QueryRow(`SELECT count(*) FROM schema_migrations`).Scan(&rerunCount))

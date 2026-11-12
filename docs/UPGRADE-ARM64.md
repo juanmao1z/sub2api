@@ -13,7 +13,7 @@ bash tools/upgrade-arm64.sh --merge
 
 Resolve conflicts deliberately. Preserve local custom behavior and intentional deletions. Confirm `backend/cmd/server/VERSION` matches `versionVerification.projectVersion` in `workspace.json`, run relevant tests, and commit the result. The script never guesses through semantic conflicts.
 
-The default source is the verified release tag, not moving `upstream/main`. Its peeled commit and original VERSION must match `workspace.json`. Official `v0.2.19` points to `dece26153621959ccd7635814f4b2d08304e681a`, but its VERSION file still says `0.2.18`. The workspace records that original value in `verifiedSourceVersionFile` and the custom release value `0.2.19` in `projectVersion`. Both build entry points use Go 1.27.3; production builds pass VERSION explicitly.
+The default source is the verified release tag, not moving `upstream/main`. Its peeled commit and original VERSION must match `workspace.json`. Official `v0.2.21` points to `10ba8f9b4dc2e6023d4a9879ab77b21841babd10`, but its VERSION file still says `0.2.20`. The workspace records that original value in `verifiedSourceVersionFile` and the custom release value `0.2.21` in `projectVersion`. Both build entry points use Go 1.27.3; production builds pass VERSION explicitly.
 
 ### v0.2.17 to v0.2.19 compatibility
 
@@ -22,6 +22,14 @@ Startup applies migrations 246 (enable image generation for Gemini and Antigravi
 The pinned console, canvas, usage guide and channel-health colors remain in use. New official administrator-key management, Grok catalog diagnostics and image-count billing controls are not added to this fixed console. The backend includes these APIs; omitted `image_count_billing` updates preserve the value for supported image-generation groups, and the new setting defaults to false. Use the API contract in `docs/admin-api-keys.md` when managing scoped keys; this upgrade does not enable image-count billing automatically.
 
 No new mandatory production environment variable is introduced. `gateway.max_same_account_retries_gemini` defaults to 4 (0–10). Removed Gemini defaults require explicit model mappings or allowlists if an account still needs those model names. Existing database, Redis, JWT and encryption configuration remains necessary. Image staging (`upload`) does not run database migrations; only starting the new application does.
+
+### v0.2.19 to v0.2.21 compatibility
+
+The custom migration ledger grows from 306 to 309 files: `249_add_usage_logs_api_key_cost_index_notx.sql` creates a concurrent covering index on usage logs; `249_mcp_oauth.sql` creates three OAuth tables; `250_openai_cache_write_ttl.sql` adds 30m/12h token counters and nullable 12h cache-write prices. Filenames are ledger keys, so both 249 files and all historical custom migrations remain unchanged. Index creation can extend first startup; validate against a disposable restored backup before switching production. Application rollback does not undo these migrations.
+
+No mandatory production environment change is required. MCP remains disabled unless `MCP_PUBLIC_URL` is explicitly configured; its new management and consent screens are not included in the pinned console. The correct memory budget key is `gateway.request_body_memory_budget_bytes`; when unset, upstream selects one quarter of the smallest detected memory limit with a 1GiB floor. Existing explicit configuration takes precedence.
+
+OpenAI cache-write billing now distinguishes 30m and 12h, with new nullable pricing fields preserving configured generic cache-write prices. The fixed console does not add the new TTL detail fields, MCP pages, image-size tier controls or new account refresh UI. Existing APIs, billing, support tickets, canvas, guides and channel colors remain. `/`, `/home` and `/login` continue using the restored historical public entry with precompiled translations under strict production CSP. Production validation must include those real routes, not only `/health`.
 
 ## 2. Create a release manifest
 
