@@ -152,20 +152,7 @@ func (s *FrontendServer) serveIndexHTML(c *gin.Context) {
 	// Check cache first. A TTL covers settings changed outside SetOnUpdateCallback.
 	cached := s.cache.Get()
 	if cached != nil && s.isCacheFresh(cached) {
-		// Check If-None-Match for 304 response
-		if match := c.GetHeader("If-None-Match"); match == cached.ETag {
-			c.Status(http.StatusNotModified)
-			c.Abort()
-			return
-		}
-
-		// Replace nonce placeholder with actual nonce before serving
-		content := replaceNoncePlaceholder(cached.Content, nonce)
-
-		c.Header("ETag", cached.ETag)
-		c.Header("Cache-Control", "no-cache") // Must revalidate
-		c.Data(http.StatusOK, "text/html; charset=utf-8", content)
-		c.Abort()
+		s.serveCachedIndexHTML(c, cached, nonce)
 		return
 	}
 
@@ -180,6 +167,7 @@ func (s *FrontendServer) serveIndexHTML(c *gin.Context) {
 			return
 		}
 		// Fallback: serve without injection
+		applyHTMLNoCacheHeaders(c.Writer.Header())
 		c.Data(http.StatusOK, "text/html; charset=utf-8", s.baseHTML)
 		c.Abort()
 		return
@@ -192,6 +180,7 @@ func (s *FrontendServer) serveIndexHTML(c *gin.Context) {
 			return
 		}
 		// Fallback: serve without injection
+		applyHTMLNoCacheHeaders(c.Writer.Header())
 		c.Data(http.StatusOK, "text/html; charset=utf-8", s.baseHTML)
 		c.Abort()
 		return
@@ -207,7 +196,7 @@ func (s *FrontendServer) serveIndexHTML(c *gin.Context) {
 	if cached != nil {
 		c.Header("ETag", cached.ETag)
 	}
-	c.Header("Cache-Control", "no-cache")
+	applyHTMLNoCacheHeaders(c.Writer.Header())
 	c.Data(http.StatusOK, "text/html; charset=utf-8", content)
 	c.Abort()
 }
@@ -223,14 +212,16 @@ func (s *FrontendServer) isCacheFresh(cached *CachedHTML) bool {
 }
 
 func (s *FrontendServer) serveCachedIndexHTML(c *gin.Context, cached *CachedHTML, nonce string) {
-	if match := c.GetHeader("If-None-Match"); match == cached.ETag {
+	// A per-request CSP nonce requires fresh HTML even when the ETag matches.
+	if nonce == "" && c.GetHeader("If-None-Match") == cached.ETag {
+		applyHTMLNoCacheHeaders(c.Writer.Header())
 		c.Status(http.StatusNotModified)
 		c.Abort()
 		return
 	}
 	content := replaceNoncePlaceholder(cached.Content, nonce)
 	c.Header("ETag", cached.ETag)
-	c.Header("Cache-Control", "no-cache")
+	applyHTMLNoCacheHeaders(c.Writer.Header())
 	c.Data(http.StatusOK, "text/html; charset=utf-8", content)
 	c.Abort()
 }

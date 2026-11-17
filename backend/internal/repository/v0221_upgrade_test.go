@@ -62,7 +62,7 @@ func verifyV0221Migration(t *testing.T, db *sql.DB) {
 		counts[table] = count
 	}
 	started := time.Now()
-	require.NoError(t, ApplyMigrations(ctx, db))
+	require.NoError(t, applyMigrationsFS(ctx, db, migrationFilesThrough(t, 250)))
 	for filename, old := range checksums {
 		var current string
 		require.NoError(t, db.QueryRowContext(ctx, `SELECT checksum FROM schema_migrations WHERE filename=$1`, filename).Scan(&current))
@@ -85,7 +85,7 @@ func verifyV0221Migration(t *testing.T, db *sql.DB) {
 	require.Equal(t, 6, columns)
 	require.NoError(t, db.QueryRowContext(ctx, `SELECT count(*) FROM information_schema.tables WHERE table_schema='public' AND table_name IN ('mcp_oauth_grants','mcp_oauth_codes','mcp_oauth_credentials')`).Scan(&tables))
 	require.Equal(t, 3, tables)
-	require.NoError(t, ApplyMigrations(ctx, db))
+	require.NoError(t, applyMigrationsFS(ctx, db, migrationFilesThrough(t, 250)))
 	require.NoError(t, applyMigrationsFS(ctx, db, migrationFilesThrough(t, 248)))
 	t.Logf("migrations=306 -> 309; duration=%s; historical checksums and table counts preserved; index valid; TTL/MCP schema verified; repeat/rollback ledger accepted", time.Since(started))
 }
