@@ -66,11 +66,32 @@ func (c *HTMLCache) Get() *CachedHTML {
 	}
 }
 
-// Set updates the cache with new rendered HTML
+// Version returns the settings generation used to reject stale in-flight writes.
+func (c *HTMLCache) Version() uint64 {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	return c.settingsVersion
+}
+
+// SetIfVersion caches rendered settings only if no invalidation occurred since the read began.
+func (c *HTMLCache) SetIfVersion(html []byte, settingsJSON []byte, version uint64) bool {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if c.settingsVersion != version {
+		return false
+	}
+	c.setLocked(html, settingsJSON)
+	return true
+}
+
+// Set updates the cache with new rendered HTML.
 func (c *HTMLCache) Set(html []byte, settingsJSON []byte) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
+	c.setLocked(html, settingsJSON)
+}
 
+func (c *HTMLCache) setLocked(html []byte, settingsJSON []byte) {
 	c.cachedHTML = html
 	c.etag = c.generateETag(settingsJSON)
 	c.cachedAt = time.Now()

@@ -209,10 +209,14 @@ type mockSettingsProvider struct {
 	settings any
 	err      error
 	called   int
+	onGet    func()
 }
 
 func (m *mockSettingsProvider) GetPublicSettingsForInjection(ctx context.Context) (any, error) {
 	m.called++
+	if m.onGet != nil {
+		m.onGet()
+	}
 	return m.settings, m.err
 }
 
@@ -582,6 +586,23 @@ func TestFrontendServer_InvalidateCache(t *testing.T) {
 			server.InvalidateCache()
 		})
 	})
+}
+
+func TestFrontendServer_DoesNotCacheSettingsAfterInvalidation(t *testing.T) {
+	provider := &mockSettingsProvider{settings: map[string]string{"site_name": "stale brand"}}
+	server, err := NewFrontendServer(provider)
+	require.NoError(t, err)
+	provider.onGet = server.InvalidateCache
+
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = httptest.NewRequest(http.MethodGet, "/", nil)
+	c.Set(middleware.CSPNonceKey, "current-nonce")
+	server.serveIndexHTML(c)
+
+	require.Equal(t, http.StatusOK, w.Code)
+	require.Contains(t, w.Body.String(), "stale brand")
+	require.Nil(t, server.cache.Get(), "an invalidated in-flight response must not repopulate the cache")
 }
 
 func TestOverrideFilesNeverReceiveImmutableCacheHeaders(t *testing.T) {

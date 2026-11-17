@@ -156,6 +156,8 @@ func (s *FrontendServer) serveIndexHTML(c *gin.Context) {
 		return
 	}
 
+	cacheVersion := s.cache.Version()
+
 	// Cache miss - fetch settings and render
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 2*time.Second)
 	defer cancel()
@@ -187,14 +189,15 @@ func (s *FrontendServer) serveIndexHTML(c *gin.Context) {
 	}
 
 	rendered := s.injectSettings(settingsJSON)
-	s.cache.Set(rendered, settingsJSON)
+	cacheUpdated := s.cache.SetIfVersion(rendered, settingsJSON, cacheVersion)
 
 	// Replace nonce placeholder with actual nonce before serving
 	content := replaceNoncePlaceholder(rendered, nonce)
 
-	cached = s.cache.Get()
-	if cached != nil {
-		c.Header("ETag", cached.ETag)
+	if cacheUpdated {
+		if cached := s.cache.Get(); cached != nil {
+			c.Header("ETag", cached.ETag)
+		}
 	}
 	applyHTMLNoCacheHeaders(c.Writer.Header())
 	c.Data(http.StatusOK, "text/html; charset=utf-8", content)
