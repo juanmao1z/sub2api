@@ -36,7 +36,7 @@ func verifyV0222Migration(t *testing.T, db *sql.DB) {
 		counts[table] = count
 	}
 	started := time.Now()
-	require.NoError(t, ApplyMigrations(ctx, db))
+	require.NoError(t, applyMigrationsFS(ctx, db, migrationFilesThrough(t, 251)))
 	for filename, old := range checksums {
 		var current string
 		require.NoError(t, db.QueryRowContext(ctx, `SELECT checksum FROM schema_migrations WHERE filename=$1`, filename).Scan(&current))
@@ -56,7 +56,7 @@ func verifyV0222Migration(t *testing.T, db *sql.DB) {
 	require.Equal(t, 3, count)
 	require.NoError(t, db.QueryRowContext(ctx, `SELECT count(*) FROM pg_proc WHERE pronamespace='public'::regnamespace AND proname IN ('apply_group_usage_rollup_invalidation','invalidate_group_usage_rollups_at','invalidate_group_usage_rollup_state','invalidate_group_usage_rollup_state_after_insert')`).Scan(&count))
 	require.Equal(t, 4, count)
-	require.NoError(t, ApplyMigrations(ctx, db))
+	require.NoError(t, applyMigrationsFS(ctx, db, migrationFilesThrough(t, 251)))
 	require.NoError(t, applyMigrationsFS(ctx, db, migrationFilesThrough(t, 250)))
 	require.NoError(t, db.QueryRowContext(ctx, `SELECT count(*) FROM schema_migrations`).Scan(&count))
 	require.Equal(t, 311, count)

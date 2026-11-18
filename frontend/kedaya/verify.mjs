@@ -181,3 +181,32 @@ test('public page scripts do not require CSP unsafe-eval', () => {
     assert.doesNotMatch(source, /\bnew\s+Function\s*\(|\beval\s*\(/, asset.file);
   }
 });
+
+test('pinned channel editor preserves Ultra Fast pricing through a load/save round trip', () => {
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'sub2api-channel-pricing-'));
+  try {
+    const assembled = assemble({ outputDir: directory });
+    const source = fs.readFileSync(path.join(directory, 'assets/ChannelsView-Df6rkLV3.js'), 'utf8');
+    // Execute the actual compiled load and save functions, with only their surrounding store dependencies supplied.
+    const loadCode = source.slice(source.indexOf('function mt(t)'), source.indexOf('async function R()'));
+    const saveCode = source.slice(source.indexOf('function ut()'), source.indexOf('function mt(t)'));
+    assert.ok(loadCode.startsWith('function mt(t)'));
+    assert.ok(saveCode.startsWith('function ut()'));
+    const identity = value => value;
+    const load = new Function('W', 'ue', 'de', 'S', 'Me', 'Dt', `return (${loadCode});`)({ value: [] }, [], ['openai'], identity, identity, identity);
+    for (const multiplier of [undefined, null, 1, 1.25, 3]) {
+      const platforms = load({ model_pricing: [{ platform: 'openai', models: ['gpt-6-astra'], billing_mode: 'token', input_price: 2, fast_multiplier: 2.5, ultrafast_multiplier: multiplier }] });
+      assert.equal(platforms[0].model_pricing[0].ultrafast_multiplier, multiplier ?? null);
+      platforms[0].model_pricing[0].input_price = 4;
+      const save = new Function('P', 'c', '$', 'Te', 'zt', `return (${saveCode});`)({ value: null }, { platforms }, identity, identity, identity);
+      const result = save().model_pricing[0];
+      assert.equal(result.ultrafast_multiplier, multiplier ?? null);
+      assert.equal(result.fast_multiplier, 2.5);
+      assert.equal(result.input_price, 4);
+    }
+    const second = assemble({ outputDir: directory });
+    assert.equal(second.releasePrefix, assembled.releasePrefix, 'reassembly must use the original base without stacking patches');
+  } finally {
+    fs.rmSync(directory, { recursive: true, force: true });
+  }
+});

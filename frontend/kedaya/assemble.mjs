@@ -117,6 +117,18 @@ export function assemble({ outputDir = path.resolve(root, '../../backend/interna
   replaceAll(outputDir, changes, 'assets/catalog-D1qxTQrs.js', 'kedaya.ai', 'Sub2API', 'Replace captured-site domain in legal fallback content.');
   replaceAll(outputDir, changes, 'assets/AppLayout.vue_vue_type_script_setup_true_lang-C4ysyc_b.js', 'ghcr.io/kiss-kedaya/sub2api', 'ghcr.io/wei-shaw/sub2api', 'Use the formal Sub2API container repository in the version panel.');
   replaceAll(outputDir, changes, 'assets/AppLayout.vue_vue_type_script_setup_true_lang-C4ysyc_b.js', 'kiss-kedaya/sub2api', 'Wei-Shaw/sub2api', 'Use the formal Sub2API source repository in the version panel.');
+  replaceAll(outputDir, changes, 'assets/ChannelsView-Df6rkLV3.js',
+    'fast_multiplier:null,flex_multiplier:null,',
+    'fast_multiplier:null,flex_multiplier:null,ultrafast_multiplier:null,',
+    'Initialize optional Ultra Fast pricing without enabling an override.');
+  patch(outputDir, changes, 'assets/ChannelsView-Df6rkLV3.js',
+    'fast_multiplier:v.fast_multiplier,flex_multiplier:v.flex_multiplier,',
+    'fast_multiplier:v.fast_multiplier,flex_multiplier:v.flex_multiplier,ultrafast_multiplier:v.ultrafast_multiplier??null,',
+    'Retain API-configured Ultra Fast pricing in the pinned channel editor.');
+  patch(outputDir, changes, 'assets/ChannelsView-Df6rkLV3.js',
+    'fast_multiplier:h.fast_multiplier!=null&&h.fast_multiplier!==""?Number(h.fast_multiplier):null,',
+    'ultrafast_multiplier:h.ultrafast_multiplier!=null&&h.ultrafast_multiplier!==""?Number(h.ultrafast_multiplier):null,fast_multiplier:h.fast_multiplier!=null&&h.fast_multiplier!==""?Number(h.fast_multiplier):null,',
+    'Round-trip Ultra Fast pricing when the pinned editor replaces channel prices.');
   patch(outputDir, changes, 'assets/ChannelStatusView-DNoLdA9d.js',
     ',_=v(()=>{var h;return((h=f.value)==null?void 0:h.metrics)??a.row.metrics}),g=v(()=>{var h;return((h=f.value)==null?void 0:h.health)??a.row.health})',
     ',_=v(()=>a.row.metrics),g=v(()=>a.row.health)',

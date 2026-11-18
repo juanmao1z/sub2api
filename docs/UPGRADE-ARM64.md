@@ -13,7 +13,7 @@ bash tools/upgrade-arm64.sh --merge
 
 Resolve conflicts deliberately. Preserve local custom behavior and intentional deletions. Confirm `backend/cmd/server/VERSION` matches `versionVerification.projectVersion` in `workspace.json`, run relevant tests, and commit the result. The script never guesses through semantic conflicts.
 
-The default source is the verified release tag, not moving `upstream/main`. Its peeled commit and original VERSION must match `workspace.json`. Official `v0.2.22` points to `b0fa9f3e6eeab1968a53e1289b69daa4bb40ca2b`, but its VERSION file still says `0.2.21`. The workspace records that original value in `verifiedSourceVersionFile` and the custom release value `0.2.22` in `projectVersion`. Both build entry points use Go 1.27.4; production builds pass VERSION explicitly.
+The default source is the verified release tag, not moving `upstream/main`. Its peeled commit and original VERSION must match `workspace.json`. Official `v0.2.23` points to `5af9afb588c4b014b3df9db7d4073af1f8ae01b6`, but its VERSION file still says `0.2.22`. The workspace records that original value in `verifiedSourceVersionFile` and the custom release value `0.2.23` in `projectVersion`. Both build entry points use Go 1.27.4; production builds pass VERSION explicitly.
 
 ### v0.2.17 to v0.2.19 compatibility
 
@@ -36,6 +36,12 @@ OpenAI cache-write billing now distinguishes 30m and 12h, with new nullable pric
 The custom ledger grows from 309 to 311 files. `251_group_force_openai_ultrafast.sql` adds a false-by-default group flag; `251_group_usage_rollup_nonblocking_build.sql` adds rollup expiry/build state and replaces invalidation functions to avoid blocking usage writes during rebuilds. Preserve all historical filenames and checksums. Validate the upgrade on an actual restored production backup before switching; image rollback does not revert database migrations.
 
 The fixed console omits `force_openai_ultrafast`; backend updates preserve the existing value when omitted, and existing groups remain disabled after migration. New Ultra Fast controls, Vertex multi-region selectors and passthrough filtering UI require separate frontend work. Existing interfaces and the removal of the homepage community dialog stay in place. HTML caching retains the custom settings TTL and fallback while applying the upstream no-store and per-request CSP nonce fixes on every cached path. No mandatory production configuration change is introduced; MCP stays disabled without `MCP_PUBLIC_URL`.
+
+### v0.2.22 to v0.2.23 compatibility
+
+The custom ledger grows from 311 to 312 files. `252_channel_pricing_ultrafast_multiplier.sql` adds a nullable positive Ultra Fast multiplier to channel model prices. Existing price fields and group policies remain unchanged; NULL selects model-default Ultra Fast pricing. Verify the migration against an actual restored production backup, including historical checksums, channel prices, row counts, repeat execution and positive-value constraints.
+
+The pinned console and historical public pages remain in place, including the removed community dialog. Its build-time channel editor adaptation round-trips `ultrafast_multiplier` when loading and saving prices, preserving API-configured overrides without adding new controls. New GPT-6.2 metadata, cache-creation usage normalization and bounded first-output stream failover are included in the backend. The upstream memory-test isolation supersedes the equivalent local test workaround. No mandatory production environment change is introduced; MCP and Ultra Fast are not automatically enabled.
 
 ## 2. Create a release manifest
 
