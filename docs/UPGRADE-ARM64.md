@@ -13,7 +13,7 @@ bash tools/upgrade-arm64.sh --merge
 
 Resolve conflicts deliberately. Preserve local custom behavior and intentional deletions. Confirm `backend/cmd/server/VERSION` matches `versionVerification.projectVersion` in `workspace.json`, run relevant tests, and commit the result. The script never guesses through semantic conflicts.
 
-The default source is the verified release tag, not moving `upstream/main`. Its peeled commit and original VERSION must match `workspace.json`. Official `v0.2.23` points to `5af9afb588c4b014b3df9db7d4073af1f8ae01b6`, but its VERSION file still says `0.2.22`. The workspace records that original value in `verifiedSourceVersionFile` and the custom release value `0.2.23` in `projectVersion`. Both build entry points use Go 1.27.4; production builds pass VERSION explicitly.
+The default source is the verified release tag, not moving `upstream/main`. Its peeled commit and original VERSION must match `workspace.json`. Official `v0.2.24` points to `5c2982a81b46e2142d0143d2f83c1ce9c4da1d24`, but its VERSION file still says `0.2.23`. The workspace records that original value in `verifiedSourceVersionFile` and the custom release value `0.2.24` in `projectVersion`. Both build entry points use Go 1.27.4; production builds pass VERSION explicitly.
 
 ### v0.2.17 to v0.2.19 compatibility
 
@@ -42,6 +42,14 @@ The fixed console omits `force_openai_ultrafast`; backend updates preserve the e
 The custom ledger grows from 311 to 312 files. `252_channel_pricing_ultrafast_multiplier.sql` adds a nullable positive Ultra Fast multiplier to channel model prices. Existing price fields and group policies remain unchanged; NULL selects model-default Ultra Fast pricing. Verify the migration against an actual restored production backup, including historical checksums, channel prices, row counts, repeat execution and positive-value constraints.
 
 The pinned console and historical public pages remain in place, including the removed community dialog. Its build-time channel editor adaptation round-trips `ultrafast_multiplier` when loading and saving prices, preserving API-configured overrides without adding new controls. New GPT-6.2 metadata, cache-creation usage normalization and bounded first-output stream failover are included in the backend. The upstream memory-test isolation supersedes the equivalent local test workaround. No mandatory production environment change is introduced; MCP and Ultra Fast are not automatically enabled.
+
+### v0.2.23 to v0.2.24 compatibility
+
+No new SQL migration is introduced; the custom ledger stays at 312 files. Verify a fresh production backup by restoring it and invoking the new version's migration entry twice. The ledger checksums, user records, tickets, channel prices, platform quotas and settings must remain unchanged.
+
+Gateway requests with duplicate JSON fields are rejected with HTTP 400, including equal duplicate values and conflicting case aliases. Validation also applies to supported multipart fields and Responses WebSocket frames, before routing or billing. Clients must serialize unambiguous objects. Normal fixed-console JSON requests continue to work. The model allowlist order, text body limits, composite rewrites and custom outbound address checks remain intact.
+
+Configured platform quota defaults are snapshotted for newly created ordinary users, including administrator-created users; existing users are not backfilled. Snapshot errors remain best-effort and do not abort signup. The release includes updated Codex context types, tool search, Exa search backend support and streaming/buffered response compatibility. The fixed console, pricing-field passthrough and historical public pages remain unchanged; new official administration controls are not added. No mandatory production environment change is required; MCP and Ultra Fast remain disabled unless explicitly configured.
 
 ## 2. Create a release manifest
 
